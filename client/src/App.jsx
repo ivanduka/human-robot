@@ -1,54 +1,81 @@
 import React, { Component } from "react";
 import { Document, Page } from "react-pdf/dist/entry.webpack";
 import "./App.css";
+import Spinner from "./spinner/Spinner";
 
-const options = {
-  cMapUrl: "cmaps/",
-  cMapPacked: true
+const fixTextLayer = () => {
+  const canvas = document.querySelector(".react-pdf__Page__canvas");
+  const text = document.querySelector(".react-pdf__Page__textContent");
+  const { style } = text;
+  style.width = canvas.style.width;
+  style.top = "0";
+  style.left = "0";
+  style.transform = "";
+  style.color = "unset"; // TODO: TEMPORARILY - ONLY FOR DEBUGGING!
 };
 
-export default class Sample extends Component {
+export default class Test extends Component {
   state = {
-    file: `${process.env.PUBLIC_URL}/pdf/sample.pdf`,
-    numPages: null
+    numPages: null,
+    pageNumber: 1
   };
 
-  onFileChange = event => {
+  onDocumentLoadSuccess = document => {
+    const { numPages } = document;
     this.setState({
-      file: event.target.files[0]
+      numPages,
+      pageNumber: 1
     });
   };
 
-  onDocumentLoadSuccess = ({ numPages }) => {
-    this.setState({ numPages });
-  };
+  changePage = offset =>
+    this.setState(prevState => ({
+      pageNumber: prevState.pageNumber + offset
+    }));
+
+  previousPage = () => this.changePage(-1);
+
+  nextPage = () => this.changePage(1);
 
   render() {
-    const { file, numPages } = this.state;
+    const { numPages, pageNumber } = this.state;
 
     return (
-      <div className="Example">
-        <header>
-          <h1>react-pdf sample page</h1>
-        </header>
-        <div className="Example__container">
-          <div className="Example__container__load">
-            <label htmlFor="file">Load from file:</label>{" "}
-            <input onChange={this.onFileChange} type="file" />
-          </div>
-          <div className="Example__container__document">
-            <Document
-              file={file}
-              onLoadSuccess={this.onDocumentLoadSuccess}
-              options={options}
-            >
-              {Array.from(new Array(numPages), (el, index) => (
-                <Page key={`page_${index + 1}`} pageNumber={index + 1} />
-              ))}
-            </Document>
-          </div>
+      <React.Fragment>
+        <div>
+          <p>
+            Page {pageNumber || (numPages ? 1 : "--")} of {numPages || "--"}
+          </p>
+          <button
+            type="button"
+            disabled={pageNumber <= 1}
+            onClick={this.previousPage}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            disabled={pageNumber >= numPages}
+            onClick={this.nextPage}
+          >
+            Next
+          </button>
         </div>
-      </div>
+        <div>
+          <Document
+            file={`${process.env.PUBLIC_URL}/pdf/sample.pdf`}
+            onLoadSuccess={this.onDocumentLoadSuccess}
+            loading={Spinner}
+          >
+            <Page
+              pageNumber={pageNumber}
+              height={null}
+              loading={Spinner}
+              onRenderSuccess={fixTextLayer}
+            />
+          </Document>
+        </div>
+      </React.Fragment>
     );
   }
 }
