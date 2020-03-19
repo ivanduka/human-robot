@@ -1,17 +1,22 @@
 import React, { Component } from "react";
-import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+  useLocation
+} from "react-router-dom";
 import "./App.css";
-import Extraction from "./extraction_app/Extraction";
+import Extraction from "./extraction/extraction_app/Extraction";
+import ExtractionIndex from "./extraction/ExtractionIndex";
 
 const app = () => (
   <Router>
     <Switch>
-      <Route path="/extraction">
-        <Extraction />
-      </Route>
-      <Route path="/">
-        <Home />
-      </Route>
+      <Route exact path="/extraction" component={ExtractionIndex} />
+      <Route path="/extraction/:file/:page" component={Extraction} />
+      <Route exact path="/" component={Home} />
+      <Route path="*" component={NoMatch} />
     </Switch>
   </Router>
 );
@@ -19,5 +24,14 @@ const app = () => (
 const Home = () => {
   return <Link to="/extraction">Extraction</Link>;
 };
+
+function NoMatch() {
+  let location = useLocation();
+  return (
+    <h3>
+      No match for <code>{location.pathname}</code>
+    </h3>
+  );
+}
 
 export default app;

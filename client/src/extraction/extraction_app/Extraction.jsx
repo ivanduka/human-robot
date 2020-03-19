@@ -1,14 +1,18 @@
 import React, { Component } from "react";
 import { Document, Page } from "react-pdf/dist/entry.webpack";
+import { uuid } from "uuidv4";
+import { generatePath } from "react-router-dom";
+
 import "./Extraction.css";
-import Spinner from "../spinner/Spinner";
+import Spinner from "../../spinner/Spinner";
 
 export default class Extraction extends Component {
   state = {
     numPages: null,
-    pageNumber: 1,
+    pageNumber: null,
     pageHeight: null,
-    pageWidth: null
+    pageWidth: null,
+    file: null
   };
 
   pageIsRendered = () => {
@@ -51,6 +55,12 @@ export default class Extraction extends Component {
   };
 
   componentDidMount() {
+    let { file, page } = this.props.match.params;
+    console.log(this.props.match.params);
+    if (page == null) {
+      page = 1;
+    }
+    this.setState({ file, pageNumber: parseInt(page) });
     window.onresize = this.updatePageDimensions;
   }
 
@@ -60,23 +70,28 @@ export default class Extraction extends Component {
 
   onDocumentLoadSuccess = document => {
     const { numPages } = document;
-    this.setState({
-      numPages,
-      pageNumber: 1
-    });
+    this.setState({ numPages });
   };
 
-  changePage = offset =>
-    this.setState(prevState => ({
-      pageNumber: prevState.pageNumber + offset
-    }));
+  changePage = offset => {
+    this.setState(prevState => {
+      const pageNumber = prevState.pageNumber + offset;
+      this.props.history.replace({
+        pathname: generatePath(this.props.match.path, {
+          page: pageNumber,
+          file: prevState.file
+        })
+      });
+      return { pageNumber };
+    });
+  };
 
   previousPage = () => this.changePage(-1);
 
   nextPage = () => this.changePage(1);
 
   render() {
-    const { numPages, pageNumber, pageHeight, pageWidth } = this.state;
+    const { numPages, pageNumber, pageHeight, pageWidth, file } = this.state;
 
     return (
       <React.Fragment>
@@ -100,7 +115,7 @@ export default class Extraction extends Component {
           </button>
         </div>
         <Document
-          file={`${process.env.PUBLIC_URL}/pdf/sample.pdf`}
+          file={`${process.env.PUBLIC_URL}/pdf/${file}.pdf`}
           onLoadSuccess={this.onDocumentLoadSuccess}
           loading={Spinner}
         >
