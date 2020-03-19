@@ -61,20 +61,18 @@ export default class Test extends Component {
             Next
           </button>
         </div>
-        <div>
-          <Document
-            file={`${process.env.PUBLIC_URL}/pdf/sample.pdf`}
-            onLoadSuccess={this.onDocumentLoadSuccess}
+        <Document
+          file={`${process.env.PUBLIC_URL}/pdf/sample.pdf`}
+          onLoadSuccess={this.onDocumentLoadSuccess}
+          loading={Spinner}
+        >
+          <Page
+            pageNumber={pageNumber}
+            height={null}
             loading={Spinner}
-          >
-            <Page
-              pageNumber={pageNumber}
-              height={null}
-              loading={Spinner}
-              onRenderSuccess={fixTextLayer}
-            />
-          </Document>
-        </div>
+            onRenderSuccess={fixTextLayer}
+          />
+        </Document>
       </React.Fragment>
     );
   }
