@@ -1,7 +1,7 @@
 .react-pdf__Document {
   display: flex;
   justify-content: center;
-  border: 1px solid black;
+  border-left: 1px solid black;
 }
 
 .react-pdf__Page {

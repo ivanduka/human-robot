@@ -11,14 +11,25 @@ const fixTextLayer = () => {
   style.top = "0";
   style.left = "0";
   style.transform = "";
-  style.color = "unset"; // TODO: TEMPORARILY - ONLY FOR DEBUGGING!
+  // style.color = "unset"; // TEMPORARILY - ONLY FOR DEBUGGING!
 };
 
 export default class Test extends Component {
   state = {
     numPages: null,
-    pageNumber: 1
+    pageNumber: 1,
+    pageHeight: null
   };
+
+  updateWindowHeight = () => {
+    this.setState({ pageHeight: window.innerHeight });
+  };
+
+  componentDidMount() {
+    this.updateWindowHeight();
+
+   window.onresize = this.updateWindowHeight;
+  }
 
   onDocumentLoadSuccess = document => {
     const { numPages } = document;
@@ -38,7 +49,7 @@ export default class Test extends Component {
   nextPage = () => this.changePage(1);
 
   render() {
-    const { numPages, pageNumber } = this.state;
+    const { numPages, pageNumber, pageHeight } = this.state;
 
     return (
       <React.Fragment>
@@ -68,7 +79,7 @@ export default class Test extends Component {
         >
           <Page
             pageNumber={pageNumber}
-            height={null}
+            height={pageHeight}
             loading={Spinner}
             onRenderSuccess={fixTextLayer}
           />
