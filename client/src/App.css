@@ -1,7 +1,15 @@
 .react-pdf__Document {
-  display: flex;
-  justify-content: center;
+  border: 2px solid black;
   border-left: 1px solid black;
+  display: flex;
+  justify-content: stretch;
+}
+
+.controls {
+  border: 2px solid black;
+  border-right: 1px solid black;
+  padding: 5px;
+  min-width: 300px;
 }
 
 .react-pdf__Page {
@@ -12,5 +20,5 @@
 
 #root {
   display: flex;
-  justify-content: space-between;
+  width: 100%;
 }

@@ -3,32 +3,59 @@ import { Document, Page } from "react-pdf/dist/entry.webpack";
 import "./App.css";
 import Spinner from "./spinner/Spinner";
 
-const fixTextLayer = () => {
-  const canvas = document.querySelector(".react-pdf__Page__canvas");
-  const text = document.querySelector(".react-pdf__Page__textContent");
-  const { style } = text;
-  style.width = canvas.style.width;
-  style.top = "0";
-  style.left = "0";
-  style.transform = "";
-  // style.color = "unset"; // TEMPORARILY - ONLY FOR DEBUGGING!
-};
-
 export default class Test extends Component {
   state = {
     numPages: null,
     pageNumber: 1,
-    pageHeight: null
+    pageHeight: null,
+    pageWidth: null
   };
 
-  updateWindowHeight = () => {
-    this.setState({ pageHeight: window.innerHeight });
+  pageIsRendered = () => {
+    this.fixTextLayer();
+    this.updatePageDimensions();
+  };
+
+  fixTextLayer = () => {
+    const canvas = document.querySelector(".react-pdf__Page__canvas");
+    const text = document.querySelector(".react-pdf__Page__textContent");
+    const { style } = text;
+    style.width = canvas.style.width;
+    style.top = "0";
+    style.left = "0";
+    style.transform = "";
+    // style.color = "unset"; // TEMPORARILY - ONLY FOR DEBUGGING!
+  };
+
+  updatePageDimensions = () => {
+    const page = document.querySelector(".react-pdf__Page");
+
+    if (page) {
+      const controlsWidth = 2 + 5 + 300 + 5 + 1;
+      const pageHorBorders = 1 + 2;
+      const pageVerBorders = 2 + 2;
+
+      const { width, height } = page.getBoundingClientRect();
+      const availableWidth = window.innerWidth - controlsWidth - pageHorBorders;
+      const availableHeight = window.innerHeight - pageVerBorders;
+
+      const widthFactor = availableWidth / width;
+      const heightFactor = availableHeight / height;
+
+      if (widthFactor < heightFactor) {
+        this.setState({ pageHeight: null, pageWidth: availableWidth });
+      } else {
+        this.setState({ pageHeight: availableHeight, pageWidth: null });
+      }
+    }
   };
 
   componentDidMount() {
-    this.updateWindowHeight();
+    window.onresize = this.updatePageDimensions;
+  }
 
-   window.onresize = this.updateWindowHeight;
+  componentWillUnmount() {
+    window.onresize = null;
   }
 
   onDocumentLoadSuccess = document => {
@@ -49,11 +76,11 @@ export default class Test extends Component {
   nextPage = () => this.changePage(1);
 
   render() {
-    const { numPages, pageNumber, pageHeight } = this.state;
+    const { numPages, pageNumber, pageHeight, pageWidth } = this.state;
 
     return (
       <React.Fragment>
-        <div>
+        <div className="controls">
           <p>
             Page {pageNumber || (numPages ? 1 : "--")} of {numPages || "--"}
           </p>
@@ -80,8 +107,9 @@ export default class Test extends Component {
           <Page
             pageNumber={pageNumber}
             height={pageHeight}
+            width={pageWidth}
             loading={Spinner}
-            onRenderSuccess={fixTextLayer}
+            onRenderSuccess={this.pageIsRendered}
           />
         </Document>
       </React.Fragment>
