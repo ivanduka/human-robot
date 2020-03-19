@@ -1,0 +1,25 @@
+.react-pdf__Document {
+    border: 2px solid black;
+    border-left: 1px solid black;
+    display: flex;
+    justify-content: stretch;
+  }
+  
+  .controls {
+    border: 2px solid black;
+    border-right: 1px solid black;
+    padding: 5px;
+    min-width: 300px;
+  }
+  
+  .react-pdf__Page {
+  }
+  
+  .react-pdf__Page__canvas {
+  }
+  
+  #root {
+    display: flex;
+    width: 100%;
+  }
+  
