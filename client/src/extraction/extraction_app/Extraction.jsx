@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { Document, Page } from "react-pdf/dist/entry.webpack";
 import { uuid } from "uuidv4";
-import { generatePath } from "react-router-dom";
+import { generatePath, Link } from "react-router-dom";
 
 import "./Extraction.css";
 import Spinner from "../../spinner/Spinner";
@@ -96,6 +96,7 @@ export default class Extraction extends Component {
     return (
       <React.Fragment>
         <div className="controls">
+          <Link to="/extraction">Back to Index</Link>
           <p>
             Page {pageNumber || (numPages ? 1 : "--")} of {numPages || "--"}
           </p>

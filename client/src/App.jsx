@@ -4,7 +4,8 @@ import {
   Switch,
   Route,
   Link,
-  useLocation
+  useLocation,
+  Redirect
 } from "react-router-dom";
 import "./App.css";
 import Extraction from "./extraction/extraction_app/Extraction";
@@ -15,6 +16,7 @@ const app = () => (
     <Switch>
       <Route exact path="/extraction" component={ExtractionIndex} />
       <Route path="/extraction/:file/:page" component={Extraction} />
+      <Redirect from="/extraction/:file" to="/extraction/:file/1" />
       <Route exact path="/" component={Home} />
       <Route path="*" component={NoMatch} />
     </Switch>
