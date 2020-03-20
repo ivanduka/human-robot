@@ -13,6 +13,7 @@ export default class Index extends Component {
   render() {
     return (
       <div>
+        <Link to="/">HOME</Link>
         <div>Index of Files:</div>
         <Link to="/extraction/2445104">2445104</Link>
       </div>
