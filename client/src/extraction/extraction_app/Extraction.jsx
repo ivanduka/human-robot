@@ -12,7 +12,18 @@ export default class Extraction extends Component {
     pageNumber: null,
     pageHeight: null,
     pageWidth: null,
-    file: null
+    file: null,
+    uuid: uuid(),
+    x1: null,
+    y1: null,
+    x2: null,
+    y2: null,
+    width: null,
+    height: null,
+    tableTitle: null,
+    continuationOf: null,
+    tables: [],
+    pagesWithTables: null
   };
 
   pageIsRendered = () => {
