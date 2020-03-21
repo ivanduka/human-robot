@@ -24,3 +24,6 @@ yarn-error.log*
 **/pdf
 .vscode
 .env
+test.py
+.idea
+/__pycache__
