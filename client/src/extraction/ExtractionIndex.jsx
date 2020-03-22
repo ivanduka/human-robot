@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import { Link, Redirect } from "react-router-dom";
 import { MDBDataTable } from "mdbreact";
 import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
+import { Helmet } from "react-helmet";
+
 import "./ExtractionIndex.css";
 
 export default class ExtractionIndex extends Component {
@@ -70,7 +72,9 @@ export default class ExtractionIndex extends Component {
         }
         const rows = results.map(row => ({
           ...row,
-          clickEvent: () => this.props.history.push("/extraction/" + row.pdfId)
+          date: new Date(row.date).toISOString().split("T")[0],
+          clickEvent: () =>
+            this.props.history.push("/extraction/" + row.pdfName)
         }));
         this.setState({ rows, loading: false });
       });
@@ -85,8 +89,8 @@ export default class ExtractionIndex extends Component {
         striped
         small
         bordered
-        entries={10}
-        entriesOptions={[10, 100, 1000]}
+        entries={100}
+        entriesOptions={[10, 100, 1000, 10000]}
         exportToCSV={true}
         hover
         noBottomColumns
@@ -100,10 +104,15 @@ export default class ExtractionIndex extends Component {
 
     return (
       <Container>
+        <Helmet>
+          <title>Index of PDF files</title>
+        </Helmet>
         <Row>
           <Col>
             <Link to="/">
-              <Button size="sm" variant="info">Back to home</Button>
+              <Button size="sm" variant="info">
+                Back to home
+              </Button>
             </Link>
             <Button size="sm" variant="primary" onClick={this.loadData}>
               Refresh Data

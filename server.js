@@ -8,7 +8,7 @@ const fs = require("fs");
 
 const csvPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\csv_tables";
 const jpgPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\jpg_tables";
-const pdfPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\pdf";
+const pdfPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\pdf_files";
 for (let p of [csvPath, jpgPath, pdfPath]) {
   fs.access(p, err => {
     if (err) throw new Error(`Path ${p} is not accessible`);

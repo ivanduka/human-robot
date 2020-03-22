@@ -2,7 +2,8 @@ import React, { Component } from "react";
 import { Document, Page } from "react-pdf/dist/entry.webpack";
 import { uuid } from "uuidv4";
 import { generatePath, Link } from "react-router-dom";
-import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
+import { Button, Spinner } from "react-bootstrap";
+import { Helmet } from "react-helmet";
 
 import "./Extraction.css";
 
@@ -46,7 +47,7 @@ export default class Extraction extends Component {
     const page = document.querySelector(".react-pdf__Page");
 
     if (page) {
-      const controlsWidth = 2 + 5 + 300 + 5 + 1;
+      const controlsWidth = 2 + 5 + 400 + 5 + 1;
       const pageHorBorders = 1 + 2;
       const pageVerBorders = 2 + 2;
 
@@ -67,7 +68,6 @@ export default class Extraction extends Component {
 
   componentDidMount() {
     let { file, page } = this.props.match.params;
-    console.log(this.props.match.params);
     if (page == null) {
       page = 1;
     }
@@ -106,34 +106,43 @@ export default class Extraction extends Component {
 
     return (
       <React.Fragment>
+        <Helmet>
+          <title>{`${file}: page ${pageNumber}`}</title>
+        </Helmet>
         <div className="controls">
-          <Link to="/extraction">Back to Index</Link>
+          <Link to="/extraction">
+            <Button size="sm" variant="info">
+              Back to Index
+            </Button>
+          </Link>
           <p>
             Page {pageNumber || (numPages ? 1 : "--")} of {numPages || "--"}
           </p>
-          <button
-            type="button"
+          <Button
+            size="sm"
             disabled={pageNumber <= 1}
             onClick={this.previousPage}
           >
             Previous
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            size="sm"
             disabled={pageNumber >= numPages}
             onClick={this.nextPage}
           >
             Next
-          </button>
+          </Button>
         </div>
         <Document
           file={`${process.env.PUBLIC_URL}/pdf/${file}.pdf`}
           onLoadSuccess={this.onDocumentLoadSuccess}
+          loading={() => <Spinner />}
         >
           <Page
             pageNumber={pageNumber}
             height={pageHeight}
             width={pageWidth}
+            loading={() => <Spinner />}
             onRenderSuccess={this.pageIsRendered}
           />
         </Document>

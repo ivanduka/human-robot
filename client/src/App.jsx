@@ -8,6 +8,7 @@ import {
   Redirect
 } from "react-router-dom";
 import { Container, Row, Col, Button } from "react-bootstrap";
+import { Helmet } from "react-helmet";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -33,6 +34,9 @@ const App = () => (
 const Home = () => {
   return (
     <Container>
+      <Helmet>
+        <title>Application Index</title>
+      </Helmet>
       <Row>
         <Col>
           <h3>Available Options:</h3>
