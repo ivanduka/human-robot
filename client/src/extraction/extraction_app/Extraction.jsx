@@ -27,6 +27,52 @@ export default class Extraction extends Component {
     pagesWithTables: null
   };
 
+  componentDidMount() {
+    let { file, page } = this.props.match.params;
+    if (page == null) {
+      page = 1;
+    }
+    this.setState({ file, pageNumber: parseInt(page) });
+    window.onresize = this.updatePageDimensions;
+
+    document.addEventListener("keydown", this.handleKeys);
+  }
+
+  componentWillUnmount() {
+    window.onresize = null;
+    document.removeEventListener("keydown", this.handleKeys);
+  }
+
+  handleKeys = event => {
+    if (
+      event.altKey &&
+      (event.key === "KeyS" || event.key.toLowerCase() === "s")
+    ) {
+      console.log("ALT+S");
+      event.preventDefault();
+    }
+
+    if (event.code === "ArrowDown") {
+      console.log("DOWN");
+      event.preventDefault();
+    }
+
+    if (event.code === "ArrowUp") {
+      console.log("UP");
+      event.preventDefault();
+    }
+
+    if (event.code === "ArrowLeft") {
+      this.previousPage();
+      event.preventDefault();
+    }
+
+    if (event.code === "ArrowRight") {
+      this.nextPage();
+      event.preventDefault();
+    }
+  };
+
   pageIsRendered = () => {
     this.fixTextLayer();
     this.updatePageDimensions();
@@ -66,19 +112,6 @@ export default class Extraction extends Component {
     }
   };
 
-  componentDidMount() {
-    let { file, page } = this.props.match.params;
-    if (page == null) {
-      page = 1;
-    }
-    this.setState({ file, pageNumber: parseInt(page) });
-    window.onresize = this.updatePageDimensions;
-  }
-
-  componentWillUnmount() {
-    window.onresize = null;
-  }
-
   onDocumentLoadSuccess = document => {
     const { numPages } = document;
     this.setState({ numPages });
@@ -87,18 +120,23 @@ export default class Extraction extends Component {
   changePage = offset => {
     this.setState(prevState => {
       const pageNumber = prevState.pageNumber + offset;
+
+      if (pageNumber < 1 || pageNumber > prevState.numPages) {
+        return;
+      }
+
       this.props.history.replace({
         pathname: generatePath(this.props.match.path, {
           page: pageNumber,
           file: prevState.file
         })
       });
+
       return { pageNumber };
     });
   };
 
   previousPage = () => this.changePage(-1);
-
   nextPage = () => this.changePage(1);
 
   render() {
@@ -116,33 +154,33 @@ export default class Extraction extends Component {
             </Button>
           </Link>
           <p>
+            <Button
+              size="sm"
+              disabled={pageNumber <= 1}
+              onClick={this.previousPage}
+            >
+              Previous (LEFT)
+            </Button>
+            <Button
+              size="sm"
+              disabled={pageNumber >= numPages}
+              onClick={this.nextPage}
+            >
+              Next (RIGHT)
+            </Button>
             Page {pageNumber || (numPages ? 1 : "--")} of {numPages || "--"}
           </p>
-          <Button
-            size="sm"
-            disabled={pageNumber <= 1}
-            onClick={this.previousPage}
-          >
-            Previous
-          </Button>
-          <Button
-            size="sm"
-            disabled={pageNumber >= numPages}
-            onClick={this.nextPage}
-          >
-            Next
-          </Button>
         </div>
         <Document
           file={`${process.env.PUBLIC_URL}/pdf/${file}.pdf`}
           onLoadSuccess={this.onDocumentLoadSuccess}
-          loading={() => <Spinner />}
+          loading={<Spinner animation="border" />}
         >
           <Page
             pageNumber={pageNumber}
             height={pageHeight}
             width={pageWidth}
-            loading={() => <Spinner />}
+            loading={<Spinner animation="border" />}
             onRenderSuccess={this.pageIsRendered}
           />
         </Document>
