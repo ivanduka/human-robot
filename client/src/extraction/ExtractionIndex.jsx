@@ -70,13 +70,11 @@ export default class ExtractionIndex extends Component {
         }
         const rows = results.map(row => ({
           ...row,
-          clickEvent: () => this.goToPDF(row.pdfId)
+          clickEvent: () => this.props.history.push("/extraction/" + row.pdfId)
         }));
         this.setState({ rows, loading: false });
       });
   };
-
-  goToPDF = pdfId => this.props.history.push("/extraction/" + pdfId);
 
   render() {
     const { rows, columns, loading } = this.state;
@@ -105,9 +103,9 @@ export default class ExtractionIndex extends Component {
         <Row>
           <Col>
             <Link to="/">
-              <Button variant="info">Back to home</Button>
+              <Button size="sm" variant="info">Back to home</Button>
             </Link>
-            <Button variant="primary" onClick={this.loadData}>
+            <Button size="sm" variant="primary" onClick={this.loadData}>
               Refresh Data
             </Button>
           </Col>
