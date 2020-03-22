@@ -15,6 +15,15 @@ for (let p of [csvPath, jpgPath, pdfPath]) {
   });
 }
 
+app.use(bodyParser.json());
+app.use(cors());
+
+app.use("/pdf", express.static(pdfPath));
+app.use("/", express.static(path.join(__dirname, "client", "build")));
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client", "build", "index.html"));
+});
+
 const db = async q => {
   const config = {
     host: process.env.DB_HOST,
