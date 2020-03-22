@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import {
   BrowserRouter as Router,
   Switch,
@@ -7,7 +7,14 @@ import {
   useLocation,
   Redirect
 } from "react-router-dom";
+import { Container, Row, Col, Button } from "react-bootstrap";
+
+import "bootstrap/dist/css/bootstrap.min.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
+import "bootstrap-css-only/css/bootstrap.min.css";
+import "mdbreact/dist/css/mdb.css";
 import "./App.css";
+
 import Extraction from "./extraction/extraction_app/Extraction";
 import ExtractionIndex from "./extraction/ExtractionIndex";
 
@@ -24,7 +31,18 @@ const App = () => (
 );
 
 const Home = () => {
-  return <Link to="/extraction">Extraction</Link>;
+  return (
+    <Container>
+      <Row>
+        <Col>
+          <h3>Available Options:</h3>
+          <Link to="/extraction">
+            <Button variant="primary">Extraction App</Button>
+          </Link>
+        </Col>
+      </Row>
+    </Container>
+  );
 };
 
 function NoMatch() {

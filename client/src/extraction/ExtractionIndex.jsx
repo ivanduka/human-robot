@@ -1,11 +1,8 @@
 import React, { Component } from "react";
-import { Link } from "react-router-dom";
+import { Link, Redirect } from "react-router-dom";
 import { MDBDataTable } from "mdbreact";
-import "@fortawesome/fontawesome-free/css/all.min.css";
-import "bootstrap-css-only/css/bootstrap.min.css";
-import "mdbreact/dist/css/mdb.css";
-
-import Spinner from "../spinner/Spinner";
+import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
+import "./ExtractionIndex.css";
 
 export default class ExtractionIndex extends Component {
   state = {
@@ -53,7 +50,8 @@ export default class ExtractionIndex extends Component {
         width: 100
       }
     ],
-    rows: null
+    rows: null,
+    loading: true
   };
 
   componentDidMount() {
@@ -63,31 +61,61 @@ export default class ExtractionIndex extends Component {
   componentWillUnmount() {}
 
   loadData = () => {
+    this.setState({ loading: true });
     fetch(`/extraction_index`)
       .then(res => res.json())
       .then(({ error, results }) => {
         if (error) {
-          return alert(error);
+          return alert(JSON.stringify(error));
         }
-        this.setState({ rows: results });
+        const rows = results.map(row => ({
+          ...row,
+          clickEvent: () => this.goToPDF(row.pdfId)
+        }));
+        this.setState({ rows, loading: false });
       });
   };
 
+  goToPDF = pdfId => this.props.history.push("/extraction/" + pdfId);
+
   render() {
-    const { rows, columns } = this.state;
-    const table = rows ? (
-      <MDBDataTable striped bordered data={{ rows, columns }} />
+    const { rows, columns, loading } = this.state;
+    const table = loading ? (
+      <Spinner animation="border" />
     ) : (
-      <Spinner />
+      <MDBDataTable
+        striped
+        small
+        bordered
+        entries={10}
+        entriesOptions={[10, 100, 1000]}
+        exportToCSV={true}
+        hover
+        noBottomColumns
+        order={["pdfId", "asc"]}
+        theadColor="indigo"
+        theadTextWhite
+        tbodyColor="darkgray"
+        data={{ rows, columns }}
+      />
     );
 
     return (
-      <div>
-        <Link to="/">HOME</Link>
-        <div>Index of Files:</div>
-        <Link to="/extraction/2445104">2445104</Link>
-        {table}
-      </div>
+      <Container>
+        <Row>
+          <Col>
+            <Link to="/">
+              <Button variant="info">Back to home</Button>
+            </Link>
+            <Button variant="primary" onClick={this.loadData}>
+              Refresh Data
+            </Button>
+          </Col>
+        </Row>
+        <Row>
+          <Col>{table}</Col>
+        </Row>
+      </Container>
     );
   }
 }

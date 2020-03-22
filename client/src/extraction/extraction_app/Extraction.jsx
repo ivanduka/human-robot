@@ -2,9 +2,9 @@ import React, { Component } from "react";
 import { Document, Page } from "react-pdf/dist/entry.webpack";
 import { uuid } from "uuidv4";
 import { generatePath, Link } from "react-router-dom";
+import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
 
 import "./Extraction.css";
-import Spinner from "../../spinner/Spinner";
 
 export default class Extraction extends Component {
   state = {
@@ -129,13 +129,11 @@ export default class Extraction extends Component {
         <Document
           file={`${process.env.PUBLIC_URL}/pdf/${file}.pdf`}
           onLoadSuccess={this.onDocumentLoadSuccess}
-          loading={Spinner}
         >
           <Page
             pageNumber={pageNumber}
             height={pageHeight}
             width={pageWidth}
-            loading={Spinner}
             onRenderSuccess={this.pageIsRendered}
           />
         </Document>
