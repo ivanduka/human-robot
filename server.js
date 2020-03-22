@@ -15,17 +15,6 @@ for (let p of [csvPath, jpgPath, pdfPath]) {
   });
 }
 
-const app = express();
-
-app.use(bodyParser.json());
-app.use(cors());
-
-app.use("/pdf", express.static(pdfPath));
-app.use("/", express.static(path.join(__dirname, "client", "build")));
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "client", "build", "index.html"));
-});
-
 const db = async q => {
   const config = {
     host: process.env.DB_HOST,
@@ -44,6 +33,24 @@ const db = async q => {
     return { error, results: null };
   }
 };
+
+const app = express();
+
+const extraction_index = async (req, res) => {
+  const result = await db({ query: "SELECT * FROM pdfs;" });
+  res.json(result);
+};
+
+app.use(bodyParser.json());
+app.use(cors());
+
+app.use("/pdf", express.static(pdfPath));
+app.use("/extraction_index", extraction_index);
+
+app.use("/", express.static(path.join(__dirname, "client", "build")));
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client", "build", "index.html"));
+});
 
 const port = 8080;
 app.listen(port, () => console.log(`Listening on port ${port}...`));

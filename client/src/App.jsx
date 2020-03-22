@@ -11,7 +11,7 @@ import "./App.css";
 import Extraction from "./extraction/extraction_app/Extraction";
 import ExtractionIndex from "./extraction/ExtractionIndex";
 
-const app = () => (
+const App = () => (
   <Router>
     <Switch>
       <Route exact path="/extraction" component={ExtractionIndex} />
@@ -36,4 +36,4 @@ function NoMatch() {
   );
 }
 
-export default app;
+export default App;
