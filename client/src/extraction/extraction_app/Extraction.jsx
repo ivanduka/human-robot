@@ -101,19 +101,18 @@ export default class Extraction extends Component {
     canvasElement.setAttribute("width", width);
 
     page.addEventListener("mousedown", e => {
-      // this.clearRectangle();
+      this.clearRectangle();
       const rect = page.getBoundingClientRect();
       lastMouseX = e.clientX - rect.left;
       lastMouseY = e.clientY - rect.top;
       mouseIsPressed = true;
-      console.log(lastMouseX, lastMouseY);
     });
 
     page.addEventListener("mouseup", () => {
       mouseIsPressed = false;
-
-      if (lastMouseX === newMouseX && lastMouseY === newMouseY) {
-        // return this.clearRectangle();
+      if (lastMouseX === newMouseX || lastMouseY === newMouseY) {
+        console.log("Clearing!");
+        return this.clearRectangle();
       }
 
       this.setState(() => ({
@@ -143,27 +142,22 @@ export default class Extraction extends Component {
     });
   };
 
-  // clearRectangle = () => {
-  //   const canvasElement = document.querySelector(".react-pdf__Page__canvas");
-  //   if (canvasElement) {
-  //     const ctx = canvasElement.getContext("2d");
-  //     ctx.clearRect(
-  //       0,
-  //       0,
-  //       parseInt(canvasElement.style.width),
-  //       parseInt(canvasElement.style.height)
-  //     );
-  //   }
-  //   this.setState(() => ({
-  //     uuid: uuid(),
-  //     x1: null,
-  //     x2: null,
-  //     y1: null,
-  //     y2: null,
-  //     height: null,
-  //     width: null
-  //   }));
-  // };
+  clearRectangle = () => {
+    const canvasElement = document.querySelector(`#drawing`);
+    if (canvasElement) {
+      const ctx = canvasElement.getContext("2d");
+      ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    }
+    this.setState(() => ({
+      uuid: uuid(),
+      x1: null,
+      x2: null,
+      y1: null,
+      y2: null,
+      width: null,
+      height: null
+    }));
+  };
 
   updatePageDimensions = () => {
     const page = document.querySelector(".react-pdf__Page");

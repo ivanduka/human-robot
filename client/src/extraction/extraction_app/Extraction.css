@@ -27,4 +27,9 @@
   position: absolute;
   top: 0;
   left: 0;
+  user-select: none;
+}
+
+.react-pdf__Page__textContent {
+  user-select: text;
 }
