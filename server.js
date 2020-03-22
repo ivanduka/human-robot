@@ -4,12 +4,27 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 
 const csvPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\csv_tables";
 const jpgPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\jpg_tables";
 const pdfPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\pdf";
+for (let p of [csvPath, jpgPath, pdfPath]) {
+  fs.access(p, err => {
+    if (err) throw new Error(`Path ${p} is not accessible`);
+  });
+}
 
 const app = express();
+
+app.use(bodyParser.json());
+app.use(cors());
+
+app.use("/pdf", express.static(pdfPath));
+app.use("/", express.static(path.join(__dirname, "client", "build")));
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client", "build", "index.html"));
+});
 
 const db = async q => {
   const config = {
@@ -30,8 +45,5 @@ const db = async q => {
   }
 };
 
-const test = async () => {
-  const data = await db({ query: "SELECT * FROM pdfs" });
-  console.log(data);
-};
-test();
+const port = 8080;
+app.listen(port, () => console.log(`Listening on port ${port}...`));
