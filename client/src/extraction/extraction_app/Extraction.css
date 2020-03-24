@@ -1,8 +1,7 @@
 .react-pdf__Document {
   border: 2px solid black;
   border-left: 1px solid black;
-  display: flex;
-  justify-content: stretch;
+  line-height: initial;
 }
 
 .controls {
@@ -20,7 +19,7 @@
 
 #root {
   display: flex;
-  width: 100%;
+  box-sizing: border-box;
 }
 
 #drawing {
@@ -32,4 +31,10 @@
 
 .react-pdf__Page__textContent {
   user-select: text;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
+
+/* * {
+  border: 1px solid #f00 !important;
+} */

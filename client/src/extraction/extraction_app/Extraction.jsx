@@ -4,7 +4,6 @@ import { uuid } from "uuidv4";
 import { generatePath, Link } from "react-router-dom";
 import { Button, Spinner } from "react-bootstrap";
 import { Helmet } from "react-helmet";
-
 import "./Extraction.css";
 
 export default class Extraction extends Component {
@@ -34,14 +33,25 @@ export default class Extraction extends Component {
     }
     this.setState({ file, pageNumber: parseInt(page) });
     window.onresize = this.updatePageDimensions;
-
     document.addEventListener("keydown", this.handleKeys);
+    document.addEventListener("copy", this.handleCopy);
   }
 
   componentWillUnmount() {
     window.onresize = null;
     document.removeEventListener("keydown", this.handleKeys);
+    document.removeEventListener("copy", this.handleCopy);
   }
+
+  handleCopy = () => {
+    const tableTitle = window
+      .getSelection()
+      .toString()
+      .trim();
+    window.getSelection().empty();
+    this.setState(() => ({ tableTitle }));
+    this.clearRectangle();
+  };
 
   handleKeys = event => {
     if (
@@ -76,6 +86,7 @@ export default class Extraction extends Component {
   pageIsRendered = () => {
     this.updatePageDimensions();
     this.setupDrawing();
+    this.clearRectangle();
   };
 
   setupDrawing = () => {
@@ -111,7 +122,6 @@ export default class Extraction extends Component {
     page.addEventListener("mouseup", () => {
       mouseIsPressed = false;
       if (lastMouseX === newMouseX || lastMouseY === newMouseY) {
-        console.log("Clearing!");
         return this.clearRectangle();
       }
 
@@ -245,6 +255,7 @@ export default class Extraction extends Component {
           file={`${process.env.PUBLIC_URL}/pdf/${file}.pdf`}
           onLoadSuccess={this.onDocumentLoadSuccess}
           loading={<Spinner animation="border" />}
+          renderAnnotationLayer={false}
         >
           <Page
             pageNumber={pageNumber}

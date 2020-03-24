@@ -89,7 +89,7 @@ export default class ExtractionIndex extends Component {
         striped
         small
         bordered
-        entries={100}
+        entries={10000}
         entriesOptions={[10, 100, 1000, 10000]}
         exportToCSV={true}
         hover
