@@ -335,12 +335,21 @@ export default class Extraction extends Component {
           >
             Next (RIGHT)
           </Button>
-          Page {pageNumber || (numPages ? 1 : "--")} of {numPages || "--"}
+          Page{" "}
+          <strong>
+            {pageNumber || 1} of {numPages || "?"}
+          </strong>
         </div>
         <div className="main_block">
-          <p>{pdfName}</p>
-          <p>Table Title: {title}</p>
-          <p>Coordinates: {coordinates}</p>
+          <p>
+            <strong>"{pdfName}"</strong>
+          </p>
+          <p>
+            Table Title:<strong> {title}</strong>
+          </p>
+          <p>
+            Coordinates: <strong>{coordinates}</strong>
+          </p>
         </div>
         <div>
           <Button
