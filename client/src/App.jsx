@@ -23,8 +23,8 @@ const App = () => (
   <Router>
     <Switch>
       <Route exact path="/extraction" component={ExtractionIndex} />
-      <Route path="/extraction/:file/:page" component={Extraction} />
-      <Redirect from="/extraction/:file" to="/extraction/:file/1" />
+      <Route path="/extraction/:pdfName/:pageNumber" component={Extraction} />
+      <Redirect from="/extraction/:pdfName" to="/extraction/:pdfName/1" />
       <Route exact path="/" component={Home} />
       <Route path="*" component={NoMatch} />
     </Switch>

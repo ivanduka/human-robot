@@ -35,6 +35,11 @@
   overflow-y: hidden;
 }
 
-/* * {
-  border: 1px solid #f00 !important;
-} */
+.main_block {
+  padding: 0 6px;
+}
+
+p {
+  margin: 0;
+  padding: 0;
+}

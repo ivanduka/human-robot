@@ -10,16 +10,16 @@ export default class Extraction extends Component {
   state = {
     numPages: null,
     pageNumber: null,
+    width: null,
+    height: null,
     pageHeight: null,
     pageWidth: null,
-    file: null,
-    uuid: uuid(),
+    pdfName: null,
+    tableId: uuid(),
     x1: null,
     y1: null,
     x2: null,
     y2: null,
-    width: null,
-    height: null,
     tableTitle: null,
     continuationOf: null,
     tables: [],
@@ -27,11 +27,9 @@ export default class Extraction extends Component {
   };
 
   componentDidMount() {
-    let { file, page } = this.props.match.params;
-    if (page == null) {
-      page = 1;
-    }
-    this.setState({ file, pageNumber: parseInt(page) });
+    let { pdfName, pageNumber } = this.props.match.params;
+    this.loadTables(pdfName, parseInt(pageNumber));
+    this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
     window.onresize = this.updatePageDimensions;
     document.addEventListener("keydown", this.handleKeys);
     document.addEventListener("copy", this.handleCopy);
@@ -42,6 +40,67 @@ export default class Extraction extends Component {
     document.removeEventListener("keydown", this.handleKeys);
     document.removeEventListener("copy", this.handleCopy);
   }
+
+  handleSave = async () => {
+    const {
+      tableId,
+      pageNumber,
+      tableTitle,
+      pdfName,
+      x1,
+      x2,
+      y1,
+      y2,
+      width,
+      height,
+      continuationOf
+    } = this.state;
+
+    if (!tableTitle || !x1) {
+      return alert("Please copy the table title and select the table!");
+    }
+
+    try {
+      const req = await fetch(`/insertTable`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          tableId,
+          page: pageNumber,
+          tableTitle,
+          pdfName,
+          x1,
+          x2,
+          y1,
+          y2,
+          pageWidth: width,
+          pageHeight: height,
+          continuationOf
+        })
+      });
+
+      const { error } = await req.json();
+      if (error) {
+        throw new Error(JSON.stringify(error));
+      }
+
+      this.clearRectangle();
+      this.setState({ tableTitle: null });
+      this.loadTables();
+    } catch (e) {
+      alert(e);
+    }
+  };
+
+  loadTables = (pdfName, pageNumber) => {
+    if (!pdfName || !pageNumber) {
+      pdfName = this.state.pdfName;
+      pageNumber = this.state.pageNumber;
+    }
+    console.log(`Loading tables for ${pdfName} page ${pageNumber}!`);
+  };
 
   handleCopy = () => {
     const tableTitle = window
@@ -58,7 +117,7 @@ export default class Extraction extends Component {
       event.altKey &&
       (event.key === "KeyS" || event.key.toLowerCase() === "s")
     ) {
-      console.log("ALT+S");
+      this.handleSave();
       event.preventDefault();
     }
 
@@ -126,7 +185,7 @@ export default class Extraction extends Component {
       }
 
       this.setState(() => ({
-        uuid: uuid(),
+        tableId: uuid(),
         x1: lastMouseX,
         y1: height - lastMouseY,
         x2: newMouseX,
@@ -159,7 +218,7 @@ export default class Extraction extends Component {
       ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     }
     this.setState(() => ({
-      uuid: uuid(),
+      tableId: uuid(),
       x1: null,
       x2: null,
       y1: null,
@@ -207,8 +266,8 @@ export default class Extraction extends Component {
 
       this.props.history.replace({
         pathname: generatePath(this.props.match.path, {
-          page: pageNumber,
-          file: prevState.file
+          pageNumber: pageNumber,
+          pdfName: prevState.pdfName
         })
       });
 
@@ -220,51 +279,103 @@ export default class Extraction extends Component {
   nextPage = () => this.changePage(1);
 
   render() {
-    const { numPages, pageNumber, pageHeight, pageWidth, file } = this.state;
+    const {
+      numPages,
+      pageNumber,
+      pageHeight,
+      pageWidth,
+      pdfName,
+      tableTitle,
+      tables,
+      x1,
+      x2,
+      y1,
+      y2,
+      width,
+      height
+    } = this.state;
 
-    return (
-      <React.Fragment>
-        <Helmet>
-          <title>{`${file}: page ${pageNumber}`}</title>
-        </Helmet>
-        <div className="controls">
+    const coordinates = x1
+      ? `${Math.round(x1)}:${Math.round(y1)} => ${Math.round(x2)}:${Math.round(
+          y2
+        )} (page ${Math.round(width)}x${Math.round(height)})`
+      : "[NOT SELECTED YET]";
+
+    const title = tableTitle || "[NOT COPIED YET]";
+
+    const webPageTitle = (
+      <Helmet>
+        <title>{`${pdfName}: page ${pageNumber}`}</title>
+      </Helmet>
+    );
+
+    const mainBlock = (
+      <div className="controls">
+        <div>
           <Link to="/extraction">
             <Button size="sm" variant="info">
               Back to Index
             </Button>
           </Link>
-          <p>
-            <Button
-              size="sm"
-              disabled={pageNumber <= 1}
-              onClick={this.previousPage}
-            >
-              Previous (LEFT)
-            </Button>
-            <Button
-              size="sm"
-              disabled={pageNumber >= numPages}
-              onClick={this.nextPage}
-            >
-              Next (RIGHT)
-            </Button>
-            Page {pageNumber || (numPages ? 1 : "--")} of {numPages || "--"}
-          </p>
         </div>
-        <Document
-          file={`${process.env.PUBLIC_URL}/pdf/${file}.pdf`}
-          onLoadSuccess={this.onDocumentLoadSuccess}
+        <div>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={pageNumber <= 1}
+            onClick={this.previousPage}
+          >
+            Previous (LEFT)
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={pageNumber >= numPages}
+            onClick={this.nextPage}
+          >
+            Next (RIGHT)
+          </Button>
+          Page {pageNumber || (numPages ? 1 : "--")} of {numPages || "--"}
+        </div>
+        <div className="main_block">
+          <p>{pdfName}</p>
+          <p>Table Title: {title}</p>
+          <p>Coordinates: {coordinates}</p>
+        </div>
+        <div>
+          <Button
+            onClick={this.handleSave}
+            size="sm"
+            disabled={!(tableTitle && x1)}
+          >
+            Save (ALT+S)
+          </Button>
+        </div>
+      </div>
+    );
+
+    const pdfDocument = (
+      <Document
+        file={`${process.env.PUBLIC_URL}/pdf/${pdfName}.pdf`}
+        onLoadSuccess={this.onDocumentLoadSuccess}
+        loading={<Spinner animation="border" />}
+        renderAnnotationLayer={false}
+      >
+        <Page
+          pageNumber={pageNumber}
+          height={pageHeight}
+          width={pageWidth}
           loading={<Spinner animation="border" />}
-          renderAnnotationLayer={false}
-        >
-          <Page
-            pageNumber={pageNumber}
-            height={pageHeight}
-            width={pageWidth}
-            loading={<Spinner animation="border" />}
-            onRenderSuccess={this.pageIsRendered}
-          />
-        </Document>
+          onRenderSuccess={this.pageIsRendered}
+        />
+      </Document>
+    );
+
+    return (
+      <React.Fragment>
+        {webPageTitle}
+        {mainBlock}
+        {pdfDocument}
       </React.Fragment>
     );
   }
