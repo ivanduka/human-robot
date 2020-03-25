@@ -111,6 +111,7 @@ export default class Extraction extends Component {
       if (error) throw new Error(JSON.stringify(error));
 
       this.setState({ tables: results });
+      this.drawTables(results);
     } catch (e) {
       alert(e);
     }
@@ -206,6 +207,27 @@ export default class Extraction extends Component {
     this.updatePageDimensions();
     this.setupDrawing();
     this.clearRectangle();
+    this.setupDisplaying();
+    this.drawTables();
+  };
+
+  setupDisplaying = () => {
+    let existingCanvasElement = document.querySelector("#displaying");
+    if (existingCanvasElement) {
+      existingCanvasElement.parentElement.removeChild(existingCanvasElement);
+    }
+    const page = document.querySelector(".react-pdf__Page");
+    const drawingCanvas = document.querySelector("#drawing");
+    const canvasElement = document.createElement("canvas");
+    canvasElement.id = "displaying";
+    drawingCanvas.parentNode.insertBefore(
+      canvasElement,
+      drawingCanvas.nextSibling
+    );
+
+    const { width, height } = page.getBoundingClientRect();
+    canvasElement.setAttribute("height", height);
+    canvasElement.setAttribute("width", width);
   };
 
   setupDrawing = () => {
@@ -362,6 +384,29 @@ export default class Extraction extends Component {
 
   previousPage = () => this.changePage(-1);
   nextPage = () => this.changePage(1);
+
+  drawTables = tables => {
+    const tablesArray = tables || this.state.tables;
+    const canvas = document.querySelector("#displaying");
+    if (!canvas || !tablesArray) return;
+
+    const ctx = canvas.getContext("2d");
+    const { width, height } = canvas;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const { pageNumber } = this.state;
+
+    for (let table of tablesArray) {
+      const { x1, x2, y1, y2, page } = table;
+      if (page !== pageNumber) continue;
+      ctx.beginPath();
+      const rectWidth = x2 - x1;
+      const rectHeight = height - y2 - (height - y1);
+      ctx.rect(x1, height - y1, rectWidth, rectHeight);
+      ctx.strokeStyle = "green";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  };
 
   render() {
     const {
