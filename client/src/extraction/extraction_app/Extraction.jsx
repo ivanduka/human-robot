@@ -388,7 +388,7 @@ export default class Extraction extends Component {
   drawTables = tables => {
     const tablesArray = tables || this.state.tables;
     const canvas = document.querySelector("#displaying");
-    if (!canvas || !tablesArray) return;
+    if (!canvas || !tablesArray || tablesArray.length === 0) return;
 
     const ctx = canvas.getContext("2d");
     const { width, height } = canvas;
@@ -412,6 +412,10 @@ export default class Extraction extends Component {
     }
   };
 
+  handleChange(event) {
+    this.setState({ continuationOf: event.target.value || null });
+  }
+
   render() {
     const {
       numPages,
@@ -428,8 +432,31 @@ export default class Extraction extends Component {
       width,
       height,
       locked,
-      locking
+      locking,
+      continuationOf
     } = this.state;
+
+    const prevPageTables = tables
+      ? tables
+          .filter(table => pageNumber - table.page === 1)
+          .map(({ tableId, tableTitle }) => (
+            <option value={tableId}>
+              {tableTitle} ({tableId})
+            </option>
+          ))
+      : [];
+
+    const continuationOfSelect = (
+      <select value={continuationOf} onChange={e => this.handleChange(e)}>
+        <option value="">not a continuation</option>
+        {prevPageTables}
+      </select>
+    );
+
+    const continuation = tableId =>
+      `${
+        tables.find(table => table.tableId === tableId)["tableTitle"]
+      } (${tableId})`;
 
     const coordinates = x1
       ? `${Math.round(x1)}:${Math.round(y1)} => ${Math.round(x2)}:${Math.round(
@@ -473,7 +500,12 @@ export default class Extraction extends Component {
                   {x1}:{y1}=>{x2}:{y2}
                 </strong>
               </p>
-              {continuationOf ? `Continuation of: ${continuationOf}` : null}
+              {continuationOf ? (
+                <p>
+                  Continuation Of:{" "}
+                  <strong>{continuation(continuationOf)}</strong>
+                </p>
+              ) : null}
               {page === pageNumber && !locked ? (
                 <Button
                   variant="danger"
@@ -509,6 +541,7 @@ export default class Extraction extends Component {
         <p>
           Coordinates: <strong>{coordinates}</strong>
         </p>
+        <p>{prevPageTables.length > 0 ? continuationOfSelect : null}</p>
         <Button
           onClick={this.handleSave}
           variant="success"
