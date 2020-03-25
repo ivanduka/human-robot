@@ -22,6 +22,12 @@ export default class ExtractionIndex extends Component {
         width: 100
       },
       {
+        label: "Link",
+        field: "link",
+        sort: "asc",
+        width: 100
+      },
+      {
         label: "PDF Size (MB)",
         field: "pdfSize",
         sort: "asc",
@@ -60,6 +66,12 @@ export default class ExtractionIndex extends Component {
     this.loadData();
   }
 
+  handleClick = pdfName => {
+    this.props.history.push({
+      pathname: "/extraction/" + pdfName
+    });
+  };
+
   componentWillUnmount() {}
 
   loadData = () => {
@@ -73,8 +85,11 @@ export default class ExtractionIndex extends Component {
         const rows = results.map(row => ({
           ...row,
           date: new Date(row.date).toISOString().split("T")[0],
-          clickEvent: () =>
-            this.props.history.push("/extraction/" + row.pdfName)
+          link: (
+            <Button size="sm" onClick={() => this.handleClick(row.pdfName)}>
+              Open
+            </Button>
+          )
         }));
         this.setState({ rows, loading: false });
       });

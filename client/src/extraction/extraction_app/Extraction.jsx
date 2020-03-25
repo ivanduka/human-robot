@@ -270,10 +270,13 @@ export default class Extraction extends Component {
   };
 
   changePage = offset => {
+    let pageUpdated = true;
+
     this.setState(prevState => {
       const pageNumber = prevState.pageNumber + offset;
 
       if (pageNumber < 1 || pageNumber > prevState.numPages) {
+        pageUpdated = false;
         return;
       }
 
@@ -287,7 +290,9 @@ export default class Extraction extends Component {
       return { pageNumber };
     });
 
-    this.loadTables();
+    if (pageUpdated) {
+      this.loadTables();
+    }
   };
 
   handleDelete = async tableId => {
@@ -343,30 +348,37 @@ export default class Extraction extends Component {
     );
 
     const tablesBlock = tables ? (
-      tables.map(
-        ({ tableId, page, x1, x2, y1, y2, continuationOf, tableTitle }, i) => (
-          <div className="table_block" key={i}>
-            <p>
-              <strong>"{tableTitle}"</strong>
-            </p>
-            <p>
-              Table ID: <strong>{tableId}</strong>
-            </p>
-            <p>
-              Page <strong>{page}</strong>, Coordinates:{" "}
-              <strong>
-                {x1}:{y1}=>{x2}:{y2}
-              </strong>
-            </p>
-            {continuationOf ? `Continuation of: ${continuationOf}` : null}
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => this.handleDelete(tableId)}
-            >
-              Delete Table
-            </Button>
-          </div>
+      tables.length === 0 ? (
+        <div className="table_block">No tables saved for this PDF yet.</div>
+      ) : (
+        tables.map(
+          (
+            { tableId, page, x1, x2, y1, y2, continuationOf, tableTitle },
+            i
+          ) => (
+            <div className="table_block" key={i}>
+              <p>
+                <strong>{tableTitle}</strong>
+              </p>
+              <p>
+                Table ID: <strong>{tableId}</strong>
+              </p>
+              <p>
+                Page <strong>{page}</strong>, Coordinates:{" "}
+                <strong>
+                  {x1}:{y1}=>{x2}:{y2}
+                </strong>
+              </p>
+              {continuationOf ? `Continuation of: ${continuationOf}` : null}
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => this.handleDelete(tableId)}
+              >
+                Delete Table
+              </Button>
+            </div>
+          )
         )
       )
     ) : (
@@ -402,7 +414,7 @@ export default class Extraction extends Component {
         </div>
         <div className="main_block">
           <p>
-            <strong>"{pdfName}"</strong>
+            PDF Name: <strong>"{pdfName}"</strong>
           </p>
           <p>
             Page{" "}

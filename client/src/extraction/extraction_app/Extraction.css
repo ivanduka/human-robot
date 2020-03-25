@@ -64,3 +64,11 @@ select {
   border-radius: 5px;
   padding: 5px;
 }
+
+th, td {
+  vertical-align: middle !important;
+}
+
+th {
+  text-align: center;
+}
