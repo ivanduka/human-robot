@@ -72,3 +72,9 @@ th, td {
 th {
   text-align: center;
 }
+
+.current {
+  color: navy;
+  border-color: navy;
+  background-color: lightgray;
+}

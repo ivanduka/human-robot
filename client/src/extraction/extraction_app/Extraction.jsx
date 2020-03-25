@@ -406,7 +406,7 @@ export default class Extraction extends Component {
       const rectWidth = newX2 - newX1;
       const rectHeight = newY2 - newY1;
       ctx.rect(newX1, newY1, rectWidth, rectHeight);
-      ctx.strokeStyle = "green";
+      ctx.strokeStyle = "blue";
       ctx.lineWidth = 1;
       ctx.stroke();
     }
@@ -454,7 +454,13 @@ export default class Extraction extends Component {
             { tableId, page, x1, x2, y1, y2, continuationOf, tableTitle },
             i
           ) => (
-            <div className="table_block" key={i}>
+            <div
+              className={[
+                "table_block",
+                page === pageNumber ? "current" : null
+              ].join(" ")}
+              key={i}
+            >
               <p>
                 <strong>{tableTitle}</strong>
               </p>
