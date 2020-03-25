@@ -43,7 +43,7 @@ const extraction_index = async (req, res) => {
 
 const getTables = async (req, res) => {
   const { pdfName } = req.body;
-  const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page, x1 DESC;`;
+  const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page DESC, y1 DESC;`;
   const result = await db({ query, params: [pdfName] });
   res.json(result);
 };

@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Document, Page } from "react-pdf/dist/entry.webpack";
 import { uuid } from "uuidv4";
 import { generatePath, Link } from "react-router-dom";
-import { Button, Spinner } from "react-bootstrap";
+import { Button, Spinner, Alert } from "react-bootstrap";
 import { Helmet } from "react-helmet";
 import "./Extraction.css";
 
@@ -304,7 +304,7 @@ export default class Extraction extends Component {
           body: JSON.stringify({ tableId })
         });
 
-        const { error, results } = await req.json();
+        const { error } = await req.json();
         if (error) throw new Error(JSON.stringify(error));
         this.loadTables();
       } catch (e) {
@@ -370,13 +370,15 @@ export default class Extraction extends Component {
                 </strong>
               </p>
               {continuationOf ? `Continuation of: ${continuationOf}` : null}
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => this.handleDelete(tableId)}
-              >
-                Delete Table
-              </Button>
+              {page === pageNumber ? (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => this.handleDelete(tableId)}
+                >
+                  Delete Table
+                </Button>
+              ) : null}
             </div>
           )
         )
@@ -412,7 +414,7 @@ export default class Extraction extends Component {
             Next Page (RIGHT)
           </Button>
         </div>
-        <div className="main_block">
+        <div className="table_block">
           <p>
             PDF Name: <strong>"{pdfName}"</strong>
           </p>
@@ -429,8 +431,6 @@ export default class Extraction extends Component {
           <p>
             Coordinates: <strong>{coordinates}</strong>
           </p>
-        </div>
-        <div>
           <Button
             onClick={this.handleSave}
             size="sm"
@@ -448,14 +448,15 @@ export default class Extraction extends Component {
         file={`${process.env.PUBLIC_URL}/pdf/${pdfName}.pdf`}
         onLoadSuccess={this.onDocumentLoadSuccess}
         loading={<Spinner animation="border" />}
-        renderAnnotationLayer={false}
       >
         <Page
           pageNumber={pageNumber}
           height={pageHeight}
           width={pageWidth}
+          renderAnnotationLayer={false}
           loading={<Spinner animation="border" />}
           onRenderSuccess={this.pageIsRendered}
+          error={<Alert variant="danger">Could not load the page :(</Alert>}
         />
       </Document>
     );
