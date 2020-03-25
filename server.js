@@ -37,7 +37,7 @@ const db = async q => {
 };
 
 const extraction_index = async (req, res) => {
-  const result = await db({ query: "SELECT * FROM pdfs;" });
+  const result = await db({ query: "SELECT p.*, COUNT(t.pdfName) as tableCount FROM pdfs p LEFT JOIN tables t ON p.pdfName = t.pdfName GROUP BY p.pdfName;" });
   res.json(result);
 };
 

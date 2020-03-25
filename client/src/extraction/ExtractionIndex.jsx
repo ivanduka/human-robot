@@ -52,6 +52,12 @@ export default class ExtractionIndex extends Component {
         width: 100
       },
       {
+        label: "Tables Captured",
+        field: "tableCount",
+        sort: "asc",
+        width: 100
+      },
+      {
         label: "Status",
         field: "status",
         sort: "asc",
