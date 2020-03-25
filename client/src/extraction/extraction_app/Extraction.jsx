@@ -23,13 +23,16 @@ export default class Extraction extends Component {
     tableTitle: null,
     continuationOf: null,
     tables: null,
-    pagesWithTables: null
+    pagesWithTables: null,
+    locked: true,
+    locking: false
   };
 
   componentDidMount() {
     let { pdfName, pageNumber } = this.props.match.params;
     this.loadTables(pdfName);
     this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
+    this.loadPdfStatus(pdfName);
     window.onresize = this.updatePageDimensions;
     document.addEventListener("keydown", this.handleKeys);
     document.addEventListener("copy", this.handleCopy);
@@ -108,6 +111,50 @@ export default class Extraction extends Component {
       if (error) throw new Error(JSON.stringify(error));
 
       this.setState({ tables: results });
+    } catch (e) {
+      alert(e);
+    }
+  };
+
+  loadPdfStatus = async pdfName => {
+    this.setState({ locked: true, locking: true });
+
+    try {
+      const req = await fetch(`/getPdfStatus`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdfName })
+      });
+
+      const { error, results } = await req.json();
+      if (error) throw new Error(JSON.stringify(error));
+      const { status } = results[0];
+      this.setState({ locked: status === "locked", locking: false });
+    } catch (e) {
+      alert(e);
+    }
+  };
+
+  setPdfStatus = async () => {
+    this.setState({ locked: true, locking: true });
+    const { pdfName, locked } = this.state;
+
+    try {
+      const req = await fetch(`/setPdfStatus`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pdfName,
+          status: locked === "locked" ? "" : "locked"
+        })
+      });
+
+      const { error } = await req.json();
+      if (error) throw new Error(JSON.stringify(error));
+      this.setState({
+        locked: locked === "locked" ? "" : "locked",
+        locking: false
+      });
     } catch (e) {
       alert(e);
     }
@@ -330,7 +377,9 @@ export default class Extraction extends Component {
       y1,
       y2,
       width,
-      height
+      height,
+      locked,
+      locking
     } = this.state;
 
     const coordinates = x1
@@ -370,7 +419,7 @@ export default class Extraction extends Component {
                 </strong>
               </p>
               {continuationOf ? `Continuation of: ${continuationOf}` : null}
-              {page === pageNumber ? (
+              {page === pageNumber && !locked ? (
                 <Button
                   variant="danger"
                   size="sm"
@@ -387,7 +436,46 @@ export default class Extraction extends Component {
       <Spinner animation="border" />
     );
 
-    const mainBlock = (
+    const newTableBlock = (
+      <div className="table_block">
+        <p>
+          PDF Name: <strong>"{pdfName}"</strong>
+        </p>
+        <p>
+          Page{" "}
+          <strong>
+            {pageNumber || <Spinner animation="border" />} of{" "}
+            {numPages || <Spinner animation="border" />}
+          </strong>
+        </p>
+        <p>
+          Table Title:<strong> {title}</strong>
+        </p>
+        <p>
+          Coordinates: <strong>{coordinates}</strong>
+        </p>
+        <Button
+          onClick={this.handleSave}
+          variant="success"
+          size="sm"
+          disabled={!(tableTitle && x1)}
+        >
+          Save (ALT+S)
+        </Button>
+      </div>
+    );
+
+    const lockButton = (
+      <Button
+        size="sm"
+        variant={locked ? "info" : "warning"}
+        onClick={this.setPdfStatus}
+      >
+        {locked ? "Unlock PDF" : "Lock PDF"}
+      </Button>
+    );
+
+    const topControls = (
       <div className="controls">
         <div>
           <Link to="/extraction">
@@ -395,51 +483,34 @@ export default class Extraction extends Component {
               Back to Index
             </Button>
           </Link>
+          {lockButton}
         </div>
-        <div>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={pageNumber <= 1}
-            onClick={this.previousPage}
-          >
-            Previous Page (LEFT)
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={pageNumber >= numPages}
-            onClick={this.nextPage}
-          >
-            Next Page (RIGHT)
-          </Button>
-        </div>
-        <div className="table_block">
-          <p>
-            PDF Name: <strong>"{pdfName}"</strong>
-          </p>
-          <p>
-            Page{" "}
-            <strong>
-              {pageNumber || <Spinner animation="border" />} of{" "}
-              {numPages || <Spinner animation="border" />}
-            </strong>
-          </p>
-          <p>
-            Table Title:<strong> {title}</strong>
-          </p>
-          <p>
-            Coordinates: <strong>{coordinates}</strong>
-          </p>
-          <Button
-            onClick={this.handleSave}
-            size="sm"
-            disabled={!(tableTitle && x1)}
-          >
-            Save (ALT+S)
-          </Button>
-        </div>
-        <div>{tablesBlock}</div>
+        {locking ? (
+          <Spinner animation="border" />
+        ) : (
+          <React.Fragment>
+            <div>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={pageNumber <= 1}
+                onClick={this.previousPage}
+              >
+                Previous Page (LEFT)
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={pageNumber >= numPages}
+                onClick={this.nextPage}
+              >
+                Next Page (RIGHT)
+              </Button>
+            </div>
+            {locked ? null : newTableBlock}
+            <div>{tablesBlock}</div>
+          </React.Fragment>
+        )}
       </div>
     );
 
@@ -464,7 +535,7 @@ export default class Extraction extends Component {
     return (
       <React.Fragment>
         {webPageTitle}
-        {mainBlock}
+        {topControls}
         {pdfDocument}
       </React.Fragment>
     );

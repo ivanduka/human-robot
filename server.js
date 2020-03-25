@@ -37,7 +37,10 @@ const db = async q => {
 };
 
 const extraction_index = async (req, res) => {
-  const result = await db({ query: "SELECT p.*, COUNT(t.pdfName) as tableCount FROM pdfs p LEFT JOIN tables t ON p.pdfName = t.pdfName GROUP BY p.pdfName;" });
+  const result = await db({
+    query:
+      "SELECT p.*, COUNT(t.pdfName) as tableCount FROM pdfs p LEFT JOIN tables t ON p.pdfName = t.pdfName GROUP BY p.pdfName;"
+  });
   res.json(result);
 };
 
@@ -52,6 +55,13 @@ const setPdfStatus = async (req, res) => {
   const { pdfName, status } = req.body;
   const query = `UPDATE pdfs SET status = ? WHERE pdfName = ?;`;
   const result = await db({ query, params: [status, pdfName] });
+  res.json(result);
+};
+
+const getPdfStatus = async (req, res) => {
+  const { pdfName } = req.body;
+  const query = `SELECT * FROM pdfs WHERE pdfName = ?;`;
+  const result = await db({ query, params: [pdfName] });
   res.json(result);
 };
 
@@ -105,6 +115,7 @@ app.use("/extractionIndex", extraction_index);
 app.use("/getTables", getTables);
 app.use("/insertTable", insertTable);
 app.use("/deleteTable", deleteTable);
+app.use("/getPdfStatus", getPdfStatus);
 app.use("/setPdfStatus", setPdfStatus);
 
 app.use("/pdf", express.static(pdfPath));
