@@ -392,16 +392,20 @@ export default class Extraction extends Component {
 
     const ctx = canvas.getContext("2d");
     const { width, height } = canvas;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, width, height);
     const { pageNumber } = this.state;
 
     for (let table of tablesArray) {
-      const { x1, x2, y1, y2, page } = table;
+      const { x1, x2, y1, y2, page, pageHeight, pageWidth } = table;
       if (page !== pageNumber) continue;
+      const newX1 = (x1 * width) / pageWidth;
+      const newX2 = (x2 * width) / pageWidth;
+      const newY1 = height - (y1 * height) / pageHeight;
+      const newY2 = height - (y2 * height) / pageHeight;
       ctx.beginPath();
-      const rectWidth = x2 - x1;
-      const rectHeight = height - y2 - (height - y1);
-      ctx.rect(x1, height - y1, rectWidth, rectHeight);
+      const rectWidth = newX2 - newX1;
+      const rectHeight = newY2 - newY1;
+      ctx.rect(newX1, newY1, rectWidth, rectHeight);
       ctx.strokeStyle = "green";
       ctx.lineWidth = 1;
       ctx.stroke();
