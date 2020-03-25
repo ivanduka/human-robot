@@ -22,13 +22,13 @@ export default class Extraction extends Component {
     y2: null,
     tableTitle: null,
     continuationOf: null,
-    tables: [],
+    tables: null,
     pagesWithTables: null
   };
 
   componentDidMount() {
     let { pdfName, pageNumber } = this.props.match.params;
-    this.loadTables(pdfName, parseInt(pageNumber));
+    this.loadTables(pdfName);
     this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
     window.onresize = this.updatePageDimensions;
     document.addEventListener("keydown", this.handleKeys);
@@ -63,9 +63,7 @@ export default class Extraction extends Component {
     try {
       const req = await fetch(`/insertTable`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tableId,
           page: pageNumber,
@@ -82,9 +80,7 @@ export default class Extraction extends Component {
       });
 
       const { error } = await req.json();
-      if (error) {
-        throw new Error(JSON.stringify(error));
-      }
+      if (error) throw new Error(JSON.stringify(error));
 
       this.clearRectangle();
       this.setState({ tableTitle: null });
@@ -94,20 +90,37 @@ export default class Extraction extends Component {
     }
   };
 
-  loadTables = (pdfName, pageNumber) => {
-    if (!pdfName || !pageNumber) {
+  loadTables = async pdfName => {
+    this.setState({ tables: null });
+
+    if (!pdfName) {
       pdfName = this.state.pdfName;
-      pageNumber = this.state.pageNumber;
     }
-    console.log(`Loading tables for ${pdfName} page ${pageNumber}!`);
+
+    try {
+      const req = await fetch(`/getTables`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdfName })
+      });
+
+      const { error, results } = await req.json();
+      if (error) throw new Error(JSON.stringify(error));
+
+      this.setState({ tables: results });
+    } catch (e) {
+      alert(e);
+    }
   };
 
-  handleCopy = () => {
+  handleCopy = e => {
     const tableTitle = window
       .getSelection()
       .toString()
       .trim();
     window.getSelection().empty();
+    e.clipboardData.setData("text/plain", tableTitle);
+    e.preventDefault();
     this.setState(() => ({ tableTitle }));
     this.clearRectangle();
   };
@@ -273,6 +286,26 @@ export default class Extraction extends Component {
 
       return { pageNumber };
     });
+
+    this.loadTables();
+  };
+
+  handleDelete = async tableId => {
+    if (window.confirm(`Do you really want to delete ${tableId}?`)) {
+      try {
+        const req = await fetch(`/deleteTable`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tableId })
+        });
+
+        const { error, results } = await req.json();
+        if (error) throw new Error(JSON.stringify(error));
+        this.loadTables();
+      } catch (e) {
+        alert(e);
+      }
+    }
   };
 
   previousPage = () => this.changePage(-1);
@@ -309,6 +342,37 @@ export default class Extraction extends Component {
       </Helmet>
     );
 
+    const tablesBlock = tables ? (
+      tables.map(
+        ({ tableId, page, x1, x2, y1, y2, continuationOf, tableTitle }, i) => (
+          <div className="table_block" key={i}>
+            <p>
+              <strong>"{tableTitle}"</strong>
+            </p>
+            <p>
+              Table ID: <strong>{tableId}</strong>
+            </p>
+            <p>
+              Page <strong>{page}</strong>, Coordinates:{" "}
+              <strong>
+                {x1}:{y1}=>{x2}:{y2}
+              </strong>
+            </p>
+            {continuationOf ? `Continuation of: ${continuationOf}` : null}
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => this.handleDelete(tableId)}
+            >
+              Delete Table
+            </Button>
+          </div>
+        )
+      )
+    ) : (
+      <Spinner animation="border" />
+    );
+
     const mainBlock = (
       <div className="controls">
         <div>
@@ -325,7 +389,7 @@ export default class Extraction extends Component {
             disabled={pageNumber <= 1}
             onClick={this.previousPage}
           >
-            Previous (LEFT)
+            Previous Page (LEFT)
           </Button>
           <Button
             size="sm"
@@ -333,16 +397,19 @@ export default class Extraction extends Component {
             disabled={pageNumber >= numPages}
             onClick={this.nextPage}
           >
-            Next (RIGHT)
+            Next Page (RIGHT)
           </Button>
-          Page{" "}
-          <strong>
-            {pageNumber || 1} of {numPages || "?"}
-          </strong>
         </div>
         <div className="main_block">
           <p>
             <strong>"{pdfName}"</strong>
+          </p>
+          <p>
+            Page{" "}
+            <strong>
+              {pageNumber || <Spinner animation="border" />} of{" "}
+              {numPages || <Spinner animation="border" />}
+            </strong>
           </p>
           <p>
             Table Title:<strong> {title}</strong>
@@ -360,6 +427,7 @@ export default class Extraction extends Component {
             Save (ALT+S)
           </Button>
         </div>
+        <div>{tablesBlock}</div>
       </div>
     );
 

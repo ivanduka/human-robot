@@ -1,3 +1,7 @@
+body {
+  font-size: 14px;
+}
+
 .react-pdf__Document {
   border: 2px solid black;
   border-left: 1px solid black;
@@ -8,7 +12,10 @@
   border: 2px solid black;
   border-right: 1px solid black;
   padding: 5px;
-  min-width: 400px;
+  width: 400px;
+  overflow-y: scroll;
+  height: 100vh;
+  flex: none;
 }
 
 .react-pdf__Page {
@@ -42,4 +49,18 @@
 p {
   margin: 0;
   padding: 0;
+}
+
+select {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.table_block {
+  margin: 5px;
+  border: 1px solid black;
+  border-radius: 5px;
+  padding: 5px;
 }
