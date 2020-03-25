@@ -175,7 +175,7 @@ export default class Extraction extends Component {
 
   handleKeys = event => {
     if (
-      event.altKey &&
+      event.shiftKey &&
       (event.key === "KeyS" || event.key.toLowerCase() === "s")
     ) {
       this.handleSave();
@@ -505,7 +505,7 @@ export default class Extraction extends Component {
           size="sm"
           disabled={!(tableTitle && x1)}
         >
-          Save (ALT+S)
+          Save (SHIFT+S)
         </Button>
       </div>
     );
