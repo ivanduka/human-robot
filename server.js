@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
+const morgan = require("morgan");
 
 const csvPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\csv_tables";
 const jpgPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\jpg_tables";
@@ -16,6 +17,13 @@ for (let p of [csvPath, jpgPath, pdfPath]) {
 }
 
 const app = express();
+
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname, "access.log"),
+  { flags: "a" }
+);
+
+app.use(morgan("combined", { stream: accessLogStream }));
 
 const db = async q => {
   const config = {
@@ -80,7 +88,8 @@ const insertTable = async (req, res) => {
     continuationOf
   } = req.body;
 
-  const creatorIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const creatorIp =
+    req.headers["x-forwarded-for"] || req.connection.remoteAddress;
 
   const query = {
     query:

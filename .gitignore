@@ -27,3 +27,4 @@ yarn-error.log*
 test.py
 .idea
 /__pycache__
+/access.log
