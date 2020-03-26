@@ -59,8 +59,8 @@ export default class Extraction extends Component {
       continuationOf
     } = this.state;
 
-    if (!tableTitle || !x1) {
-      return alert("Please copy the table title and select the table!");
+    if (!tableTitle || !x1 || !tableTitle.trim()) {
+      return alert("Please copy/enter the table title and select the table!");
     }
 
     try {
@@ -156,7 +156,6 @@ export default class Extraction extends Component {
             status: locked === "locked" ? "" : "locked"
           })
         });
-
 
         const { error } = await req.json();
         if (req.status) throw new Error(JSON.stringify(req));
@@ -507,23 +506,23 @@ export default class Extraction extends Component {
               ].join(" ")}
               key={i}
             >
-              <p>
+              <div>
                 <strong>{tableTitle}</strong>
-              </p>
-              <p>
+              </div>
+              <div>
                 Table ID: <strong>{tableId}</strong>
-              </p>
-              <p>
+              </div>
+              <div>
                 Page <strong>{page}</strong>, Coordinates:{" "}
                 <strong>
                   {x1}:{y1}=>{x2}:{y2}
                 </strong>
-              </p>
+              </div>
               {continuationOf ? (
-                <p>
+                <div>
                   Continuation Of:{" "}
                   <strong>{continuation(continuationOf)}</strong>
-                </p>
+                </div>
               ) : null}
               {page === pageNumber && !locked ? (
                 <Button
@@ -544,35 +543,35 @@ export default class Extraction extends Component {
 
     const newTableBlock = (
       <div className="table_block">
-        <p>
+        <div>
           PDF Name: <strong>"{pdfName}"</strong>
-        </p>
-        <p>
+        </div>
+        <div>
           Page{" "}
           <strong>
             {pageNumber || <Spinner animation="border" />} of{" "}
             {numPages || <Spinner animation="border" />}
           </strong>
-        </p>
-        <p>
+        </div>
+        <div>
           <Form.Control
             size="sm"
             as="textarea"
             rows="2"
             placeholder="Select the table title on the page and copy it (CTRL+C) or just edit here"
-            value={tableTitle}
+            value={tableTitle || ""}
             onChange={this.handleTableTitleChange}
           />
-        </p>
-        <p>
+        </div>
+        <div>
           Coordinates: <strong>{coordinates}</strong>
-        </p>
-        <p>{prevPageTables.length > 0 ? continuationOfSelect : null}</p>
+        </div>
+        <div>{prevPageTables.length > 0 ? continuationOfSelect : null}</div>
         <Button
           onClick={this.handleSave}
           variant="success"
           size="sm"
-          disabled={!(tableTitle && x1)}
+          disabled={!(tableTitle && x1 && tableTitle.trim())}
         >
           Save (SHIFT+S)
         </Button>
