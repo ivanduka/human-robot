@@ -322,7 +322,7 @@ export default class Extraction extends Component {
     if (page) {
       const controlsWidth = 5 + 400 + 5 + 1;
       const pageHorBorders = 1;
-      const pageVerBorders = 2;
+      const pageVerBorders = 1;
 
       const { width, height } = page.getBoundingClientRect();
       const availableWidth = window.innerWidth - controlsWidth - pageHorBorders;
