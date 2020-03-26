@@ -28,6 +28,17 @@ export default class Extraction extends Component {
     locking: false
   };
 
+  componentDidUpdate(prevProps) {
+    if (
+      this.props.match.params.pageNumber !== prevProps.match.params.pageNumber
+    ) {
+      let { pdfName, pageNumber } = this.props.match.params;
+      this.loadTables(pdfName);
+      this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
+      this.loadPdfStatus(pdfName);
+    }
+  }
+
   componentDidMount() {
     let { pdfName, pageNumber } = this.props.match.params;
     this.loadTables(pdfName);
@@ -191,16 +202,6 @@ export default class Extraction extends Component {
       event.preventDefault();
     }
 
-    if (event.code === "ArrowDown") {
-      console.log("DOWN");
-      event.preventDefault();
-    }
-
-    if (event.code === "ArrowUp") {
-      console.log("UP");
-      event.preventDefault();
-    }
-
     if (event.code === "ArrowLeft") {
       this.previousPage();
       event.preventDefault();
@@ -346,6 +347,9 @@ export default class Extraction extends Component {
     this.setState({ numPages });
   };
 
+  previousPage = () => this.changePage(-1);
+  nextPage = () => this.changePage(1);
+
   changePage = offset => {
     let pageUpdated = true;
 
@@ -390,9 +394,6 @@ export default class Extraction extends Component {
       }
     }
   };
-
-  previousPage = () => this.changePage(-1);
-  nextPage = () => this.changePage(1);
 
   drawTables = tables => {
     const tablesArray = tables || this.state.tables;
@@ -482,8 +483,6 @@ export default class Extraction extends Component {
         )} (page ${Math.round(width)}x${Math.round(height)})`
       : "[NOT SELECTED YET]";
 
-    const title = tableTitle || "[NOT COPIED YET]";
-
     const webPageTitle = (
       <Helmet>
         <title>{`${pdfName}: page ${pageNumber}`}</title>
@@ -507,7 +506,11 @@ export default class Extraction extends Component {
               key={i}
             >
               <div>
-                <strong>{tableTitle}</strong>
+                <strong>
+                  <Link to={`/extraction/${pdfName}/${page}`}>
+                    {tableTitle}
+                  </Link>
+                </strong>
               </div>
               <div>
                 Table ID: <strong>{tableId}</strong>

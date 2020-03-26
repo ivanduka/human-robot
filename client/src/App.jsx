@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  BrowserRouter as Router,
+  BrowserRouter,
   Switch,
   Route,
   Link,
@@ -20,7 +20,7 @@ import Extraction from "./extraction/extraction_app/Extraction";
 import ExtractionIndex from "./extraction/ExtractionIndex";
 
 const App = () => (
-  <Router>
+  <BrowserRouter>
     <Switch>
       <Route exact path="/extraction" component={ExtractionIndex} />
       <Route path="/extraction/:pdfName/:pageNumber" component={Extraction} />
@@ -28,7 +28,7 @@ const App = () => (
       <Route exact path="/" component={Home} />
       <Route path="*" component={NoMatch} />
     </Switch>
-  </Router>
+  </BrowserRouter>
 );
 
 const Home = () => {
