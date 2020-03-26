@@ -171,10 +171,10 @@ export default class Extraction extends Component {
         const { error } = await req.json();
         if (req.status !== 200) throw new Error(JSON.stringify(req));
         if (error) throw new Error(JSON.stringify(error));
-        this.setState({
+        this.setState(() => ({
           locked: locked === "locked" ? "" : "locked",
           locking: false
-        });
+        }));
       } catch (e) {
         alert(e);
       }
@@ -423,7 +423,14 @@ export default class Extraction extends Component {
   };
 
   handleContinuationChange(event) {
-    this.setState({ continuationOf: event.target.value || null });
+    const continuationOf = event.target.value || null;
+    if (continuationOf) {
+      const { tableTitle } = this.state.tables.find(
+        table => table.tableId === continuationOf
+      );
+      return this.setState({ continuationOf, tableTitle });
+    }
+    this.setState({ continuationOf, tableTitle: null });
   }
 
   handleTableTitleChange = event => {
@@ -454,7 +461,7 @@ export default class Extraction extends Component {
       ? tables
           .filter(table => pageNumber - table.page === 1)
           .map(({ tableId, tableTitle }) => (
-            <option value={tableId}>
+            <option value={tableId} key={tableId}>
               {tableTitle} ({tableId})
             </option>
           ))
@@ -463,7 +470,7 @@ export default class Extraction extends Component {
     const continuationOfSelect = (
       <Form.Control
         as="select"
-        value={continuationOf}
+        value={continuationOf || ""}
         size="sm"
         onChange={e => this.handleContinuationChange(e)}
       >

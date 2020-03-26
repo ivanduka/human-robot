@@ -92,7 +92,11 @@ export default class ExtractionIndex extends Component {
           ...row,
           date: new Date(row.date).toISOString().split("T")[0],
           link: (
-            <Button size="sm" onClick={() => this.handleClick(row.pdfName)}>
+            <Button
+              variant={row.status ? "warning" : "primary"}
+              size="sm"
+              onClick={() => this.handleClick(row.pdfName)}
+            >
               Open
             </Button>
           )
