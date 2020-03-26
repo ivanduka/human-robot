@@ -3,13 +3,10 @@ body {
 }
 
 .react-pdf__Document {
-  border: 2px solid black;
-  border-left: 1px solid black;
   line-height: initial;
 }
 
 .controls {
-  border: 2px solid black;
   border-right: 1px solid black;
   padding: 5px;
   width: 400px;
@@ -19,6 +16,8 @@ body {
 }
 
 .react-pdf__Page {
+  border-bottom: 1px solid black;
+  border-right: 1px solid black;
 }
 
 .react-pdf__Page__canvas {
@@ -29,7 +28,8 @@ body {
   box-sizing: border-box;
 }
 
-#drawing, #displaying {
+#drawing,
+#displaying {
   position: absolute;
   top: 0;
   left: 0;
@@ -65,7 +65,8 @@ select {
   padding: 5px;
 }
 
-th, td {
+th,
+td {
   vertical-align: middle !important;
 }
 

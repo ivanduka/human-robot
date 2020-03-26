@@ -216,7 +216,6 @@ export default class Extraction extends Component {
     if (existingCanvasElement) {
       existingCanvasElement.parentElement.removeChild(existingCanvasElement);
     }
-    const page = document.querySelector(".react-pdf__Page");
     const drawingCanvas = document.querySelector("#drawing");
     const canvasElement = document.createElement("canvas");
     canvasElement.id = "displaying";
@@ -225,7 +224,7 @@ export default class Extraction extends Component {
       drawingCanvas.nextSibling
     );
 
-    const { width, height } = page.getBoundingClientRect();
+    const { width, height } = drawingCanvas.getBoundingClientRect();
     canvasElement.setAttribute("height", height);
     canvasElement.setAttribute("width", width);
   };
@@ -242,7 +241,7 @@ export default class Extraction extends Component {
     canvasElement.id = "drawing";
     pdfCanvas.parentNode.insertBefore(canvasElement, pdfCanvas.nextSibling);
 
-    const { top, left, width, height } = page.getBoundingClientRect();
+    const { top, left, width, height } = pdfCanvas.getBoundingClientRect();
     const ctx = canvasElement.getContext("2d");
     let lastMouseX = 0;
     let lastMouseY = 0;
@@ -254,7 +253,7 @@ export default class Extraction extends Component {
 
     page.addEventListener("mousedown", e => {
       this.clearRectangle();
-      const rect = page.getBoundingClientRect();
+      const rect = pdfCanvas.getBoundingClientRect();
       lastMouseX = e.clientX - rect.left;
       lastMouseY = e.clientY - rect.top;
       mouseIsPressed = true;
@@ -314,9 +313,9 @@ export default class Extraction extends Component {
     const page = document.querySelector(".react-pdf__Page");
 
     if (page) {
-      const controlsWidth = 2 + 5 + 400 + 5 + 1;
-      const pageHorBorders = 1 + 2;
-      const pageVerBorders = 2 + 2;
+      const controlsWidth = 5 + 400 + 5 + 1;
+      const pageHorBorders = 1;
+      const pageVerBorders = 2;
 
       const { width, height } = page.getBoundingClientRect();
       const availableWidth = window.innerWidth - controlsWidth - pageHorBorders;
