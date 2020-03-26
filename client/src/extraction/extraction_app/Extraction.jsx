@@ -137,7 +137,6 @@ export default class Extraction extends Component {
   };
 
   setPdfStatus = async () => {
-    this.setState({ locked: true, locking: true });
     const { pdfName, locked } = this.state;
     if (
       window.confirm(
@@ -146,6 +145,8 @@ export default class Extraction extends Component {
         } the file for change?`
       )
     ) {
+      this.setState({ locked: true, locking: true });
+
       try {
         const req = await fetch(`/setPdfStatus`, {
           method: "POST",
