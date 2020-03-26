@@ -22,8 +22,8 @@ const accessLogStream = fs.createWriteStream(
   path.join(__dirname, "access.log"),
   { flags: "a" }
 );
-
 app.use(morgan("combined", { stream: accessLogStream }));
+app.use(morgan("dev"));
 
 const db = async q => {
   const config = {
@@ -39,7 +39,6 @@ const db = async q => {
     await connection.end();
     return { error: null, results };
   } catch (error) {
-    console.log(error);
     return { error, results: null };
   }
 };
@@ -49,6 +48,9 @@ const extraction_index = async (req, res) => {
     query:
       "SELECT p.*, COUNT(t.pdfName) as tableCount FROM pdfs p LEFT JOIN tables t ON p.pdfName = t.pdfName GROUP BY p.pdfName;"
   });
+  if (result.error) {
+    res.status(400);
+  }
   res.json(result);
 };
 
@@ -56,6 +58,9 @@ const getTables = async (req, res) => {
   const { pdfName } = req.body;
   const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page DESC, y1 DESC;`;
   const result = await db({ query, params: [pdfName] });
+  if (result.error) {
+    res.status(400);
+  }
   res.json(result);
 };
 
@@ -63,6 +68,9 @@ const setPdfStatus = async (req, res) => {
   const { pdfName, status } = req.body;
   const query = `UPDATE pdfs SET status = ? WHERE pdfName = ?;`;
   const result = await db({ query, params: [status, pdfName] });
+  if (result.error || result.results.affectedRows === 0) {
+    res.status(400);
+  }
   res.json(result);
 };
 
@@ -70,6 +78,9 @@ const getPdfStatus = async (req, res) => {
   const { pdfName } = req.body;
   const query = `SELECT * FROM pdfs WHERE pdfName = ?;`;
   const result = await db({ query, params: [pdfName] });
+  if (result.error) {
+    res.status(400);
+  }
   res.json(result);
 };
 
@@ -110,6 +121,9 @@ const insertTable = async (req, res) => {
     ]
   };
   const result = await db(query);
+  if (result.error || result.results.affectedRows === 0) {
+    res.status(400);
+  }
   res.json(result);
 };
 
@@ -117,6 +131,9 @@ const deleteTable = async (req, res) => {
   const { tableId } = req.body;
   const query = `DELETE FROM tables WHERE tableId = ?;`;
   const result = await db({ query, params: [tableId] });
+  if (result.error || result.results.affectedRows === 0) {
+    res.status(400);
+  }
   res.json(result);
 };
 
