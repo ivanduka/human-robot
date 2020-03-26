@@ -80,9 +80,11 @@ const insertTable = async (req, res) => {
     continuationOf
   } = req.body;
 
+  const creatorIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
   const query = {
     query:
-      "INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle, continuationOf) VALUES (?,?,?,?,?,?,?,?,?,?,?);",
+      "INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle, continuationOf, creatorIp) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);",
     params: [
       tableId,
       pdfName,
@@ -94,7 +96,8 @@ const insertTable = async (req, res) => {
       x2,
       y2,
       tableTitle,
-      continuationOf
+      continuationOf,
+      creatorIp
     ]
   };
   const result = await db(query);
