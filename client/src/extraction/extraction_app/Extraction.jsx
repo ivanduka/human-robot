@@ -139,25 +139,32 @@ export default class Extraction extends Component {
   setPdfStatus = async () => {
     this.setState({ locked: true, locking: true });
     const { pdfName, locked } = this.state;
+    if (
+      window.confirm(
+        `Do you really want to ${
+          locked ? "unlock" : "lock"
+        } the file for change?`
+      )
+    ) {
+      try {
+        const req = await fetch(`/setPdfStatus`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pdfName,
+            status: locked === "locked" ? "" : "locked"
+          })
+        });
 
-    try {
-      const req = await fetch(`/setPdfStatus`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pdfName,
-          status: locked === "locked" ? "" : "locked"
-        })
-      });
-
-      const { error } = await req.json();
-      if (error) throw new Error(JSON.stringify(error));
-      this.setState({
-        locked: locked === "locked" ? "" : "locked",
-        locking: false
-      });
-    } catch (e) {
-      alert(e);
+        const { error } = await req.json();
+        if (error) throw new Error(JSON.stringify(error));
+        this.setState({
+          locked: locked === "locked" ? "" : "locked",
+          locking: false
+        });
+      } catch (e) {
+        alert(e);
+      }
     }
   };
 
@@ -571,7 +578,7 @@ export default class Extraction extends Component {
     const lockButton = (
       <Button
         size="sm"
-        variant={locked ? "info" : "warning"}
+        variant={locked ? "warning" : "success"}
         onClick={this.setPdfStatus}
       >
         {locked ? "Unlock PDF" : "Lock PDF"}
