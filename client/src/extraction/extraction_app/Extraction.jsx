@@ -158,7 +158,7 @@ export default class Extraction extends Component {
         });
 
         const { error } = await req.json();
-        if (req.status) throw new Error(JSON.stringify(req));
+        if (req.status !== 200) throw new Error(JSON.stringify(req));
         if (error) throw new Error(JSON.stringify(error));
         this.setState({
           locked: locked === "locked" ? "" : "locked",
@@ -381,7 +381,7 @@ export default class Extraction extends Component {
           body: JSON.stringify({ tableId })
         });
 
-        if (req.status) throw new Error(JSON.stringify(req));
+        if (req.status !== 200) throw new Error(JSON.stringify(req));
         const { error } = await req.json();
         if (error) throw new Error(JSON.stringify(error));
         this.loadTables();
