@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Document, Page } from "react-pdf/dist/entry.webpack";
 import { uuid } from "uuidv4";
 import { generatePath, Link } from "react-router-dom";
-import { Button, Spinner, Alert } from "react-bootstrap";
+import { Button, Spinner, Alert, Form } from "react-bootstrap";
 import { Helmet } from "react-helmet";
 import "./Extraction.css";
 
@@ -70,7 +70,7 @@ export default class Extraction extends Component {
         body: JSON.stringify({
           tableId,
           page: pageNumber,
-          tableTitle,
+          tableTitle: tableTitle.trim(),
           pdfName,
           x1,
           x2,
@@ -411,9 +411,13 @@ export default class Extraction extends Component {
     }
   };
 
-  handleChange(event) {
+  handleContinuationChange(event) {
     this.setState({ continuationOf: event.target.value || null });
   }
+
+  handleTableTitleChange = event => {
+    this.setState({ tableTitle: event.target.value });
+  };
 
   render() {
     const {
@@ -446,10 +450,15 @@ export default class Extraction extends Component {
       : [];
 
     const continuationOfSelect = (
-      <select value={continuationOf} onChange={e => this.handleChange(e)}>
+      <Form.Control
+        as="select"
+        value={continuationOf}
+        size="sm"
+        onChange={e => this.handleContinuationChange(e)}
+      >
         <option value="">not a continuation</option>
         {prevPageTables}
-      </select>
+      </Form.Control>
     );
 
     const continuation = tableId =>
@@ -535,7 +544,14 @@ export default class Extraction extends Component {
           </strong>
         </p>
         <p>
-          Table Title:<strong> {title}</strong>
+          <Form.Control
+            size="sm"
+            as="textarea"
+            rows="2"
+            placeholder="Select the table title on the page and copy it (CTRL+C) or just edit here"
+            value={tableTitle}
+            onChange={this.handleTableTitleChange}
+          />
         </p>
         <p>
           Coordinates: <strong>{coordinates}</strong>
