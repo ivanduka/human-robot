@@ -24,7 +24,7 @@ export default class Extraction extends Component {
     continuationOf: null,
     tables: null,
     pagesWithTables: null,
-    locked: true,
+    locked: "locked",
     locking: false
   };
 
@@ -129,7 +129,7 @@ export default class Extraction extends Component {
   };
 
   loadPdfStatus = async pdfName => {
-    this.setState({ locked: true, locking: true });
+    this.setState({ locked: "locked", locking: true });
 
     try {
       const req = await fetch(`/getPdfStatus`, {
@@ -141,7 +141,7 @@ export default class Extraction extends Component {
       const { error, results } = await req.json();
       if (error) throw new Error(JSON.stringify(error));
       const { status } = results[0];
-      this.setState({ locked: status === "locked", locking: false });
+      this.setState({ locked: status, locking: false });
     } catch (e) {
       alert(e);
     }
