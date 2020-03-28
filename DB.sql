@@ -48,7 +48,7 @@ CREATE TABLE `pdfs` (
   `filingId` int NOT NULL,
   `date` date NOT NULL,
   `totalPages` int NOT NULL,
-  `status` varchar(255) DEFAULT NULL,
+  `status` varchar(255) NOT NULL,
   PRIMARY KEY (`pdfId`,`pdfName`),
   UNIQUE KEY `fileId_UNIQUE` (`pdfId`),
   UNIQUE KEY `fileName_UNIQUE` (`pdfName`)
@@ -64,7 +64,7 @@ DROP TABLE IF EXISTS `tables`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `tables` (
   `tableId` varchar(36) NOT NULL,
-  `pdfId` int NOT NULL,
+  `pdfName` varchar(255) NOT NULL,
   `page` int NOT NULL,
   `pageWidth` int NOT NULL,
   `pageHeight` int NOT NULL,
@@ -80,16 +80,19 @@ CREATE TABLE `tables` (
   `pdfY1` int DEFAULT NULL,
   `pdfX2` int DEFAULT NULL,
   `pdfY2` int DEFAULT NULL,
-  `tablescol` varchar(36) DEFAULT NULL,
-  `correctCsv` varchar(45) DEFAULT NULL,
+  `correctCsv` varchar(36) DEFAULT NULL,
+  `dt_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `creatorIp` varchar(255) DEFAULT NULL,
+  `imageExtracted` varchar(255) DEFAULT NULL,
+  `tablesExtracted` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`tableId`),
   UNIQUE KEY `uuid_UNIQUE` (`tableId`),
-  KEY `pdf_idx` (`pdfId`),
+  KEY `pdf_idx` (`pdfName`),
   KEY `continuation_idx` (`continuationOf`),
   KEY `correct_csv_idx` (`correctCsv`),
   CONSTRAINT `continuation` FOREIGN KEY (`continuationOf`) REFERENCES `tables` (`tableId`),
   CONSTRAINT `correct_csv` FOREIGN KEY (`correctCsv`) REFERENCES `csvs` (`csvId`),
-  CONSTRAINT `pdf` FOREIGN KEY (`pdfId`) REFERENCES `pdfs` (`pdfId`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `pdfName` FOREIGN KEY (`pdfName`) REFERENCES `pdfs` (`pdfName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -102,4 +105,4 @@ CREATE TABLE `tables` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-21 14:40:01
+-- Dump completed on 2020-03-27 18:23:49
