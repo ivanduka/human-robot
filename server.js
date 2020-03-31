@@ -94,6 +94,16 @@ const getValidationCSVs = async (req, res) => {
   res.json(result);
 };
 
+const setValidation = async (req, res) => {
+  const { tableId, csvId } = req.body;
+  const query = `UPDATE tables SET correct_csv = ? WHERE tableId = ?;`;
+  const result = await db({ query, params: [csvId, tableId] });
+  if (result.error || result.results.affectedRows === 0) {
+    res.status(400);
+  }
+  res.json(result);
+};
+
 const setPdfStatus = async (req, res) => {
   const { pdfName, status } = req.body;
   const query = `UPDATE pdfs SET status = ? WHERE pdfName = ?;`;
@@ -171,14 +181,17 @@ const deleteTable = async (req, res) => {
 app.use(bodyParser.json());
 app.use(cors());
 
-app.use("/extractionIndex", table_index);
+app.use("/table_index", table_index);
+
 app.use("/getTables", getTables);
 app.use("/insertTable", insertTable);
 app.use("/deleteTable", deleteTable);
 app.use("/getPdfStatus", getPdfStatus);
 app.use("/setPdfStatus", setPdfStatus);
+
 app.use("/getValidationTables", getValidationTables);
 app.use("/getValidationCSVs", getValidationCSVs);
+app.use("/setValidation", setValidation);
 
 app.use("/pdf", express.static(pdfPath));
 app.use("/", express.static(path.join(__dirname, "client", "build")));

@@ -107,7 +107,7 @@ export default class ExtractionIndex extends Component {
 
   loadData = () => {
     this.setState({ loading: true });
-    fetch(`/extractionIndex`)
+    fetch(`/table_index`)
       .then(res => res.json())
       .then(({ error, results }) => {
         if (error) {
