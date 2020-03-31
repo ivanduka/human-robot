@@ -43,10 +43,10 @@ const db = async q => {
   }
 };
 
-const extraction_index = async (req, res) => {
+const table_index = async (req, res) => {
   const result = await db({
     query: `
-SELECT 
+    SELECT 
     p.*,
     COUNT(t.pdfName) AS tableCount,
     COUNT(t.correct_csv) AS tablesValidated
@@ -54,7 +54,8 @@ FROM
     pdfs p
         LEFT JOIN
     tables t ON p.pdfName = t.pdfName
-GROUP BY p.pdfName;    
+GROUP BY p.pdfName
+ORDER BY p.pdfId; 
     `
   });
   if (result.error) {
@@ -65,8 +66,28 @@ GROUP BY p.pdfName;
 
 const getTables = async (req, res) => {
   const { pdfName } = req.body;
-  const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page DESC, y1 DESC;`;
+  const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page DESC, y1 ASC;`;
   const result = await db({ query, params: [pdfName] });
+  if (result.error) {
+    res.status(400);
+  }
+  res.json(result);
+};
+
+const getValidationTables = async (req, res) => {
+  const { pdfName } = req.body;
+  const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page ASC, y1 DESC;`;
+  const result = await db({ query, params: [pdfName] });
+  if (result.error) {
+    res.status(400);
+  }
+  res.json(result);
+};
+
+const getValidationCSVs = async (req, res) => {
+  const { tableId } = req.body;
+  const query = `SELECT * FROM csvs WHERE tableId = ? ORDER BY method;`;
+  const result = await db({ query, params: [tableId] });
   if (result.error) {
     res.status(400);
   }
@@ -113,7 +134,8 @@ const insertTable = async (req, res) => {
 
   const query = {
     query:
-      "INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle, continuationOf, creatorIp) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);",
+      "INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, " +
+      "y2, tableTitle, continuationOf, creatorIp) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);",
     params: [
       tableId,
       pdfName,
@@ -149,12 +171,14 @@ const deleteTable = async (req, res) => {
 app.use(bodyParser.json());
 app.use(cors());
 
-app.use("/extractionIndex", extraction_index);
+app.use("/extractionIndex", table_index);
 app.use("/getTables", getTables);
 app.use("/insertTable", insertTable);
 app.use("/deleteTable", deleteTable);
 app.use("/getPdfStatus", getPdfStatus);
 app.use("/setPdfStatus", setPdfStatus);
+app.use("/getValidationTables", getValidationTables);
+app.use("/getValidationCSVs", getValidationCSVs);
 
 app.use("/pdf", express.static(pdfPath));
 app.use("/", express.static(path.join(__dirname, "client", "build")));
