@@ -40,7 +40,7 @@ export default class Extraction extends Component {
   }
 
   componentDidMount() {
-    let { pdfName, pageNumber } = this.props.match.params;
+    const { pdfName, pageNumber } = this.props.match.params;
     this.loadTables(pdfName);
     this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
     this.loadPdfStatus(pdfName);
@@ -175,7 +175,7 @@ export default class Extraction extends Component {
         const data = await req.json();
         const { error, results } = data;
         if (error || req.status !== 200) throw new Error(JSON.stringify(data));
-        
+
         this.setState(() => ({
           locked: locked === "locked" ? "" : "locked",
           locking: false
@@ -393,7 +393,7 @@ export default class Extraction extends Component {
         const data = await req.json();
         const { error, results } = data;
         if (error || req.status !== 200) throw new Error(JSON.stringify(data));
-        
+
         this.loadTables();
       } catch (e) {
         alert(e);
@@ -607,7 +607,7 @@ export default class Extraction extends Component {
     const topControls = (
       <div className="controls">
         <div>
-          <Link to="/extraction">
+          <Link to="/tables_index">
             <Button size="sm" variant="info">
               Back to Index
             </Button>

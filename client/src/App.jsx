@@ -16,15 +16,17 @@ import "bootstrap-css-only/css/bootstrap.min.css";
 import "mdbreact/dist/css/mdb.css";
 import "./App.css";
 
-import Extraction from "./extraction/extraction_app/Extraction";
-import ExtractionIndex from "./extraction/ExtractionIndex";
+import Extraction from "./extraction_app/Extraction";
+import TablesIndex from "./tables_index/TablesIndex";
+import Validation from "./validation_app/Validation"
 
 const App = () => (
   <BrowserRouter>
     <Switch>
-      <Route exact path="/extraction" component={ExtractionIndex} />
+      <Route exact path="/tables_index" component={TablesIndex} />
       <Route path="/extraction/:pdfName/:pageNumber" component={Extraction} />
       <Redirect from="/extraction/:pdfName" to="/extraction/:pdfName/1" />
+      <Route path="/validation/:pdfName" component={Validation} />
       <Route exact path="/" component={Home} />
       <Route path="*" component={NoMatch} />
     </Switch>
@@ -40,8 +42,8 @@ const Home = () => {
       <Row>
         <Col>
           <h3>Available Options:</h3>
-          <Link to="/extraction">
-            <Button variant="primary">Extraction App</Button>
+          <Link to="/tables_index">
+            <Button variant="primary">Tables Index</Button>
           </Link>
         </Col>
       </Row>

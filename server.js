@@ -45,8 +45,17 @@ const db = async q => {
 
 const extraction_index = async (req, res) => {
   const result = await db({
-    query:
-      "SELECT p.*, COUNT(t.pdfName) as tableCount FROM pdfs p LEFT JOIN tables t ON p.pdfName = t.pdfName GROUP BY p.pdfName;"
+    query: `
+SELECT 
+    p.*,
+    COUNT(t.pdfName) AS tableCount,
+    COUNT(t.correct_csv) AS tablesValidated
+FROM
+    pdfs p
+        LEFT JOIN
+    tables t ON p.pdfName = t.pdfName
+GROUP BY p.pdfName;    
+    `
   });
   if (result.error) {
     res.status(400);

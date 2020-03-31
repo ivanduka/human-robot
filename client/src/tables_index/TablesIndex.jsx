@@ -4,7 +4,7 @@ import { MDBDataTable } from "mdbreact";
 import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
 import { Helmet } from "react-helmet";
 
-import "./ExtractionIndex.css";
+import "./TablesIndex.css";
 
 export default class ExtractionIndex extends Component {
   state = {
@@ -21,12 +21,7 @@ export default class ExtractionIndex extends Component {
         sort: "asc",
         width: 100
       },
-      {
-        label: "Link",
-        field: "link",
-        sort: "asc",
-        width: 100
-      },
+
       {
         label: "PDF Size (MB)",
         field: "pdfSize",
@@ -52,8 +47,32 @@ export default class ExtractionIndex extends Component {
         width: 100
       },
       {
+        label: "",
+        field: "capturingLink",
+        sort: "asc",
+        width: 100
+      },
+      {
         label: "Tables Captured",
         field: "tableCount",
+        sort: "asc",
+        width: 100
+      },
+      {
+        label: "",
+        field: "validatingLink",
+        sort: "asc",
+        width: 100
+      },
+      {
+        label: "Tables Validated",
+        field: "tablesValidated",
+        sort: "asc",
+        width: 100
+      },
+      {
+        label: "Tables Not Validated",
+        field: "tablesNotValidated",
         sort: "asc",
         width: 100
       },
@@ -72,9 +91,15 @@ export default class ExtractionIndex extends Component {
     this.loadData();
   }
 
-  handleClick = pdfName => {
+  handleCapturingLink = pdfName => {
     this.props.history.push({
       pathname: "/extraction/" + pdfName
+    });
+  };
+
+  handleValidatingLink = pdfName => {
+    this.props.history.push({
+      pathname: "/validation/" + pdfName
     });
   };
 
@@ -91,15 +116,25 @@ export default class ExtractionIndex extends Component {
         const rows = results.map(row => ({
           ...row,
           date: new Date(row.date).toISOString().split("T")[0],
-          link: (
+          capturingLink: (
             <Button
               variant={row.status ? "warning" : "primary"}
               size="sm"
-              onClick={() => this.handleClick(row.pdfName)}
+              onClick={() => this.handleCapturingLink(row.pdfName)}
             >
-              Open
+              Capture
             </Button>
-          )
+          ),
+          validatingLink: (
+            <Button
+              variant="info"
+              size="sm"
+              onClick={() => this.handleValidatingLink(row.pdfName)}
+            >
+              Validate
+            </Button>
+          ),
+          tablesNotValidated: row.tableCount - row.tablesValidated
         }));
         this.setState({ rows, loading: false });
       });
@@ -128,7 +163,7 @@ export default class ExtractionIndex extends Component {
     );
 
     return (
-      <Container>
+      <Container fluid>
         <Helmet>
           <title>Index of PDF files</title>
         </Helmet>
