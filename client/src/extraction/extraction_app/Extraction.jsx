@@ -93,8 +93,9 @@ export default class Extraction extends Component {
         })
       });
 
-      const { error } = await req.json();
-      if (error) throw new Error(JSON.stringify(error));
+      const data = await req.json();
+      const { error, results } = data;
+      if (error || req.status !== 200) throw new Error(JSON.stringify(data));
 
       this.clearRectangle();
       this.setState({ tableTitle: null });
@@ -118,8 +119,9 @@ export default class Extraction extends Component {
         body: JSON.stringify({ pdfName })
       });
 
-      const { error, results } = await req.json();
-      if (error) throw new Error(JSON.stringify(error));
+      const data = await req.json();
+      const { error, results } = data;
+      if (error || req.status !== 200) throw new Error(JSON.stringify(data));
 
       this.setState({ tables: results });
       this.drawTables(results);
@@ -138,8 +140,10 @@ export default class Extraction extends Component {
         body: JSON.stringify({ pdfName })
       });
 
-      const { error, results } = await req.json();
-      if (error) throw new Error(JSON.stringify(error));
+      const data = await req.json();
+      const { error, results } = data;
+      if (error || req.status !== 200) throw new Error(JSON.stringify(data));
+
       const { status } = results[0];
       this.setState({ locked: status, locking: false });
     } catch (e) {
@@ -168,9 +172,10 @@ export default class Extraction extends Component {
           })
         });
 
-        const { error } = await req.json();
-        if (req.status !== 200) throw new Error(JSON.stringify(req));
-        if (error) throw new Error(JSON.stringify(error));
+        const data = await req.json();
+        const { error, results } = data;
+        if (error || req.status !== 200) throw new Error(JSON.stringify(data));
+        
         this.setState(() => ({
           locked: locked === "locked" ? "" : "locked",
           locking: false
@@ -385,9 +390,10 @@ export default class Extraction extends Component {
           body: JSON.stringify({ tableId })
         });
 
-        if (req.status !== 200) throw new Error(JSON.stringify(req));
-        const { error } = await req.json();
-        if (error) throw new Error(JSON.stringify(error));
+        const data = await req.json();
+        const { error, results } = data;
+        if (error || req.status !== 200) throw new Error(JSON.stringify(data));
+        
         this.loadTables();
       } catch (e) {
         alert(e);
