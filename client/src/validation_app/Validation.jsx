@@ -70,7 +70,8 @@ export default class Validation extends Component {
   };
 
   render() {
-    const { pdfName, csvs, loading, currentTable } = this.state;
+    const { pdfName, csvs, tables, loading, tableId } = this.state;
+    const { continuationOf, correct_csv, tableTitle, page } = tableId ? tables.find(t => t.tableId === tableId) : {};
 
     const webPageTitle = (
       <Helmet>
@@ -78,20 +79,27 @@ export default class Validation extends Component {
       </Helmet>
     );
 
-    // const currentCsvs = csvs
-    //   .filter(csv => csv.tableId === currentTable.tableId)
-    //   .map(csv => <li>{JSON.stringify(csv)}</li>);
-
     const mainBlock = (
       <React.Fragment>
         {webPageTitle}
         <Button onClick={this.prevTable}>Prev Table</Button>
         <Button onClick={this.nextTable}>Next Table</Button>
-        <div>{pdfName}</div>
-        {/* <ul>{currentCsvs}</ul> */}
       </React.Fragment>
     );
 
-    return loading ? <Spinner animation="border" /> : mainBlock;
+    return (
+      <React.Fragment>
+        {webPageTitle}
+        {loading ? (
+          <Spinner animation="border" />
+        ) : tableId ? (
+          mainBlock
+        ) : (
+          <Alert variant="danger">Not tables captured/extracted for this PDF</Alert>
+        )}
+      </React.Fragment>
+    );
+
+    return;
   }
 }
