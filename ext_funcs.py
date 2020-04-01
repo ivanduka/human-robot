@@ -50,7 +50,7 @@ def extract_csv(args):
             if len(tables) == 1:
                 csv_id = str(uuid4())
                 csv_file_name = csv_tables_folder.joinpath(f"{csv_id}.csv")
-                tables[0].to_csv(csv_file_name, index=False, header=False)
+                tables[0].to_csv(csv_file_name, index=False, header=False, encoding="utf-8-sig")
 
                 with engine.connect() as conn:
                     statement = text("INSERT INTO csvs (csvId, tableId, method) " +

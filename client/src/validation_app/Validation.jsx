@@ -5,7 +5,12 @@ import { Helmet } from "react-helmet";
 import "./Validation.css";
 
 export default class Validation extends Component {
-  state = { pdfName: null };
+  state = {
+    pdfName: null,
+    csvs: [],
+    loading: false,
+    tableId: null
+  };
 
   componentDidMount() {
     const { pdfName } = this.props.match.params;
@@ -13,7 +18,29 @@ export default class Validation extends Component {
     this.loadData(pdfName);
   }
 
-  loadData() {}
+  loadData = async pdfName => {
+    this.setState({ loading: true });
+
+    if (!pdfName) {
+      pdfName = this.state.pdfName;
+    }
+
+    try {
+      const req = await fetch(`/getValidationCSVs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdfName })
+      });
+      const data = await req.json();
+      const { error, results } = data;
+      if (error || req.status !== 200) throw new Error(JSON.stringify(data));
+
+      const tableId = results.length > 0 ? results[0].tableId : null;
+      this.setState({ loading: false, csvs: results, tableId });
+    } catch (e) {
+      alert(e);
+    }
+  };
 
   render() {
     const { pdfName } = this.state;
@@ -26,7 +53,7 @@ export default class Validation extends Component {
     return (
       <React.Fragment>
         {webPageTitle}
-        <div>hello!</div>
+        <div>{pdfName}</div>
       </React.Fragment>
     );
   }

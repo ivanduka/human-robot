@@ -74,20 +74,34 @@ const getTables = async (req, res) => {
   res.json(result);
 };
 
-const getValidationTables = async (req, res) => {
-  const { pdfName } = req.body;
-  const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page ASC, y1 DESC;`;
-  const result = await db({ query, params: [pdfName] });
-  if (result.error) {
-    res.status(400);
-  }
-  res.json(result);
-};
-
 const getValidationCSVs = async (req, res) => {
-  const { tableId } = req.body;
-  const query = `SELECT * FROM csvs WHERE tableId = ? ORDER BY method;`;
-  const result = await db({ query, params: [tableId] });
+  const { pdfName } = req.body;
+  const query = `
+  SELECT 
+    c.csvId,
+    c.method,
+    t.pdfName,
+    t.tableId,
+    t.page,
+    t.tableTitle,
+    t.continuationOf,
+    correct_csv
+FROM
+    csvs c
+        LEFT JOIN
+    tables t ON t.tableId = c.tableId
+WHERE
+    t.tableId IN (SELECT 
+            t.tableId
+        FROM
+            tables
+        WHERE
+            t.pdfName = ?)
+        AND imageExtracted IS NOT NULL
+        AND csvsExtracted IS NOT NULL
+ORDER BY t.page ASC, t.y1 DESC;
+  `;
+  const result = await db({ query, params: [pdfName] });
   if (result.error) {
     res.status(400);
   }
@@ -189,7 +203,6 @@ app.use("/deleteTable", deleteTable);
 app.use("/getPdfStatus", getPdfStatus);
 app.use("/setPdfStatus", setPdfStatus);
 
-app.use("/getValidationTables", getValidationTables);
 app.use("/getValidationCSVs", getValidationCSVs);
 app.use("/setValidation", setValidation);
 
