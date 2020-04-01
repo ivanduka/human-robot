@@ -27,17 +27,19 @@ export default class Validation extends Component {
     }
 
     try {
-      const reqCsvs = await fetch(`/getValidationCSVs`, {
+      const req1 = fetch(`/getValidationCSVs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pdfName }),
       });
 
-      const reqTables = await fetch(`/getValidationTables`, {
+      const req2 = fetch(`/getValidationTables`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pdfName }),
       });
+
+      const [reqCsvs, reqTables] = await Promise.all([req1, req2]);
 
       const dataCsvs = await reqCsvs.json();
       const errorCsvs = dataCsvs.error;
