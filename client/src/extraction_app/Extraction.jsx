@@ -190,7 +190,9 @@ export default class Extraction extends Component {
     const tableTitle = window
       .getSelection()
       .toString()
+      .replace(/\s+/g, " ")
       .trim();
+
     window.getSelection().empty();
     e.clipboardData.setData("text/plain", tableTitle);
     e.preventDefault();
