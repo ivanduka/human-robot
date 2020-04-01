@@ -38,7 +38,6 @@ def extract_image(args):
 
 
 def extract_csv(args):
-
     buf = StringIO()
     with redirect_stdout(buf), redirect_stderr(buf):
         table, engine_string, pdf_files_folder_string, csv_tables_folder_string = args
