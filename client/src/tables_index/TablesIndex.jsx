@@ -59,6 +59,12 @@ export default class ExtractionIndex extends Component {
         width: 100
       },
       {
+        label: "Status",
+        field: "status",
+        sort: "asc",
+        width: 100
+      },
+      {
         label: "",
         field: "validatingLink",
         sort: "asc",
@@ -73,12 +79,6 @@ export default class ExtractionIndex extends Component {
       {
         label: "Tables Not Validated",
         field: "tablesNotValidated",
-        sort: "asc",
-        width: 100
-      },
-      {
-        label: "Status",
-        field: "status",
         sort: "asc",
         width: 100
       }
