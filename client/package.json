@@ -39,5 +39,10 @@
       "last 1 safari version"
     ]
   },
+  "prettier": {
+    "quoteProps": "preserve",
+    "trailingComma": "all",
+    "printWidth": 120
+  },
   "proxy": "http://localhost:8080"
 }

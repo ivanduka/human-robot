@@ -8,8 +8,9 @@ export default class Validation extends Component {
   state = {
     pdfName: null,
     csvs: [],
-    loading: false,
-    tableId: null
+    tables: [],
+    loading: true,
+    currentTable: null,
   };
 
   componentDidMount() {
@@ -26,35 +27,65 @@ export default class Validation extends Component {
     }
 
     try {
-      const req = await fetch(`/getValidationCSVs`, {
+      const reqCsvs = await fetch(`/getValidationCSVs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pdfName })
+        body: JSON.stringify({ pdfName }),
       });
-      const data = await req.json();
-      const { error, results } = data;
-      if (error || req.status !== 200) throw new Error(JSON.stringify(data));
 
-      const tableId = results.length > 0 ? results[0].tableId : null;
-      this.setState({ loading: false, csvs: results, tableId });
+      const reqTables = await fetch(`/getValidationTables`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdfName }),
+      });
+
+      const dataCsvs = await reqCsvs.json();
+      const errorCsvs = dataCsvs.error;
+      const resultCsvs = dataCsvs.results;
+
+      const dataTables = await reqTables.json();
+      const errorTables = dataTables.error;
+      const resultTables = dataTables.results;
+
+      if (errorCsvs || reqCsvs.status !== 200) throw new Error(JSON.stringify(dataCsvs));
+      if (errorTables || reqTables.status !== 200) throw new Error(JSON.stringify(dataTables));
+
+      let { currentTable } = this.state;
+
+      this.setState({ loading: false, csvs: resultCsvs, tables: resultTables, currentTable });
     } catch (e) {
       alert(e);
     }
   };
 
+  prevTable = () => {};
+  nextTable = () => {
+    const { csvs, currentTable } = this.state;
+  };
+
   render() {
-    const { pdfName } = this.state;
+    const { pdfName, csvs, loading, currentTable } = this.state;
+
     const webPageTitle = (
       <Helmet>
         <title>{pdfName}</title>
       </Helmet>
     );
 
-    return (
+    // const currentCsvs = csvs
+    //   .filter(csv => csv.tableId === currentTable.tableId)
+    //   .map(csv => <li>{JSON.stringify(csv)}</li>);
+
+    const mainBlock = (
       <React.Fragment>
         {webPageTitle}
+        <Button onClick={this.prevTable}>Prev Table</Button>
+        <Button onClick={this.nextTable}>Next Table</Button>
         <div>{pdfName}</div>
+        {/* <ul>{currentCsvs}</ul> */}
       </React.Fragment>
     );
+
+    return loading ? <Spinner animation="border" /> : mainBlock;
   }
 }
