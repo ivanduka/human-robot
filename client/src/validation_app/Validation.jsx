@@ -10,7 +10,7 @@ export default class Validation extends Component {
     csvs: [],
     tables: [],
     loading: true,
-    currentTable: null,
+    tableId: null,
   };
 
   componentDidMount() {
@@ -43,18 +43,22 @@ export default class Validation extends Component {
 
       const dataCsvs = await reqCsvs.json();
       const errorCsvs = dataCsvs.error;
-      const resultCsvs = dataCsvs.results;
+      const csvs = dataCsvs.results;
 
       const dataTables = await reqTables.json();
       const errorTables = dataTables.error;
-      const resultTables = dataTables.results;
+      const tables = dataTables.results;
 
       if (errorCsvs || reqCsvs.status !== 200) throw new Error(JSON.stringify(dataCsvs));
       if (errorTables || reqTables.status !== 200) throw new Error(JSON.stringify(dataTables));
 
-      let { currentTable } = this.state;
+      const tableId = tables.find(table => table.tableId === this.state.tableId)
+        ? this.state.tableId
+        : tables.length > 0
+        ? tables[0].tableId
+        : null;
 
-      this.setState({ loading: false, csvs: resultCsvs, tables: resultTables, currentTable });
+      this.setState({ loading: false, csvs, tables, tableId });
     } catch (e) {
       alert(e);
     }
