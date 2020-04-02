@@ -152,7 +152,7 @@ export default class Validation extends Component {
           <strong>CSV ID: </strong>
           {csvId}
         </p>
-        <div className={csvId === correct_csv ? "ml-2 correct" : "ml-2"}>{constructTable(data)}</div>
+        <div className={csvId === correct_csv ? "ml-2 mr-2 correct" : "ml-2 mr-2 bg-light"}>{constructTable(data)}</div>
       </div>
     ));
 
@@ -219,7 +219,7 @@ export default class Validation extends Component {
             />
           </Col>
           <Col>
-            <div className="border">{csvsBlock}</div>
+            <div className="border border-dark">{csvsBlock}</div>
           </Col>
         </Row>
       </Container>
