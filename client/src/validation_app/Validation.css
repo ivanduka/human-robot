@@ -17,3 +17,7 @@ table {
 td {
   padding: 3px;
 }
+
+.correct {
+  background-color: lightgreen;
+}

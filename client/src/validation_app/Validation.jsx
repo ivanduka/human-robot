@@ -112,8 +112,12 @@ export default class Validation extends Component {
       return <Spinner animation="border" />;
     }
 
-    const currentIndex = tableId ? tables.findIndex(t => t.tableId === tableId) : -1;
-    const { continuationOf, correct_csv, tableTitle, page } = loading ? {} : tables[currentIndex];
+    if (!tableId) {
+      return <Alert variant="danger">Not tables captured/extracted for this PDF</Alert>;
+    }
+
+    const currentIndex = tables.findIndex(t => t.tableId === tableId);
+    const { continuationOf, correct_csv, tableTitle, page } = tables[currentIndex];
 
     const conTable = continuationOf ? tables.find(t => t.tableId === continuationOf) : null;
     const conTableBlock = continuationOf ? (
@@ -139,7 +143,7 @@ export default class Validation extends Component {
     );
 
     const csvsBlock = csvs.map(({ csvId, method, data }) => (
-      <div className="border" key={csvId}>
+      <div className="mb-5" key={csvId}>
         <h6 className="ml-2">
           <strong>Method: </strong>
           {method}
@@ -148,7 +152,7 @@ export default class Validation extends Component {
           <strong>CSV ID: </strong>
           {csvId}
         </p>
-        <div className="m-2">{constructTable(data)}</div>
+        <div className={csvId === correct_csv ? "ml-2 correct" : "ml-2"}>{constructTable(data)}</div>
       </div>
     ));
 
