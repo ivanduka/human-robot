@@ -91,7 +91,7 @@ export default class Validation extends Component {
     const csvsBlock = csvs
       .filter(c => c.tableId === tableId)
       .map(({ csvId, method }) => (
-        <div className="border">
+        <div className="border" key={csvId}>
           <h6>
             <strong>Method: </strong>
             {method}
