@@ -173,7 +173,13 @@ export default class Validation extends Component {
         <Button variant="success" size="sm" className="ml-2" onClick={() => this.setResult(tableId, csvId)}>
           Select
         </Button>
-        <div className={csvId === correct_csv ? "ml-2 mr-2 correct" : "ml-2 mr-2 bg-light"}>{constructTable(data)}</div>
+        <div
+          className={
+            csvId === correct_csv ? "ml-2 mr-2 correct" : correct_csv ? "ml-2 mr-2 incorrect" : "ml-2 mr-2 bg-light"
+          }
+        >
+          {constructTable(data)}
+        </div>
       </div>
     ));
 
@@ -242,7 +248,7 @@ export default class Validation extends Component {
           <Col>
             <div className="border border-dark">
               {csvsBlock}
-              <Button variant="warning" size="sm" className="ml-2" onClick={() => this.setResult(tableId, null)}>
+              <Button variant="warning" size="sm" className="ml-2 mb-3" onClick={() => this.setResult(tableId, null)}>
                 Unset Validation
               </Button>
             </div>
