@@ -2,3 +2,18 @@
   position: sticky;
   top: 20px;
 }
+
+table,
+th,
+td {
+  border: 1px solid black;
+  vertical-align: top !important;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+td {
+  padding: 3px;
+}

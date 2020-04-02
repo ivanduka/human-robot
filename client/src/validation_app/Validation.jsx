@@ -61,15 +61,13 @@ export default class Validation extends Component {
         : null;
 
       const csvDataPromise = csvId =>
-        new Promise((resolve, reject) => {
+        new Promise(resolve => {
           Papa.parse(`/csv/${csvId}.csv`, {
             download: true,
             complete(results) {
               resolve(results.data);
             },
-            error(err) {
-              reject(err);
-            },
+            skipEmptyLines: true,
           });
         });
 
@@ -114,17 +112,31 @@ export default class Validation extends Component {
       </p>
     ) : null;
 
+    const constructTable = table => (
+      <table>
+        <tbody>
+          {table.map(row => (
+            <tr>
+              {row.map(col => (
+                <td>{col}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+
     const csvsBlock = csvs.map(({ csvId, method, data }) => (
       <div className="border" key={csvId}>
-        <h6>
+        <h6 className="ml-2">
           <strong>Method: </strong>
           {method}
         </h6>
-        <p>
+        <p className="ml-2">
           <strong>CSV ID: </strong>
           {csvId}
         </p>
-        {JSON.stringify(data)}
+        <div className="m-2">{constructTable(data)}</div>
       </div>
     ));
 
@@ -138,9 +150,11 @@ export default class Validation extends Component {
       <Container fluid>
         <Row>
           <Col>
-            <Button className="ml-0" size="sm" variant="info">
-              Back to Tables Index
-            </Button>
+            <Link to="/tables_index">
+              <Button className="ml-0" size="sm" variant="info">
+                Back to Index
+              </Button>
+            </Link>
             <Button size="sm" variant="info" onClick={() => this.loadData()}>
               Refresh Data
             </Button>
