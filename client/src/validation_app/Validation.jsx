@@ -74,6 +74,7 @@ export default class Validation extends Component {
       csvs = await Promise.all(
         csvs
           .filter(csv => csv.tableId === tableId)
+          .sort((a, b) => a.method.localeCompare(b.method))
           .map(csv => ({ ...csv, data: csvDataPromise(csv.csvId) }))
           .map(async csv => ({ ...csv, data: await csv.data })),
       );
