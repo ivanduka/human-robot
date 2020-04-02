@@ -208,6 +208,8 @@ app.use("/getValidationCSVs", getValidationCSVs);
 app.use("/setValidation", setValidation);
 
 app.use("/pdf", express.static(pdfPath));
+app.use("/jpg", express.static(jpgPath));
+app.use("/csv", express.static(csvPath));
 app.use("/", express.static(path.join(__dirname, "client", "build")));
 app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "client", "build", "index.html"));

@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { generatePath, Link } from "react-router-dom";
-import { Button, Spinner, Alert, Form } from "react-bootstrap";
+import { Button, Spinner, Alert, Form, Container, Row, Col } from "react-bootstrap";
 import { Helmet } from "react-helmet";
 import "./Validation.css";
 
@@ -11,6 +11,7 @@ export default class Validation extends Component {
     tables: [],
     loading: true,
     tableId: null,
+    imageLoaded: false,
   };
 
   componentDidMount() {
@@ -20,7 +21,7 @@ export default class Validation extends Component {
   }
 
   loadData = async pdfName => {
-    this.setState({ loading: true });
+    this.setState({ loading: true, imageLoaded: false });
 
     if (!pdfName) {
       pdfName = this.state.pdfName;
@@ -69,9 +70,39 @@ export default class Validation extends Component {
     const { csvs, currentTable } = this.state;
   };
 
+  imageOnLoad = () => {
+    this.setState({ imageLoaded: true });
+  };
+
   render() {
-    const { pdfName, csvs, tables, loading, tableId } = this.state;
-    const { continuationOf, correct_csv, tableTitle, page } = tableId ? tables.find(t => t.tableId === tableId) : {};
+    const { pdfName, csvs, tables, loading, tableId, imageLoaded } = this.state;
+    const currentIndex = tableId ? tables.findIndex(t => t.tableId === tableId) : -1;
+    const { continuationOf, correct_csv, tableTitle, page } = tableId ? tables[currentIndex] : {};
+
+    const conTable = continuationOf ? tables.find(t => t.tableId === continuationOf) : null;
+    const conTableBlock = continuationOf ? (
+      <p>
+        <strong>Continuation Table Name: </strong>
+        {conTable.tableTitle}, <strong>Continuation Table ID: </strong>
+        {conTable.tableId}
+      </p>
+    ) : null;
+
+    const csvsBlock = csvs
+      .filter(c => c.tableId === tableId)
+      .map(({ csvId, method }) => (
+        <div className="border">
+          <h6>
+            <strong>Method: </strong>
+            {method}
+          </h6>
+          <p>
+            <strong>CSV ID: </strong>
+            {csvId}
+          </p>
+          TABLE
+        </div>
+      ));
 
     const webPageTitle = (
       <Helmet>
@@ -80,11 +111,64 @@ export default class Validation extends Component {
     );
 
     const mainBlock = (
-      <React.Fragment>
-        {webPageTitle}
-        <Button onClick={this.prevTable}>Prev Table</Button>
-        <Button onClick={this.nextTable}>Next Table</Button>
-      </React.Fragment>
+      <Container fluid>
+        <Row>
+          <Col>
+            <Button className="ml-0" size="sm" variant="info">
+              Back to Tables Index
+            </Button>
+            <Button size="sm" variant="info">
+              Refresh Data
+            </Button>
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <p>
+              <strong>PDF Name: </strong>
+              {pdfName}, <strong>Page: </strong> {page}
+            </p>
+          </Col>
+          <Col>
+            <p>
+              <strong>Table: </strong> {currentIndex + 1} of {tables.length}
+            </p>
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <p>
+              <strong>Table Name: </strong>
+              {tableTitle}, <strong>Table ID: </strong>
+              {tableId}
+            </p>
+            {conTableBlock}
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <Button className="ml-0" size="sm" variant="info" onClick={this.prevTable}>
+              Prev Table
+            </Button>
+            <Button size="sm" variant="info" onClick={this.nextTable}>
+              Next Table
+            </Button>
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <img
+              src={`/jpg/${tableId}.jpg`}
+              className="img-fluid border border-dark sticky"
+              style={imageLoaded ? {} : { visibility: "hidden" }}
+              onLoad={this.imageOnLoad}
+            />
+          </Col>
+          <Col>
+            <div className="border">{csvsBlock}</div>
+          </Col>
+        </Row>
+      </Container>
     );
 
     return (
