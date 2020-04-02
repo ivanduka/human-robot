@@ -85,9 +85,20 @@ export default class Validation extends Component {
     }
   };
 
-  prevTable = () => {};
+  prevTable = () => {
+    const { tables, tableId } = this.state;
+    const currentIndex = tables.findIndex(t => t.tableId === tableId);
+    if (currentIndex === 0) return;
+    this.setState({ tableId: tables[currentIndex - 1].tableId });
+    this.loadData();
+  };
+
   nextTable = () => {
-    const { csvs, currentTable } = this.state;
+    const { tables, tableId } = this.state;
+    const currentIndex = tables.findIndex(t => t.tableId === tableId);
+    if (currentIndex === tables.length - 1) return;
+    this.setState({ tableId: tables[currentIndex + 1].tableId });
+    this.loadData();
   };
 
   imageOnLoad = () => {
