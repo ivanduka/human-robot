@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { generatePath, Link } from "react-router-dom";
 import { Button, Spinner, Alert, Form, Container, Row, Col } from "react-bootstrap";
 import { Helmet } from "react-helmet";
+import Papa from "papaparse";
 import "./Validation.css";
 
 export default class Validation extends Component {
@@ -21,7 +22,7 @@ export default class Validation extends Component {
   }
 
   loadData = async pdfName => {
-    this.setState({ loading: true, imageLoaded: false });
+    this.setState(() => ({ loading: true, imageLoaded: false, csvs: [], tables: [] }));
 
     if (!pdfName) {
       pdfName = this.state.pdfName;
@@ -44,7 +45,7 @@ export default class Validation extends Component {
 
       const dataCsvs = await reqCsvs.json();
       const errorCsvs = dataCsvs.error;
-      const csvs = dataCsvs.results;
+      let csvs = dataCsvs.results;
 
       const dataTables = await reqTables.json();
       const errorTables = dataTables.error;
@@ -59,8 +60,29 @@ export default class Validation extends Component {
         ? tables[0].tableId
         : null;
 
+      const csvDataPromise = csvId =>
+        new Promise((resolve, reject) => {
+          Papa.parse(`/csv/${csvId}.csv`, {
+            download: true,
+            complete(results) {
+              resolve(results.data);
+            },
+            error(err) {
+              reject(err);
+            },
+          });
+        });
+
+      csvs = await Promise.all(
+        csvs
+          .filter(csv => csv.tableId === tableId)
+          .map(csv => ({ ...csv, data: csvDataPromise(csv.csvId) }))
+          .map(async csv => ({ ...csv, data: await csv.data })),
+      );
+
       this.setState({ loading: false, csvs, tables, tableId });
     } catch (e) {
+      console.log(e);
       alert(e);
     }
   };
@@ -76,8 +98,12 @@ export default class Validation extends Component {
 
   render() {
     const { pdfName, csvs, tables, loading, tableId, imageLoaded } = this.state;
+    if (loading) {
+      return <Spinner animation="border" />;
+    }
+
     const currentIndex = tableId ? tables.findIndex(t => t.tableId === tableId) : -1;
-    const { continuationOf, correct_csv, tableTitle, page } = tableId ? tables[currentIndex] : {};
+    const { continuationOf, correct_csv, tableTitle, page } = loading ? {} : tables[currentIndex];
 
     const conTable = continuationOf ? tables.find(t => t.tableId === continuationOf) : null;
     const conTableBlock = continuationOf ? (
@@ -88,21 +114,19 @@ export default class Validation extends Component {
       </p>
     ) : null;
 
-    const csvsBlock = csvs
-      .filter(c => c.tableId === tableId)
-      .map(({ csvId, method }) => (
-        <div className="border" key={csvId}>
-          <h6>
-            <strong>Method: </strong>
-            {method}
-          </h6>
-          <p>
-            <strong>CSV ID: </strong>
-            {csvId}
-          </p>
-          TABLE
-        </div>
-      ));
+    const csvsBlock = csvs.map(({ csvId, method, data }) => (
+      <div className="border" key={csvId}>
+        <h6>
+          <strong>Method: </strong>
+          {method}
+        </h6>
+        <p>
+          <strong>CSV ID: </strong>
+          {csvId}
+        </p>
+        {JSON.stringify(data)}
+      </div>
+    ));
 
     const webPageTitle = (
       <Helmet>
@@ -117,7 +141,7 @@ export default class Validation extends Component {
             <Button className="ml-0" size="sm" variant="info">
               Back to Tables Index
             </Button>
-            <Button size="sm" variant="info">
+            <Button size="sm" variant="info" onClick={() => this.loadData()}>
               Refresh Data
             </Button>
           </Col>
