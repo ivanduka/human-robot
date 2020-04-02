@@ -106,6 +106,24 @@ export default class Validation extends Component {
     this.setState({ imageLoaded: true });
   };
 
+  setResult = async (tableId, csvId) => {
+    this.setState({ loading: true });
+
+    const res = await fetch("/setValidation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ tableId, csvId }),
+    });
+
+    const { error, results } = await res.json();
+
+    if (error || res.status !== 200) throw new Error(JSON.stringify({ error, results }));
+
+    this.loadData();
+  };
+
   render() {
     const { pdfName, csvs, tables, loading, tableId, imageLoaded } = this.state;
     if (loading) {
@@ -152,6 +170,9 @@ export default class Validation extends Component {
           <strong>CSV ID: </strong>
           {csvId}
         </p>
+        <Button variant="success" size="sm" className="ml-2" onClick={() => this.setResult(tableId, csvId)}>
+          Select
+        </Button>
         <div className={csvId === correct_csv ? "ml-2 mr-2 correct" : "ml-2 mr-2 bg-light"}>{constructTable(data)}</div>
       </div>
     ));
@@ -219,7 +240,12 @@ export default class Validation extends Component {
             />
           </Col>
           <Col>
-            <div className="border border-dark">{csvsBlock}</div>
+            <div className="border border-dark">
+              {csvsBlock}
+              <Button variant="warning" size="sm" className="ml-2" onClick={() => this.setResult(tableId, null)}>
+                Unset Validation
+              </Button>
+            </div>
           </Col>
         </Row>
       </Container>
