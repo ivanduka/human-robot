@@ -46,7 +46,7 @@ const db = async q => {
 const table_index = async (req, res) => {
   const result = await db({
     query: `
-    SELECT 
+SELECT 
     p.*,
     COUNT(t.pdfName) AS tableCount,
     COUNT(t.correct_csv) AS tablesValidated
