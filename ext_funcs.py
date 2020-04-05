@@ -6,6 +6,7 @@ from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 import camelot
 from uuid import uuid4
+import pandas as pd
 
 
 def extract_image(args):
@@ -51,6 +52,10 @@ def extract_csv(args):
                 csv_id = str(uuid4())
                 csv_file_name = csv_tables_folder.joinpath(f"{csv_id}.csv")
                 tables[0].to_csv(csv_file_name, index=False, header=False, encoding="utf-8-sig")
+                # df = pd.read_csv(csv_file_name, encoding="utf-8-sig")
+                # df = df.dropna(how="all", axis=0)
+                # df = df.dropna(how="all", axis=1)
+                # df.to_csv(csv_file_name, index=False, header=False, encoding="utf-8-sig")
 
                 with engine.connect() as conn:
                     statement = text("INSERT INTO csvs (csvId, tableId, method) " +
@@ -62,15 +67,33 @@ def extract_csv(args):
             pdf_file_path = pdf_files_folder.joinpath(f"{table['pdfName']}.pdf")
             table_areas = [f"{table['pdfX1']},{table['pdfY1']},{table['pdfX2']},{table['pdfY2']}"]
 
-            tables1 = camelot.read_pdf(
+            tables = camelot.read_pdf(
+                str(pdf_file_path),
+                table_areas=table_areas, pages=str(table['page']),
+                strip_text='\n', line_scale=40, flag_size=True,)
+            save_table(tables, "lattice")
+
+            tables = camelot.read_pdf(
                 str(pdf_file_path),
                 table_areas=table_areas, pages=str(table['page']),
                 strip_text='\n', line_scale=40, flag_size=True, copy_text=['v', 'h'],)
-            save_table(tables1, "lattice")
+            save_table(tables, "lattice-vh")
 
-            tables2 = camelot.read_pdf(str(pdf_file_path), table_areas=table_areas, pages=str(table['page']),
-                                       strip_text='\n', flavor="stream", flag_size=True)
-            save_table(tables2, "stream")
+            tables = camelot.read_pdf(
+                str(pdf_file_path),
+                table_areas=table_areas, pages=str(table['page']),
+                strip_text='\n', line_scale=40, flag_size=True, copy_text=['v'],)
+            save_table(tables, "lattice-v")
+
+            tables = camelot.read_pdf(
+                str(pdf_file_path),
+                table_areas=table_areas, pages=str(table['page']),
+                strip_text='\n', line_scale=40, flag_size=True, copy_text=['h'],)
+            save_table(tables, "lattice-h")
+
+            tables = camelot.read_pdf(str(pdf_file_path), table_areas=table_areas, pages=str(table['page']),
+                                      strip_text='\n', flavor="stream", flag_size=True)
+            save_table(tables, "stream")
 
             with engine.connect() as conn:
                 statement = text("UPDATE tables SET csvsExtracted = 'done' WHERE tableId = :tableId;")
