@@ -21,8 +21,8 @@ export default class Validation extends Component {
     this.loadData(pdfName);
   }
 
-  loadData = async pdfName => {
-    this.setState(() => ({ loading: true, imageLoaded: false, csvs: [], tables: [] }));
+  loadData = async (pdfName, notFirstLoading) => {
+    this.setState(() => (notFirstLoading ? {} : { loading: true, imageLoaded: false }));
 
     if (!pdfName) {
       pdfName = this.state.pdfName;
@@ -54,30 +54,16 @@ export default class Validation extends Component {
       if (errorCsvs || reqCsvs.status !== 200) throw new Error(JSON.stringify(dataCsvs));
       if (errorTables || reqTables.status !== 200) throw new Error(JSON.stringify(dataTables));
 
-      const tableId = tables.find(table => table.tableId === this.state.tableId)
+      const tableId = tables.find((table) => table.tableId === this.state.tableId)
         ? this.state.tableId
         : tables.length > 0
         ? tables[0].tableId
         : null;
 
-      const csvDataPromise = csvId =>
-        new Promise(resolve => {
-          Papa.parse(`/csv/${csvId}.csv`, {
-            download: true,
-            complete(results) {
-              resolve(results.data);
-            },
-            skipEmptyLines: true,
-          });
-        });
-
-      csvs = await Promise.all(
-        csvs
-          .filter(csv => csv.tableId === tableId)
-          .sort((a, b) => a.method.localeCompare(b.method))
-          .map(csv => ({ ...csv, data: csvDataPromise(csv.csvId) }))
-          .map(async csv => ({ ...csv, data: await csv.data })),
-      );
+      csvs = csvs
+        .filter((csv) => csv.tableId === tableId)
+        .sort((a, b) => a.method.localeCompare(b.method))
+        .map((csv) => ({ ...csv, data: JSON.parse(csv.csvText) }));
 
       this.setState({ loading: false, csvs, tables, tableId });
     } catch (e) {
@@ -88,18 +74,18 @@ export default class Validation extends Component {
 
   prevTable = () => {
     const { tables, tableId } = this.state;
-    const currentIndex = tables.findIndex(t => t.tableId === tableId);
+    const currentIndex = tables.findIndex((t) => t.tableId === tableId);
     if (currentIndex === 0) return;
-    this.setState({ tableId: tables[currentIndex - 1].tableId });
-    this.loadData();
+    this.setState({ tableId: tables[currentIndex - 1].tableId, imageLoaded: false });
+    this.loadData(null, true);
   };
 
   nextTable = () => {
     const { tables, tableId } = this.state;
-    const currentIndex = tables.findIndex(t => t.tableId === tableId);
+    const currentIndex = tables.findIndex((t) => t.tableId === tableId);
     if (currentIndex === tables.length - 1) return;
-    this.setState({ tableId: tables[currentIndex + 1].tableId });
-    this.loadData();
+    this.setState({ tableId: tables[currentIndex + 1].tableId, imageLoaded: false });
+    this.loadData(null, true);
   };
 
   imageOnLoad = () => {
@@ -107,8 +93,6 @@ export default class Validation extends Component {
   };
 
   setResult = async (tableId, csvId) => {
-    this.setState({ loading: true });
-
     const res = await fetch("/setValidation", {
       method: "POST",
       headers: {
@@ -121,7 +105,7 @@ export default class Validation extends Component {
 
     if (error || res.status !== 200) throw new Error(JSON.stringify({ error, results }));
 
-    this.loadData();
+    this.loadData(null, true);
   };
 
   render() {
@@ -134,10 +118,10 @@ export default class Validation extends Component {
       return <Alert variant="danger">Not tables captured/extracted for this PDF</Alert>;
     }
 
-    const currentIndex = tables.findIndex(t => t.tableId === tableId);
+    const currentIndex = tables.findIndex((t) => t.tableId === tableId);
     const { continuationOf, correct_csv, tableTitle, page } = tables[currentIndex];
 
-    const conTable = continuationOf ? tables.find(t => t.tableId === continuationOf) : null;
+    const conTable = continuationOf ? tables.find((t) => t.tableId === continuationOf) : null;
     const conTableBlock = continuationOf ? (
       <p>
         <strong>Continuation Table Name: </strong>
@@ -146,12 +130,12 @@ export default class Validation extends Component {
       </p>
     ) : null;
 
-    const constructTable = table => (
+    const constructTable = (table) => (
       <table>
         <tbody>
-          {table.map(row => (
+          {table.map((row) => (
             <tr>
-              {row.map(col => (
+              {row.map((col) => (
                 <td>{col}</td>
               ))}
             </tr>
@@ -170,7 +154,13 @@ export default class Validation extends Component {
           <strong>CSV ID: </strong>
           {csvId}
         </p>
-        <Button variant="success" size="sm" className="ml-2" onClick={() => this.setResult(tableId, csvId)}>
+        <Button
+          variant="success"
+          size="sm"
+          disabled={csvId === correct_csv}
+          className="ml-2"
+          onClick={() => this.setResult(tableId, csvId)}
+        >
           Select
         </Button>
         <div
@@ -198,7 +188,7 @@ export default class Validation extends Component {
                 Back to Index
               </Button>
             </Link>
-            <Button size="sm" variant="info" onClick={() => this.loadData()}>
+            <Button size="sm" variant="warning" onClick={() => this.loadData()}>
               Refresh Data
             </Button>
           </Col>
@@ -208,11 +198,6 @@ export default class Validation extends Component {
             <p>
               <strong>PDF Name: </strong>
               {pdfName}, <strong>Page: </strong> {page}
-            </p>
-          </Col>
-          <Col>
-            <p>
-              <strong>Table: </strong> {currentIndex + 1} of {tables.length}
             </p>
           </Col>
         </Row>
@@ -228,10 +213,17 @@ export default class Validation extends Component {
         </Row>
         <Row>
           <Col>
-            <Button className="ml-0" size="sm" variant="info" onClick={this.prevTable}>
+            <Button
+              className="ml-0"
+              size="sm"
+              variant="secondary"
+              onClick={this.prevTable}
+              disabled={currentIndex + 1 === 1}
+            >
               Prev Table
             </Button>
-            <Button size="sm" variant="info" onClick={this.nextTable}>
+            <strong>Table: </strong> {currentIndex + 1} of {tables.length}
+            <Button size="sm" variant="secondary" onClick={this.nextTable} disabled={currentIndex + 1 === tables.length}>
               Next Table
             </Button>
           </Col>
