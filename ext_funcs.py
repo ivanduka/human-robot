@@ -10,23 +10,58 @@ import pandas as pd
 import traceback
 import json
 import re
+import PyPDF2
 
 
-def cleanup_df(df):
-    r = re.compile("\S")  # Any non-whitespace character
+def insert_pdf(args):
+    buf = StringIO()
+    with redirect_stdout(buf), redirect_stderr(buf):
+        pdf_path, engine_string, engine2_string = args
+        pdf_path = Path(pdf_path)
+        engine = create_engine(engine_string)
+        engine2 = create_engine(engine2_string)
 
-    def row_has_content(row):
-        for cell in row:
-            if r.search(cell):
-                return True
-        return False
+        def get_number_of_pages():
+            with pdf_path.open("rb") as pdf:
+                reader = PyPDF2.PdfFileReader(pdf)
+                if reader.isEncrypted:
+                    reader.decrypt("")
+                total_pages = reader.getNumPages()
+                return total_pages
 
-    result = df.values.tolist()
-    result = [row for row in result if row_has_content(row)]
-    result = pd.DataFrame(result).T.values.tolist()
-    result = [row for row in result if row_has_content(row)]
-    result = pd.DataFrame(result).T
-    return result
+        def check_if_file_is_in_db_already():
+            with engine.connect() as conn:
+                statement = text("SELECT * FROM pdfs WHERE pdfName = :pdf_name;")
+                result = conn.execute(statement, {"pdf_name": pdf_path.stem})
+                return True if result.rowcount > 0 else False
+
+        def get_pdf_metadata():
+            statement = text("SELECT ParentID, DataID, CreateDate FROM [CS_Prod].[dbo].[DTreeCore] " +
+                             "WHERE Name LIKE :file_name")
+            with engine2.connect() as conn:
+                df = pd.read_sql(statement, conn, params={"file_name": pdf_path.stem + "%"})
+            return df.to_dict("records")[0]
+
+        try:
+            if (check_if_file_is_in_db_already()):
+                print("Already in DB.")
+                return
+
+            metadata = get_pdf_metadata()
+            metadata["pdf_name"] = pdf_path.stem
+            metadata["pdf_size"] = int(pdf_path.stat().st_size / 1024 / 1024 * 100) / 100
+            metadata["total_pages"] = get_number_of_pages()
+
+            with engine.connect() as conn:
+                statement = text("INSERT INTO pdfs (pdfId, pdfName, pdfSize, filingId, date, totalPages) " +
+                                 "VALUE (:DataID,:pdf_name,:pdf_size,:ParentID,:CreateDate,:total_pages);")
+                result = conn.execute(statement, metadata)
+            print(f"{pdf_path.stem}: successfully inserted {result.rowcount} rows")
+        except Exception as e:
+            print(f"{pdf_path.stem}: ERROR! {e}")
+            traceback.print_tb(e.__traceback__)
+        finally:
+            return buf.getvalue()
 
 
 def extract_image(args):
@@ -54,11 +89,28 @@ def extract_image(args):
                 print(f'Successfully inserted {result.rowcount} rows for {table["tableId"]}')
         except Exception as e:
             print(f'Error extracting {table["tableId"]}: {e}')
+            traceback.print_tb(e.__traceback__)
         finally:
             return buf.getvalue()
 
 
 def extract_csv(args):
+    def cleanup_df(df):
+        r = re.compile("\S")  # Any non-whitespace character
+
+        def row_has_content(row):
+            for cell in row:
+                if r.search(cell):
+                    return True
+            return False
+
+        result = df.values.tolist()
+        result = [row for row in result if row_has_content(row)]
+        result = pd.DataFrame(result).T.values.tolist()
+        result = [row for row in result if row_has_content(row)]
+        result = pd.DataFrame(result).T
+        return result
+
     buf = StringIO()
     with redirect_stdout(buf), redirect_stderr(buf):
         table, engine_string, pdf_files_folder_string, csv_tables_folder_string = args
