@@ -18,8 +18,25 @@ export default class Validation extends Component {
   componentDidMount() {
     const { pdfName } = this.props.match.params;
     this.setState({ pdfName });
+    document.addEventListener("keydown", this.handleKeys);
     this.loadData(pdfName);
   }
+
+  componentWillUnmount() {
+    document.removeEventListener("keydown", this.handleKeys);
+  }
+
+  handleKeys = (event) => {
+    if (event.code === "ArrowLeft") {
+      this.prevTable();
+      event.preventDefault();
+    }
+
+    if (event.code === "ArrowRight") {
+      this.nextTable();
+      event.preventDefault();
+    }
+  };
 
   loadData = async (pdfName, notFirstLoading) => {
     this.setState(() => (notFirstLoading ? {} : { loading: true, imageLoaded: false }));
@@ -223,7 +240,12 @@ export default class Validation extends Component {
               Prev Table
             </Button>
             <strong>Table: </strong> {currentIndex + 1} of {tables.length}
-            <Button size="sm" variant="secondary" onClick={this.nextTable} disabled={currentIndex + 1 === tables.length}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={this.nextTable}
+              disabled={currentIndex + 1 === tables.length}
+            >
               Next Table
             </Button>
           </Col>
