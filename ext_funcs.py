@@ -94,8 +94,8 @@ def extract_csv(args):
             tables = camelot.read_pdf(
                 str(pdf_file_path),
                 table_areas=table_areas, pages=str(table['page']),
-                strip_text='\n', line_scale=40, flag_size=True, copy_text=['v'],)
-            save_table(tables, "lattice-v")
+                strip_text='\n', line_scale=40, flag_size=True, copy_text=['v', 'h'],)
+            save_table(tables, "lattice-vh")
 
             tables = camelot.read_pdf(str(pdf_file_path), table_areas=table_areas, pages=str(table['page']),
                                       strip_text='\n', flavor="stream", flag_size=True)
