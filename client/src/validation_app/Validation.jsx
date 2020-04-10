@@ -262,7 +262,13 @@ export default class Validation extends Component {
           <Col>
             <div className="border border-dark">
               {csvsBlock}
-              <Button variant="warning" size="sm" className="ml-2 mb-3" onClick={() => this.setResult(tableId, null)}>
+              <Button
+                disabled={!correct_csv}
+                variant="warning"
+                size="sm"
+                className="ml-2 mb-3"
+                onClick={() => this.setResult(tableId, null)}
+              >
                 Unset Validation
               </Button>
             </div>
