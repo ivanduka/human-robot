@@ -11,12 +11,14 @@ const csvPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\csv_tables";
 const jpgPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\jpg_tables";
 const pdfPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\pdf_files";
 for (let p of [csvPath, jpgPath, pdfPath]) {
-  fs.access(p, err => {
+  fs.access(p, (err) => {
     if (err) throw new Error(`Path ${p} is not accessible`);
   });
 }
 
 const app = express();
+
+app.options("*", cors());
 
 const accessLogStream = fs.createWriteStream(
   path.join(__dirname, "access.log"),
@@ -25,12 +27,12 @@ const accessLogStream = fs.createWriteStream(
 app.use(morgan("combined", { stream: accessLogStream }));
 app.use(morgan("dev"));
 
-const db = async q => {
+const db = async (q) => {
   const config = {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
-    database: process.env.DB_DATABASE
+    database: process.env.DB_DATABASE,
   };
 
   try {
@@ -47,7 +49,13 @@ const table_index = async (req, res) => {
   const result = await db({
     query: `
 SELECT 
-    p.*,
+    p.pdfId,
+    p.pdfName,
+    p.pdfSize,
+    p.filingId,
+    p.date,
+    p.totalPages,
+    p.status,
     COUNT(t.pdfName) AS tableCount,
     COUNT(t.correct_csv) AS tablesValidated
 FROM
@@ -56,7 +64,7 @@ FROM
     tables t ON p.pdfName = t.pdfName
 GROUP BY p.pdfName
 ORDER BY p.pdfId; 
-    `
+    `,
   });
   if (result.error) {
     res.status(400);
@@ -150,7 +158,7 @@ const insertTable = async (req, res) => {
     y2,
     pageHeight,
     pageWidth,
-    continuationOf
+    continuationOf,
   } = req.body;
 
   const creatorIp =
@@ -172,8 +180,8 @@ const insertTable = async (req, res) => {
       y2,
       tableTitle,
       continuationOf,
-      creatorIp
-    ]
+      creatorIp,
+    ],
   };
   const result = await db(query);
   if (result.error || result.results.affectedRows === 0) {
