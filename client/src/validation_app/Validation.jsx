@@ -252,6 +252,7 @@ export default class Validation extends Component {
         </Row>
         <Row>
           <Col>
+            {imageLoaded || <Spinner animation="border" />}
             <img
               src={`/jpg/${tableId}.jpg`}
               className="img-fluid border border-dark sticky"

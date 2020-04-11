@@ -13,93 +13,93 @@ export default class ExtractionIndex extends Component {
         label: "PDF ID",
         field: "pdfId",
         sort: "asc",
-        width: 100
+        width: 100,
       },
       {
         label: "PDF Name",
         field: "pdfName",
         sort: "asc",
-        width: 100
+        width: 50,
       },
 
       {
         label: "PDF Size (MB)",
         field: "pdfSize",
         sort: "asc",
-        width: 100
+        width: 100,
       },
       {
         label: "Filing ID",
         field: "filingId",
         sort: "asc",
-        width: 100
+        width: 100,
       },
       {
         label: "Sumbission Date",
         field: "date",
         sort: "asc",
-        width: 150
+        width: 150,
       },
       {
         label: "Total Pages",
         field: "totalPages",
         sort: "asc",
-        width: 100
+        width: 100,
       },
       {
         label: "",
         field: "capturingLink",
         sort: "asc",
-        width: 100
+        width: 100,
       },
       {
         label: "Tables Captured",
         field: "tableCount",
         sort: "asc",
-        width: 100
+        width: 100,
       },
       {
         label: "Status",
         field: "status",
         sort: "asc",
-        width: 100
+        width: 100,
       },
       {
         label: "",
         field: "validatingLink",
         sort: "asc",
-        width: 100
+        width: 100,
       },
       {
         label: "Tables Validated",
         field: "tablesValidated",
         sort: "asc",
-        width: 100
+        width: 100,
       },
       {
         label: "Tables Not Validated",
         field: "tablesNotValidated",
         sort: "asc",
-        width: 100
-      }
+        width: 100,
+      },
     ],
     rows: null,
-    loading: true
+    loading: true,
   };
 
   componentDidMount() {
     this.loadData();
   }
 
-  handleCapturingLink = pdfName => {
+  handleCapturingLink = (pdfName) => {
     this.props.history.push({
-      pathname: "/extraction/" + pdfName
+      pathname: "/extraction/" + pdfName,
     });
   };
 
-  handleValidatingLink = pdfName => {
+  handleValidatingLink = (pdfName) => {
     this.props.history.push({
-      pathname: "/validation/" + pdfName
+      pathname: "/validation/" + pdfName,
     });
   };
 
@@ -108,12 +108,12 @@ export default class ExtractionIndex extends Component {
   loadData = () => {
     this.setState({ loading: true });
     fetch(`/table_index`)
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(({ error, results }) => {
         if (error) {
           return alert(JSON.stringify(error));
         }
-        const rows = results.map(row => ({
+        const rows = results.map((row) => ({
           ...row,
           date: new Date(row.date).toISOString().split("T")[0],
           capturingLink: (
@@ -126,15 +126,11 @@ export default class ExtractionIndex extends Component {
             </Button>
           ),
           validatingLink: (
-            <Button
-              variant="info"
-              size="sm"
-              onClick={() => this.handleValidatingLink(row.pdfName)}
-            >
+            <Button variant="info" size="sm" onClick={() => this.handleValidatingLink(row.pdfName)}>
               Validate
             </Button>
           ),
-          tablesNotValidated: row.tableCount - row.tablesValidated
+          tablesNotValidated: row.tableCount - row.tablesValidated,
         }));
         this.setState({ rows, loading: false });
       });
