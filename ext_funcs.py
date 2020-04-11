@@ -11,6 +11,8 @@ import traceback
 import json
 import re
 import PyPDF2
+from tika import parser
+import dateutil.parser
 
 
 def insert_pdf(args):
@@ -51,10 +53,12 @@ def insert_pdf(args):
             metadata["pdf_name"] = pdf_path.stem
             metadata["pdf_size"] = int(pdf_path.stat().st_size / 1024 / 1024 * 100) / 100
             metadata["total_pages"] = get_number_of_pages()
+            metadata["xmlContent"] = parser.from_file(str(pdf_path), xmlContent=True)["content"]
+            # metadata["CreateDate"] = dateutil.parser.parse(metadata["CreateDate"])
 
             with engine.connect() as conn:
-                statement = text("INSERT INTO pdfs (pdfId, pdfName, pdfSize, filingId, date, totalPages) " +
-                                 "VALUE (:DataID,:pdf_name,:pdf_size,:ParentID,:CreateDate,:total_pages);")
+                statement = text("INSERT INTO pdfs (pdfId, pdfName, pdfSize, filingId, date, totalPages, xmlContent) " +
+                                 "VALUE (:DataID,:pdf_name,:pdf_size,:ParentID,:CreateDate,:total_pages, :xmlContent);")
                 result = conn.execute(statement, metadata)
             print(f"{pdf_path.stem}: successfully inserted {result.rowcount} rows")
         except Exception as e:

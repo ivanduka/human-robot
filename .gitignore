@@ -28,3 +28,4 @@ test.py
 .idea
 /__pycache__
 /access.log
+.ipynb_checkpoints/processing-checkpoint.ipynb
