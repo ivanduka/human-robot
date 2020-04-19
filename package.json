@@ -4,7 +4,7 @@
   "description": "semi-automatic pdf tables extraction system",
   "main": "server.js",
   "scripts": {
-    "start": "pm2 start server.js --watch",
+    "start": "pm2 start server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
