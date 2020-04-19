@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import { generatePath, Link } from "react-router-dom";
 import { Button, Spinner, Alert, Form, Container, Row, Col } from "react-bootstrap";
 import { Helmet } from "react-helmet";
-import Papa from "papaparse";
 import "./Validation.css";
 
 export default class Validation extends Component {
