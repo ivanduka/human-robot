@@ -171,7 +171,8 @@ export default class Extraction extends Component {
   };
 
   handleCopy = (e) => {
-    const tableTitle = window.getSelection().toString().replace(/\s+/g, " ").trim();
+    const rgx = /[^a-z0-9\.\,\:\(\)\[\]\{\}\=\+\-\_\*\&\^\%\$\#\@\!\`\~\\\|\;\'\"\/\?\>\<]+/ig
+    const tableTitle = window.getSelection().toString().replace(rgx, " ").trim();
 
     window.getSelection().empty();
     e.clipboardData.setData("text/plain", tableTitle);
