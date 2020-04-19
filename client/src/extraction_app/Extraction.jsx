@@ -25,14 +25,13 @@ export default class Extraction extends Component {
     tables: null,
     pagesWithTables: null,
     locked: "locked",
-    locking: false
+    locking: false,
   };
 
   componentDidUpdate(prevProps) {
-    if (
-      this.props.match.params.pageNumber !== prevProps.match.params.pageNumber
-    ) {
+    if (this.props.match.params.pageNumber !== prevProps.match.params.pageNumber) {
       let { pdfName, pageNumber } = this.props.match.params;
+      pdfName = decodeURIComponent(pdfName);
       this.loadTables(pdfName);
       this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
       this.loadPdfStatus(pdfName);
@@ -40,7 +39,8 @@ export default class Extraction extends Component {
   }
 
   componentDidMount() {
-    const { pdfName, pageNumber } = this.props.match.params;
+    let { pdfName, pageNumber } = this.props.match.params;
+    pdfName = decodeURIComponent(pdfName);
     this.loadTables(pdfName);
     this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
     this.loadPdfStatus(pdfName);
@@ -56,19 +56,7 @@ export default class Extraction extends Component {
   }
 
   handleSave = async () => {
-    const {
-      tableId,
-      pageNumber,
-      tableTitle,
-      pdfName,
-      x1,
-      x2,
-      y1,
-      y2,
-      width,
-      height,
-      continuationOf
-    } = this.state;
+    const { tableId, pageNumber, tableTitle, pdfName, x1, x2, y1, y2, width, height, continuationOf } = this.state;
 
     if (!tableTitle || !x1 || !tableTitle.trim()) {
       return alert("Please copy/enter the table title and select the table!");
@@ -89,8 +77,8 @@ export default class Extraction extends Component {
           y2,
           pageWidth: width,
           pageHeight: height,
-          continuationOf
-        })
+          continuationOf,
+        }),
       });
 
       const data = await req.json();
@@ -105,7 +93,7 @@ export default class Extraction extends Component {
     }
   };
 
-  loadTables = async pdfName => {
+  loadTables = async (pdfName) => {
     this.setState({ tables: null });
 
     if (!pdfName) {
@@ -116,12 +104,13 @@ export default class Extraction extends Component {
       const req = await fetch(`/getTables`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pdfName })
+        body: JSON.stringify({ pdfName }),
       });
 
       const data = await req.json();
       const { error, results } = data;
       if (error || req.status !== 200) throw new Error(JSON.stringify(data));
+
 
       this.setState({ tables: results });
       this.drawTables(results);
@@ -130,19 +119,20 @@ export default class Extraction extends Component {
     }
   };
 
-  loadPdfStatus = async pdfName => {
+  loadPdfStatus = async (pdfName) => {
     this.setState({ locked: "locked", locking: true });
 
     try {
       const req = await fetch(`/getPdfStatus`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pdfName })
+        body: JSON.stringify({ pdfName }),
       });
 
       const data = await req.json();
       const { error, results } = data;
       if (error || req.status !== 200) throw new Error(JSON.stringify(data));
+
 
       const { status } = results[0];
       this.setState({ locked: status, locking: false });
@@ -153,13 +143,7 @@ export default class Extraction extends Component {
 
   setPdfStatus = async () => {
     const { pdfName, locked } = this.state;
-    if (
-      window.confirm(
-        `Do you really want to ${
-          locked ? "unlock" : "lock"
-        } the file for change?`
-      )
-    ) {
+    if (window.confirm(`Do you really want to ${locked ? "unlock" : "lock"} the file for change?`)) {
       this.setState({ locked: true, locking: true });
 
       try {
@@ -168,8 +152,8 @@ export default class Extraction extends Component {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             pdfName,
-            status: locked === "locked" ? "" : "locked"
-          })
+            status: locked === "locked" ? "" : "locked",
+          }),
         });
 
         const data = await req.json();
@@ -178,7 +162,7 @@ export default class Extraction extends Component {
 
         this.setState(() => ({
           locked: locked === "locked" ? "" : "locked",
-          locking: false
+          locking: false,
         }));
       } catch (e) {
         alert(e);
@@ -186,12 +170,8 @@ export default class Extraction extends Component {
     }
   };
 
-  handleCopy = e => {
-    const tableTitle = window
-      .getSelection()
-      .toString()
-      .replace(/\s+/g, " ")
-      .trim();
+  handleCopy = (e) => {
+    const tableTitle = window.getSelection().toString().replace(/\s+/g, " ").trim();
 
     window.getSelection().empty();
     e.clipboardData.setData("text/plain", tableTitle);
@@ -200,11 +180,8 @@ export default class Extraction extends Component {
     this.clearRectangle();
   };
 
-  handleKeys = event => {
-    if (
-      event.shiftKey &&
-      (event.key === "KeyS" || event.key.toLowerCase() === "s")
-    ) {
+  handleKeys = (event) => {
+    if (event.shiftKey && (event.key === "KeyS" || event.key.toLowerCase() === "s")) {
       this.handleSave();
       event.preventDefault();
     }
@@ -236,10 +213,7 @@ export default class Extraction extends Component {
     const drawingCanvas = document.querySelector("#drawing");
     const canvasElement = document.createElement("canvas");
     canvasElement.id = "displaying";
-    drawingCanvas.parentNode.insertBefore(
-      canvasElement,
-      drawingCanvas.nextSibling
-    );
+    drawingCanvas.parentNode.insertBefore(canvasElement, drawingCanvas.nextSibling);
 
     const { width, height } = drawingCanvas.getBoundingClientRect();
     canvasElement.setAttribute("height", height);
@@ -268,7 +242,7 @@ export default class Extraction extends Component {
     canvasElement.setAttribute("height", height);
     canvasElement.setAttribute("width", width);
 
-    page.addEventListener("mousedown", e => {
+    page.addEventListener("mousedown", (e) => {
       this.clearRectangle();
       const rect = pdfCanvas.getBoundingClientRect();
       lastMouseX = e.clientX - rect.left;
@@ -289,11 +263,11 @@ export default class Extraction extends Component {
         x2: newMouseX,
         y2: height - newMouseY,
         width,
-        height
+        height,
       }));
     });
 
-    page.addEventListener("mousemove", e => {
+    page.addEventListener("mousemove", (e) => {
       newMouseX = e.clientX - left;
       newMouseY = e.clientY - top;
       if (mouseIsPressed) {
@@ -322,7 +296,7 @@ export default class Extraction extends Component {
       y1: null,
       y2: null,
       width: null,
-      height: null
+      height: null,
     }));
   };
 
@@ -349,7 +323,7 @@ export default class Extraction extends Component {
     }
   };
 
-  onDocumentLoadSuccess = document => {
+  onDocumentLoadSuccess = (document) => {
     const { numPages } = document;
     this.setState({ numPages });
   };
@@ -357,10 +331,10 @@ export default class Extraction extends Component {
   previousPage = () => this.changePage(-1);
   nextPage = () => this.changePage(1);
 
-  changePage = offset => {
+  changePage = (offset) => {
     let pageUpdated = true;
 
-    this.setState(prevState => {
+    this.setState((prevState) => {
       const pageNumber = prevState.pageNumber + offset;
 
       if (pageNumber < 1 || pageNumber > prevState.numPages) {
@@ -371,8 +345,8 @@ export default class Extraction extends Component {
       this.props.history.replace({
         pathname: generatePath(this.props.match.path, {
           pageNumber: pageNumber,
-          pdfName: prevState.pdfName
-        })
+          pdfName: prevState.pdfName,
+        }),
       });
 
       return { pageNumber };
@@ -383,13 +357,13 @@ export default class Extraction extends Component {
     }
   };
 
-  handleDelete = async tableId => {
+  handleDelete = async (tableId) => {
     if (window.confirm(`Do you really want to delete ${tableId}?`)) {
       try {
         const req = await fetch(`/deleteTable`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tableId })
+          body: JSON.stringify({ tableId }),
         });
 
         const data = await req.json();
@@ -403,7 +377,7 @@ export default class Extraction extends Component {
     }
   };
 
-  drawTables = tables => {
+  drawTables = (tables) => {
     const tablesArray = tables || this.state.tables;
     const canvas = document.querySelector("#displaying");
     if (!canvas || !tablesArray || tablesArray.length === 0) return;
@@ -433,15 +407,13 @@ export default class Extraction extends Component {
   handleContinuationChange(event) {
     const continuationOf = event.target.value || null;
     if (continuationOf) {
-      const { tableTitle } = this.state.tables.find(
-        table => table.tableId === continuationOf
-      );
+      const { tableTitle } = this.state.tables.find((table) => table.tableId === continuationOf);
       return this.setState({ continuationOf, tableTitle });
     }
     this.setState({ continuationOf, tableTitle: null });
   }
 
-  handleTableTitleChange = event => {
+  handleTableTitleChange = (event) => {
     this.setState({ tableTitle: event.target.value });
   };
 
@@ -462,12 +434,12 @@ export default class Extraction extends Component {
       height,
       locked,
       locking,
-      continuationOf
+      continuationOf,
     } = this.state;
 
     const prevPageTables = tables
       ? tables
-          .filter(table => pageNumber - table.page === 1)
+          .filter((table) => pageNumber - table.page === 1)
           .map(({ tableId, tableTitle }) => (
             <option value={tableId} key={tableId}>
               {tableTitle} ({tableId})
@@ -480,22 +452,19 @@ export default class Extraction extends Component {
         as="select"
         value={continuationOf || ""}
         size="sm"
-        onChange={e => this.handleContinuationChange(e)}
+        onChange={(e) => this.handleContinuationChange(e)}
       >
         <option value="">not a continuation</option>
         {prevPageTables}
       </Form.Control>
     );
 
-    const continuation = tableId =>
-      `${
-        tables.find(table => table.tableId === tableId)["tableTitle"]
-      } (${tableId})`;
+    const continuation = (tableId) => `${tables.find((table) => table.tableId === tableId)["tableTitle"]} (${tableId})`;
 
     const coordinates = x1
-      ? `${Math.round(x1)}:${Math.round(y1)} => ${Math.round(x2)}:${Math.round(
-          y2
-        )} (page ${Math.round(width)}x${Math.round(height)})`
+      ? `${Math.round(x1)}:${Math.round(y1)} => ${Math.round(x2)}:${Math.round(y2)} (page ${Math.round(
+          width,
+        )}x${Math.round(height)})`
       : "[NOT SELECTED YET]";
 
     const webPageTitle = (
@@ -508,52 +477,34 @@ export default class Extraction extends Component {
       tables.length === 0 ? (
         <div className="table_block">No tables saved for this PDF yet.</div>
       ) : (
-        tables.map(
-          (
-            { tableId, page, x1, x2, y1, y2, continuationOf, tableTitle },
-            i
-          ) => (
-            <div
-              className={[
-                "table_block",
-                page === pageNumber ? "current" : null
-              ].join(" ")}
-              key={i}
-            >
-              <div>
-                <strong>
-                  <Link to={`/extraction/${pdfName}/${page}`}>
-                    {tableTitle}
-                  </Link>
-                </strong>
-              </div>
-              <div>
-                Table ID: <strong>{tableId}</strong>
-              </div>
-              <div>
-                Page <strong>{page}</strong>, Coordinates:{" "}
-                <strong>
-                  {x1}:{y1}=>{x2}:{y2}
-                </strong>
-              </div>
-              {continuationOf ? (
-                <div>
-                  Continuation Of:{" "}
-                  <strong>{continuation(continuationOf)}</strong>
-                </div>
-              ) : null}
-              {page === pageNumber && !locked ? (
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => this.handleDelete(tableId)}
-                >
-                  Delete Table
-                </Button>
-              ) : null}
+        tables.map(({ tableId, page, x1, x2, y1, y2, continuationOf, tableTitle }, i) => (
+          <div className={["table_block", page === pageNumber ? "current" : null].join(" ")} key={i}>
+            <div>
+              <strong>
+                <Link to={`/extraction/${pdfName}/${page}`}>{tableTitle}</Link>
+              </strong>
             </div>
-          )
-        )
+            <div>
+              Table ID: <strong>{tableId}</strong>
+            </div>
+            <div>
+              Page <strong>{page}</strong>, Coordinates:{" "}
+              <strong>
+                {x1}:{y1}=>{x2}:{y2}
+              </strong>
+            </div>
+            {continuationOf ? (
+              <div>
+                Continuation Of: <strong>{continuation(continuationOf)}</strong>
+              </div>
+            ) : null}
+            {page === pageNumber && !locked ? (
+              <Button variant="danger" size="sm" onClick={() => this.handleDelete(tableId)}>
+                Delete Table
+              </Button>
+            ) : null}
+          </div>
+        ))
       )
     ) : (
       <Spinner animation="border" />
@@ -567,8 +518,7 @@ export default class Extraction extends Component {
         <div>
           Page{" "}
           <strong>
-            {pageNumber || <Spinner animation="border" />} of{" "}
-            {numPages || <Spinner animation="border" />}
+            {pageNumber || <Spinner animation="border" />} of {numPages || <Spinner animation="border" />}
           </strong>
         </div>
         <div>
@@ -597,11 +547,7 @@ export default class Extraction extends Component {
     );
 
     const lockButton = (
-      <Button
-        size="sm"
-        variant={locked ? "warning" : "success"}
-        onClick={this.setPdfStatus}
-      >
+      <Button size="sm" variant={locked ? "warning" : "success"} onClick={this.setPdfStatus}>
         {locked ? "Unlock PDF" : "Lock PDF"}
       </Button>
     );
@@ -621,20 +567,10 @@ export default class Extraction extends Component {
         ) : (
           <React.Fragment>
             <div>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={pageNumber <= 1}
-                onClick={this.previousPage}
-              >
+              <Button variant="secondary" size="sm" disabled={pageNumber <= 1} onClick={this.previousPage}>
                 Previous Page (LEFT)
               </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={pageNumber >= numPages}
-                onClick={this.nextPage}
-              >
+              <Button size="sm" variant="secondary" disabled={pageNumber >= numPages} onClick={this.nextPage}>
                 Next Page (RIGHT)
               </Button>
             </div>
@@ -647,7 +583,7 @@ export default class Extraction extends Component {
 
     const pdfDocument = (
       <Document
-        file={`${process.env.PUBLIC_URL}/pdf/${pdfName}.pdf`}
+        file={pdfName ? `${process.env.PUBLIC_URL}/pdf/${encodeURIComponent(pdfName)}.pdf` : null}
         onLoadSuccess={this.onDocumentLoadSuccess}
         loading={<Spinner animation="border" />}
       >
