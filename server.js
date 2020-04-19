@@ -152,7 +152,6 @@ const setPdfStatus = async (req, res) => {
 
 const getPdfStatus = async (req, res) => {
   const { pdfName } = req.body;
-  logger.warn(pdfName);
   const query = `SELECT * FROM pdfs WHERE pdfName = ?;`;
   const result = await db({ query, params: [pdfName] });
   if (result.error) {

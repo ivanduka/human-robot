@@ -80,7 +80,7 @@ export default class Validation extends Component {
       csvs = csvs
         .filter((csv) => csv.tableId === tableId)
         .sort((a, b) => a.method.localeCompare(b.method))
-        .map((csv) => ({ ...csv, data: JSON.parse(csv.csvText) }));
+        .map((csv) => ({ ...csv, data: csv.csvText }));
 
       this.setState({ loading: false, csvs, tables, tableId });
     } catch (e) {
