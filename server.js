@@ -1,11 +1,12 @@
 require("dotenv").config();
-const mysql = require("promise-mysql");
+const mysql = require("mysql2/promise");
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 const morgan = require("morgan");
+const log4js = require("log4js");
 
 const csvPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\csv_tables";
 const jpgPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\jpg_tables";
@@ -20,28 +21,35 @@ const app = express();
 
 app.options("*", cors());
 
-const accessLogStream = fs.createWriteStream(
-  path.join(__dirname, "access.log"),
-  { flags: "a" }
-);
-app.use(morgan("combined", { stream: accessLogStream }));
-app.use(morgan("dev"));
+// LOGGING
+log4js.configure({
+  appenders: {
+    default: { type: "file", filename: "access.log" },
+    console: { type: "console" },
+  },
+  categories: {
+    default: { appenders: ["default", "console"], level: "debug" },
+  },
+});
+const logger = log4js.getLogger();
+
+app.use(morgan("combined", { stream: { write: (str) => logger.debug(str) } }));
+
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_DATABASE,
+  connectionLimit: 50,
+});
 
 const db = async (q) => {
-  const config = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_DATABASE,
-  };
-
   try {
-    const connection = await mysql.createConnection(config);
-    const results = await connection.query(q.query, q.params);
-    await connection.end();
-    return { error: null, results };
+    logger.debug(q);
+    const [results] = await pool.execute(q.query, q.params);
+    return { results };
   } catch (error) {
-    return { error, results: null };
+    return { error };
   }
 };
 
@@ -67,6 +75,7 @@ ORDER BY p.pdfId;
     `,
   });
   if (result.error) {
+    logger.error(result.error);
     res.status(400);
   }
   res.json(result);
@@ -77,6 +86,7 @@ const getTables = async (req, res) => {
   const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page DESC, y1 ASC;`;
   const result = await db({ query, params: [pdfName] });
   if (result.error) {
+    logger.error(result.error);
     res.status(400);
   }
   res.json(result);
@@ -87,6 +97,7 @@ const getValidationTables = async (req, res) => {
   const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page ASC, y1 DESC;`;
   const result = await db({ query, params: [pdfName] });
   if (result.error) {
+    logger.error(result.error);
     res.status(400);
   }
   res.json(result);
@@ -95,7 +106,7 @@ const getValidationTables = async (req, res) => {
 const getValidationCSVs = async (req, res) => {
   const { pdfName } = req.body;
   const query = `
-  SELECT 
+SELECT 
     *
 FROM
     csvs
@@ -111,6 +122,7 @@ WHERE
   `;
   const result = await db({ query, params: [pdfName] });
   if (result.error) {
+    logger.error(error);
     res.status(400);
   }
   res.json(result);
@@ -121,6 +133,7 @@ const setValidation = async (req, res) => {
   const query = `UPDATE tables SET correct_csv = ? WHERE tableId = ?;`;
   const result = await db({ query, params: [csvId, tableId] });
   if (result.error || result.results.affectedRows === 0) {
+    logger.error(result.error);
     res.status(400);
   }
   res.json(result);
@@ -131,6 +144,7 @@ const setPdfStatus = async (req, res) => {
   const query = `UPDATE pdfs SET status = ? WHERE pdfName = ?;`;
   const result = await db({ query, params: [status, pdfName] });
   if (result.error || result.results.affectedRows === 0) {
+    logger.error(result.error);
     res.status(400);
   }
   res.json(result);
@@ -141,6 +155,7 @@ const getPdfStatus = async (req, res) => {
   const query = `SELECT * FROM pdfs WHERE pdfName = ?;`;
   const result = await db({ query, params: [pdfName] });
   if (result.error) {
+    logger.error(result.error);
     res.status(400);
   }
   res.json(result);
@@ -185,6 +200,7 @@ const insertTable = async (req, res) => {
   };
   const result = await db(query);
   if (result.error || result.results.affectedRows === 0) {
+    logger.error(result.error);
     res.status(400);
   }
   res.json(result);
@@ -195,12 +211,20 @@ const deleteTable = async (req, res) => {
   const query = `DELETE FROM tables WHERE tableId = ?;`;
   const result = await db({ query, params: [tableId] });
   if (result.error || result.results.affectedRows === 0) {
+    logger.error(result.error);
     res.status(400);
   }
   res.json(result);
 };
 
+const errorHandler = (err, req, res, next) => {
+  res.status(500);
+  logger.error(error);
+  res.send(JSON.stringify(err));
+};
+
 app.use(bodyParser.json());
+app.use(errorHandler);
 app.use(cors());
 
 app.use("/table_index", table_index);
