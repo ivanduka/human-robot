@@ -46,7 +46,6 @@ def insert_pdf(args):
 
         try:
             if (check_if_file_is_in_db_already()):
-                print("Already in DB.")
                 return
 
             metadata = get_pdf_metadata()
@@ -90,7 +89,6 @@ def extract_image(args):
                 with engine.connect() as conn:
                     statement = text("UPDATE tables SET imageExtracted = 'done' WHERE tableId = :tableId;")
                     result = conn.execute(statement, {"tableId": table["tableId"]})
-                print(f'Successfully inserted {result.rowcount} rows for {table["tableId"]}')
         except Exception as e:
             print(f'Error extracting {table["tableId"]}: {e}')
             traceback.print_tb(e.__traceback__)
@@ -160,7 +158,6 @@ def extract_csv(args):
             with engine.connect() as conn:
                 statement = text("UPDATE tables SET csvsExtracted = 'done' WHERE tableId = :tableId;")
                 result = conn.execute(statement, {"tableId": table['tableId']})
-            print(f"{table['tableId']}: done")
         except Exception as e:
             print(f"{table['tableId']}: {e}")
             traceback.print_tb(e.__traceback__)
