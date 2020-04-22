@@ -375,6 +375,7 @@ export default class Extraction extends Component {
         const { error, results } = data;
         if (error || req.status !== 200) throw new Error(JSON.stringify(data));
 
+        this.clearRectangle();
         this.loadTables();
       } catch (e) {
         alert(e);
