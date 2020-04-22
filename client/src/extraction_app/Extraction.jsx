@@ -191,6 +191,11 @@ export default class Extraction extends Component {
       event.preventDefault();
     }
 
+    if (event.shiftKey && (event.key === "KeyQ" || event.key.toLowerCase() === "q")) {
+      this.handleQuickSaveAsContinuation();
+      event.preventDefault();
+    }
+
     if (event.code === "ArrowLeft") {
       this.previousPage();
       event.preventDefault();
@@ -423,6 +428,21 @@ export default class Extraction extends Component {
     this.setState({ tableTitle: event.target.value });
   };
 
+  handleQuickSaveAsContinuation = () => {
+    const { tables, pageNumber } = this.state;
+    const prevPageTables = tables.filter((t) => pageNumber - t.page === 1);
+    if (prevPageTables.length === 0) {
+      return alert("No tables on the previous page were found!");
+    } else if (prevPageTables.length !== 1) {
+      return alert("More than one table on the previous page was found! Use the regular save function!");
+    }
+    const { tableTitle, tableId } = prevPageTables[0];
+    this.setState({ tableTitle, continuationOf: tableId }, () => {
+      this.handleSave();
+      this.nextPage();
+    });
+  };
+
   render() {
     const {
       numPages,
@@ -548,6 +568,9 @@ export default class Extraction extends Component {
           disabled={!(tableTitle && x1 && tableTitle.trim())}
         >
           Save (SHIFT+S)
+        </Button>
+        <Button onClick={this.handleQuickSaveAsContinuation} variant="warning" size="sm">
+          Save as a cont.(SHIFT+Q)
         </Button>
       </div>
     );
