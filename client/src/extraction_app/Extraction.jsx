@@ -26,6 +26,7 @@ export default class Extraction extends Component {
     pagesWithTables: null,
     locked: "locked",
     locking: false,
+    scrollingAfterUpdate: false,
   };
 
   componentDidUpdate(prevProps) {
@@ -35,6 +36,11 @@ export default class Extraction extends Component {
       this.loadTables(pdfName);
       this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
       this.loadPdfStatus(pdfName);
+    }
+    const current = document.querySelector(".current");
+    if (current && this.state.scrollingAfterUpdate) {
+      this.setState({ scrollingAfterUpdate: false });
+      current.scrollIntoView();
     }
   }
 
@@ -111,8 +117,7 @@ export default class Extraction extends Component {
       const { error, results } = data;
       if (error || req.status !== 200) throw new Error(JSON.stringify(data));
 
-
-      this.setState({ tables: results });
+      this.setState({ tables: results, scrollingAfterUpdate: true });
       this.drawTables(results);
     } catch (e) {
       alert(e);
@@ -132,7 +137,6 @@ export default class Extraction extends Component {
       const data = await req.json();
       const { error, results } = data;
       if (error || req.status !== 200) throw new Error(JSON.stringify(data));
-
 
       const { status } = results[0];
       this.setState({ locked: status, locking: false });
@@ -171,7 +175,7 @@ export default class Extraction extends Component {
   };
 
   handleCopy = (e) => {
-    const rgx = /[^a-z0-9\.\,\:\(\)\[\]\{\}\=\+\-\_\*\&\^\%\$\#\@\!\`\~\\\|\;\'\"\/\?\>\<]+/ig
+    const rgx = /[^a-z0-9\.\,\:\(\)\[\]\{\}\=\+\-\_\*\&\^\%\$\#\@\!\`\~\\\|\;\'\"\/\?\>\<]+/gi;
     const tableTitle = window.getSelection().toString().replace(rgx, " ").trim();
 
     window.getSelection().empty();
@@ -440,10 +444,10 @@ export default class Extraction extends Component {
 
     const prevPageTables = tables
       ? tables
-          .filter((table) => pageNumber - table.page === 1)
-          .map(({ tableId, tableTitle }) => (
+          .filter((table) => pageNumber - table.page === 1 || pageNumber === table.page)
+          .map(({ tableId, tableTitle, page }) => (
             <option value={tableId} key={tableId}>
-              {tableTitle} ({tableId})
+              {pageNumber === page ? "(this page)" : "(prev page)"} {tableTitle} ({tableId})
             </option>
           ))
       : [];
