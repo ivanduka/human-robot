@@ -475,9 +475,19 @@ export default class Extraction extends Component {
       continuationOf,
     } = this.state;
 
+    const continuations = new Set();
+    if (tables) {
+      for (let table of tables) {
+        continuations.add(table.continuationOf);
+      }
+    }
+
     const prevPageTables = tables
       ? tables
-          .filter((table) => pageNumber - table.page === 1 || pageNumber === table.page)
+          .filter(
+            (table) =>
+              (pageNumber - table.page === 1 || pageNumber === table.page) && !continuations.has(table.tableId),
+          )
           .map(({ tableId, tableTitle, page }) => (
             <option value={tableId} key={tableId}>
               {pageNumber === page ? "(this page)" : "(prev page)"} {tableTitle} ({tableId})
