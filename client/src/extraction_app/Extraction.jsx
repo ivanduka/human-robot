@@ -92,7 +92,7 @@ export default class Extraction extends Component {
       if (error || req.status !== 200) throw new Error(JSON.stringify(data));
 
       this.clearRectangle();
-      this.setState({ tableTitle: null });
+      this.setState({ tableTitle: null, continuationOf: null });
       this.loadTables();
     } catch (e) {
       alert(e);
@@ -193,6 +193,16 @@ export default class Extraction extends Component {
 
     if (event.shiftKey && (event.key === "KeyQ" || event.key.toLowerCase() === "q")) {
       this.handleQuickSaveAsContinuation();
+      event.preventDefault();
+    }
+
+    if (event.shiftKey && (event.key === "KeyA" || event.key.toLowerCase() === "a")) {
+      this.previousPage();
+      event.preventDefault();
+    }
+
+    if (event.shiftKey && (event.key === "KeyD" || event.key.toLowerCase() === "d")) {
+      this.nextPage();
       event.preventDefault();
     }
 
@@ -432,9 +442,11 @@ export default class Extraction extends Component {
     const { tables, pageNumber } = this.state;
     const prevPageTables = tables.filter((t) => pageNumber - t.page === 1);
     if (prevPageTables.length === 0) {
-      return alert("No tables on the previous page were found!");
+      alert("No tables on the previous page were found!");
+      return;
     } else if (prevPageTables.length !== 1) {
-      return alert("More than one table on the previous page was found! Use the regular save function!");
+      alert("More than one table on the previous page was found! Use the regular save function!");
+      return;
     }
     const { tableTitle, tableId } = prevPageTables[0];
     this.setState({ tableTitle, continuationOf: tableId }, () => {
@@ -597,10 +609,10 @@ export default class Extraction extends Component {
           <React.Fragment>
             <div>
               <Button variant="secondary" size="sm" disabled={pageNumber <= 1} onClick={this.previousPage}>
-                Previous Page (LEFT)
+                Previous Page (SHIFT+A)
               </Button>
               <Button size="sm" variant="secondary" disabled={pageNumber >= numPages} onClick={this.nextPage}>
-                Next Page (RIGHT)
+                Next Page (SHIFT+D)
               </Button>
             </div>
             {locked ? null : newTableBlock}
