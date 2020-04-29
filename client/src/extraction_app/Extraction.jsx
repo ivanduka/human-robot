@@ -179,7 +179,9 @@ export default class Extraction extends Component {
     const tableTitle = window.getSelection().toString().replace(rgx, " ").trim();
 
     window.getSelection().empty();
-    e.clipboardData.setData("text/plain", tableTitle);
+    if (e.clipboardData) {
+      e.clipboardData.setData("text/plain", tableTitle);
+    }
     e.preventDefault();
     this.setState(() => ({ tableTitle }));
     this.clearRectangle();
@@ -206,13 +208,8 @@ export default class Extraction extends Component {
       event.preventDefault();
     }
 
-    if (event.code === "ArrowLeft") {
-      this.previousPage();
-      event.preventDefault();
-    }
-
-    if (event.code === "ArrowRight") {
-      this.nextPage();
+    if (event.shiftKey && (event.key === "KeyC" || event.key.toLowerCase() === "c")) {
+      this.handleCopy(event);
       event.preventDefault();
     }
   };
@@ -574,7 +571,7 @@ export default class Extraction extends Component {
             size="sm"
             as="textarea"
             rows="2"
-            placeholder="Select the table title on the page and copy it (CTRL+C) or just edit here"
+            placeholder="Select the table title on the page and copy it (CTRL+C or SHIFT+C) or just edit here"
             value={tableTitle || ""}
             onChange={this.handleTableTitleChange}
           />
