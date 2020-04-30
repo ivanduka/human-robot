@@ -518,7 +518,10 @@ export default class Extraction extends Component {
             </Form.Control>
         );
 
-        const continuation = (tableId) => `${tables.find((table) => table.tableId === tableId)["tableTitle"]} (${tableId})`;
+        const continuation = (tableId) => {
+            const contTable = tables.find((table) => table.tableId === tableId);
+            return contTable ? `${contTable["tableTitle"]} (${tableId})` : `(${tableId})`;
+        };
 
         const coordinates = x1
             ? `${Math.round(x1)}:${Math.round(y1)} => ${Math.round(x2)}:${Math.round(y2)} (page ${Math.round(
