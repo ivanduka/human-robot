@@ -1,295 +1,292 @@
-import React, { Component } from "react";
-import { generatePath, Link } from "react-router-dom";
-import { Button, Spinner, Alert, Form, Container, Row, Col } from "react-bootstrap";
-import { Helmet } from "react-helmet";
+import React, {Component} from "react";
+import {Link} from "react-router-dom";
+import {Button, Spinner, Alert, Container, Row, Col} from "react-bootstrap";
+import {Helmet} from "react-helmet";
 import "./Validation.css";
 
 export default class Validation extends Component {
-  state = {
-    pdfName: null,
-    csvs: [],
-    tables: [],
-    loading: true,
-    tableId: null,
-    imageLoaded: false,
-  };
+    state = {
+        pdfName: null,
+        csvs: [],
+        tables: [],
+        loading: true,
+        tableId: null,
+        imageLoaded: false,
+    };
 
-  componentDidMount() {
-    const { pdfName } = this.props.match.params;
-    this.setState({ pdfName });
-    document.addEventListener("keydown", this.handleKeys);
-    this.loadData(pdfName);
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener("keydown", this.handleKeys);
-  }
-
-  handleKeys = (event) => {
-    if (event.code === "ArrowLeft") {
-      this.prevTable();
-      event.preventDefault();
+    componentDidMount() {
+        const {pdfName} = this.props.match.params;
+        this.setState({pdfName});
+        document.addEventListener("keydown", this.handleKeys);
+        this.loadData(pdfName);
     }
 
-    if (event.code === "ArrowRight") {
-      this.nextTable();
-      event.preventDefault();
-    }
-  };
-
-  loadData = async (pdfName, notFirstLoading) => {
-    this.setState(() => (notFirstLoading ? {} : { loading: true, imageLoaded: false }));
-
-    if (!pdfName) {
-      pdfName = this.state.pdfName;
+    componentWillUnmount() {
+        document.removeEventListener("keydown", this.handleKeys);
     }
 
-    try {
-      const req1 = fetch(`/getValidationCSVs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pdfName }),
-      });
+    handleKeys = (event) => {
+        if (event.code === "ArrowLeft") {
+            this.prevTable();
+            event.preventDefault();
+        }
 
-      const req2 = fetch(`/getValidationTables`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pdfName }),
-      });
+        if (event.code === "ArrowRight") {
+            this.nextTable();
+            event.preventDefault();
+        }
+    };
 
-      const [reqCsvs, reqTables] = await Promise.all([req1, req2]);
+    loadData = async (pdfName, notFirstLoading) => {
+        this.setState(() => (notFirstLoading ? {} : {loading: true, imageLoaded: false}));
 
-      const dataCsvs = await reqCsvs.json();
-      const errorCsvs = dataCsvs.error;
-      let csvs = dataCsvs.results;
+        if (!pdfName) {
+            pdfName = this.state.pdfName;
+        }
 
-      const dataTables = await reqTables.json();
-      const errorTables = dataTables.error;
-      const tables = dataTables.results;
+        try {
+            const req1 = fetch(`/getValidationCSVs`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({pdfName}),
+            });
 
-      if (errorCsvs || reqCsvs.status !== 200) throw new Error(JSON.stringify(dataCsvs));
-      if (errorTables || reqTables.status !== 200) throw new Error(JSON.stringify(dataTables));
+            const req2 = fetch(`/getValidationTables`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({pdfName}),
+            });
 
-      const tableId = tables.find((table) => table.tableId === this.state.tableId)
-        ? this.state.tableId
-        : tables.length > 0
-        ? tables[0].tableId
-        : null;
+            const [reqCsvs, reqTables] = await Promise.all([req1, req2]);
 
-      csvs = csvs
-        .filter((csv) => csv.tableId === tableId)
-        .sort((a, b) => a.method.localeCompare(b.method))
-        .map((csv) => ({ ...csv, data: csv.csvText }));
+            const dataCsvs = await reqCsvs.json();
+            const errorCsvs = dataCsvs.error;
+            let csvs = dataCsvs.results;
 
-      this.setState({ loading: false, csvs, tables, tableId });
-    } catch (e) {
-      console.log(e);
-      alert(e);
-    }
-  };
+            const dataTables = await reqTables.json();
+            const errorTables = dataTables.error;
+            const tables = dataTables.results;
 
-  prevTable = () => {
-    const { tables, tableId } = this.state;
-    const currentIndex = tables.findIndex((t) => t.tableId === tableId);
-    if (currentIndex === 0) return;
-    this.setState({ tableId: tables[currentIndex - 1].tableId, imageLoaded: false });
-    this.loadData(null, true);
-  };
+            if (errorCsvs || reqCsvs.status !== 200) return alert(JSON.stringify(dataCsvs));
+            if (errorTables || reqTables.status !== 200) return alert(JSON.stringify(dataTables));
 
-  nextTable = () => {
-    const { tables, tableId } = this.state;
-    const currentIndex = tables.findIndex((t) => t.tableId === tableId);
-    if (currentIndex === tables.length - 1) return;
-    this.setState({ tableId: tables[currentIndex + 1].tableId, imageLoaded: false });
-    this.loadData(null, true);
-  };
+            const tableId = tables.find((table) => table.tableId === this.state.tableId)
+                ? this.state.tableId
+                : tables.length > 0
+                    ? tables[0].tableId
+                    : null;
 
-  imageOnLoad = () => {
-    this.setState({ imageLoaded: true });
-  };
+            csvs = csvs
+                .filter((csv) => csv.tableId === tableId)
+                .sort((a, b) => a.method.localeCompare(b.method))
+                .map((csv) => ({...csv, data: csv["csvText"]}));
 
-  setResult = async (tableId, csvId) => {
-    const res = await fetch("/setValidation", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ tableId, csvId }),
-    });
+            this.setState({loading: false, csvs, tables, tableId});
+        } catch (e) {
+            alert(e);
+        }
+    };
 
-    const { error, results } = await res.json();
+    prevTable = () => {
+        const {tables, tableId} = this.state;
+        const currentIndex = tables.findIndex((t) => t.tableId === tableId);
+        if (currentIndex === 0) return;
+        this.setState({tableId: tables[currentIndex - 1].tableId, imageLoaded: false});
+        this.loadData(null, true);
+    };
 
-    if (error || res.status !== 200) throw new Error(JSON.stringify({ error, results }));
+    nextTable = () => {
+        const {tables, tableId} = this.state;
+        const currentIndex = tables.findIndex((t) => t.tableId === tableId);
+        if (currentIndex === tables.length - 1) return;
+        this.setState({tableId: tables[currentIndex + 1].tableId, imageLoaded: false});
+        this.loadData(null, true);
+    };
 
-    this.loadData(null, true);
-  };
+    imageOnLoad = () => {
+        this.setState({imageLoaded: true});
+    };
 
-  render() {
-    const { pdfName, csvs, tables, loading, tableId, imageLoaded } = this.state;
-    if (loading) {
-      return <Spinner animation="border" />;
-    }
+    setResult = async (tableId, csvId) => {
+        const res = await fetch("/setValidation", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({tableId, csvId}),
+        });
 
-    if (!tableId) {
-      return <Alert variant="danger">Not tables captured/extracted for this PDF</Alert>;
-    }
+        const {error, results} = await res.json();
 
-    const currentIndex = tables.findIndex((t) => t.tableId === tableId);
-    const { continuationOf, correct_csv, tableTitle, page } = tables[currentIndex];
+        if (error || res.status !== 200) throw new Error(JSON.stringify({error, results}));
 
-    const conTable = continuationOf ? tables.find((t) => t.tableId === continuationOf) : null;
-    const conTableBlock = continuationOf ? (
-      <p>
-        <strong>Continuation Table Name: </strong>
-        {conTable.tableTitle}, <strong>Continuation Table ID: </strong>
-        {conTable.tableId}
-      </p>
-    ) : null;
+        await this.loadData(null, true);
+    };
 
-    const constructTable = (table) => (
-      <table>
-        <tbody>
-          {table.map((row) => (
-            <tr>
-              {row.map((col) => (
-                <td>{col}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
+    render() {
+        const {pdfName, csvs, tables, loading, tableId, imageLoaded} = this.state;
+        if (loading) {
+            return <Spinner animation="border"/>;
+        }
 
-    const csvsBlock = csvs.map(({ csvId, method, data }) => (
-      <div className="mb-5" key={csvId}>
-        <h6 className="ml-2">
-          <strong>Method: </strong>
-          {method}
-        </h6>
-        <p className="ml-2">
-          <strong>CSV ID: </strong>
-          {csvId}
-        </p>
-        <Button
-          variant="success"
-          size="sm"
-          disabled={csvId === correct_csv}
-          className="ml-2"
-          onClick={() => this.setResult(tableId, csvId)}
-        >
-          Select
-        </Button>
-        <div
-          className={
-            csvId === correct_csv ? "ml-2 mr-2 correct" : correct_csv ? "ml-2 mr-2 incorrect" : "ml-2 mr-2 bg-light"
-          }
-        >
-          {constructTable(data)}
-        </div>
-      </div>
-    ));
+        if (!tableId) {
+            return <Alert variant="danger">Not tables captured/extracted for this PDF</Alert>;
+        }
 
-    const webPageTitle = (
-      <Helmet>
-        <title>{pdfName}</title>
-      </Helmet>
-    );
+        const currentIndex = tables.findIndex((t) => t.tableId === tableId);
+        const {continuationOf, correct_csv, tableTitle, page} = tables[currentIndex];
 
-    const mainBlock = (
-      <Container fluid>
-        <Row>
-          <Col>
-            <Link to="/tables_index">
-              <Button className="ml-0" size="sm" variant="info">
-                Back to Index
-              </Button>
-            </Link>
-            <Button size="sm" variant="warning" onClick={() => this.loadData()}>
-              Refresh Data
-            </Button>
-          </Col>
-        </Row>
-        <Row>
-          <Col>
+        const conTable = continuationOf ? tables.find((t) => t.tableId === continuationOf) : null;
+        const conTableBlock = continuationOf ? (
             <p>
-              <strong>PDF Name: </strong>
-              {pdfName}, <strong>Page: </strong> {page}
+                <strong>Continuation Table Name: </strong>
+                {conTable.tableTitle}, <strong>Continuation Table ID: </strong>
+                {conTable.tableId}
             </p>
-          </Col>
-        </Row>
-        <Row>
-          <Col>
-            <p>
-              <strong>Table Name: </strong>
-              {tableTitle}, <strong>Table ID: </strong>
-              {tableId}
-            </p>
-            {conTableBlock}
-          </Col>
-        </Row>
-        <Row>
-          <Col>
-            <Button
-              className="ml-0"
-              size="sm"
-              variant="secondary"
-              onClick={this.prevTable}
-              disabled={currentIndex + 1 === 1}
-            >
-              Prev Table
-            </Button>
-            <strong>Table: </strong> {currentIndex + 1} of {tables.length}
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={this.nextTable}
-              disabled={currentIndex + 1 === tables.length}
-            >
-              Next Table
-            </Button>
-          </Col>
-        </Row>
-        <Row>
-          <Col>
-            {imageLoaded || <Spinner animation="border" />}
-            <img
-              src={`/jpg/${tableId}.jpg`}
-              className="img-fluid border border-dark sticky"
-              style={imageLoaded ? {} : { visibility: "hidden" }}
-              onLoad={this.imageOnLoad}
-            />
-          </Col>
-          <Col>
-            <div className="border border-dark">
-              {csvsBlock}
-              <Button
-                disabled={!correct_csv}
-                variant="warning"
-                size="sm"
-                className="ml-2 mb-3"
-                onClick={() => this.setResult(tableId, null)}
-              >
-                Unset Validation
-              </Button>
+        ) : null;
+
+        const constructTable = (table) => (
+            <table>
+                <tbody>
+                {table.map((row) => (
+                    <tr>
+                        {row.map((col) => (
+                            <td>{col}</td>
+                        ))}
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+        );
+
+        const csvsBlock = csvs.map(({csvId, method, data}) => (
+            <div className="mb-5" key={csvId}>
+                <h6 className="ml-2">
+                    <strong>Method: </strong>
+                    {method}
+                </h6>
+                <p className="ml-2">
+                    <strong>CSV ID: </strong>
+                    {csvId}
+                </p>
+                <Button
+                    variant="success"
+                    size="sm"
+                    disabled={csvId === correct_csv}
+                    className="ml-2"
+                    onClick={() => this.setResult(tableId, csvId)}
+                >
+                    Select
+                </Button>
+                <div
+                    className={
+                        csvId === correct_csv ? "ml-2 mr-2 correct" : correct_csv ? "ml-2 mr-2 incorrect" : "ml-2 mr-2 bg-light"
+                    }
+                >
+                    {constructTable(data)}
+                </div>
             </div>
-          </Col>
-        </Row>
-      </Container>
-    );
+        ));
 
-    return (
-      <React.Fragment>
-        {webPageTitle}
-        {loading ? (
-          <Spinner animation="border" />
-        ) : tableId ? (
-          mainBlock
-        ) : (
-          <Alert variant="danger">Not tables captured/extracted for this PDF</Alert>
-        )}
-      </React.Fragment>
-    );
+        const webPageTitle = (
+            <Helmet>
+                <title>{pdfName}</title>
+            </Helmet>
+        );
 
-    return;
-  }
+        const mainBlock = (
+            <Container fluid>
+                <Row>
+                    <Col>
+                        <Link to="/tables_index">
+                            <Button className="ml-0" size="sm" variant="info">
+                                Back to Index
+                            </Button>
+                        </Link>
+                        <Button size="sm" variant="warning" onClick={() => this.loadData()}>
+                            Refresh Data
+                        </Button>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col>
+                        <p>
+                            <strong>PDF Name: </strong>
+                            {pdfName}, <strong>Page: </strong> {page}
+                        </p>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col>
+                        <p>
+                            <strong>Table Name: </strong>
+                            {tableTitle}, <strong>Table ID: </strong>
+                            {tableId}
+                        </p>
+                        {conTableBlock}
+                    </Col>
+                </Row>
+                <Row>
+                    <Col>
+                        <Button
+                            className="ml-0"
+                            size="sm"
+                            variant="secondary"
+                            onClick={this.prevTable}
+                            disabled={currentIndex + 1 === 1}
+                        >
+                            Prev Table
+                        </Button>
+                        <strong>Table: </strong> {currentIndex + 1} of {tables.length}
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={this.nextTable}
+                            disabled={currentIndex + 1 === tables.length}
+                        >
+                            Next Table
+                        </Button>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col>
+                        {imageLoaded || <Spinner animation="border"/>}
+                        <img
+                            src={`/jpg/${tableId}.jpg`}
+                            className="img-fluid border border-dark sticky"
+                            style={imageLoaded ? {} : {visibility: "hidden"}}
+                            onLoad={this.imageOnLoad}
+                            alt="Table screenshot from the PDF file"/>
+                    </Col>
+                    <Col>
+                        <div className="border border-dark">
+                            {csvsBlock}
+                            <Button
+                                disabled={!correct_csv}
+                                variant="warning"
+                                size="sm"
+                                className="ml-2 mb-3"
+                                onClick={() => this.setResult(tableId, null)}
+                            >
+                                Unset Validation
+                            </Button>
+                        </div>
+                    </Col>
+                </Row>
+            </Container>
+        );
+
+        return (
+            <React.Fragment>
+                {webPageTitle}
+                {loading ? (
+                    <Spinner animation="border"/>
+                ) : tableId ? (
+                    mainBlock
+                ) : (
+                    <Alert variant="danger">Not tables captured/extracted for this PDF</Alert>
+                )}
+            </React.Fragment>
+        );
+    }
 }

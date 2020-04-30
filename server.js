@@ -70,7 +70,7 @@ FROM
     pdfs p
         LEFT JOIN
     tables t ON p.pdfName = t.pdfName
-GROUP BY p.pdfName
+GROUP BY p.pdfName, p.pdfId
 ORDER BY p.pdfId; 
     `,
   });
@@ -83,7 +83,7 @@ ORDER BY p.pdfId;
 
 const getTables = async (req, res) => {
   const { pdfName } = req.body;
-  const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page DESC, y1 ASC;`;
+  const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page DESC, y1;`;
   const result = await db({ query, params: [pdfName] });
   if (result.error) {
     logger.error(result.error);
@@ -94,7 +94,7 @@ const getTables = async (req, res) => {
 
 const getValidationTables = async (req, res) => {
   const { pdfName } = req.body;
-  const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page ASC, y1 DESC;`;
+  const query = `SELECT * FROM tables WHERE pdfName = ? ORDER BY page, y1 DESC;`;
   const result = await db({ query, params: [pdfName] });
   if (result.error) {
     logger.error(result.error);
@@ -181,8 +181,7 @@ const insertTable = async (req, res) => {
 
   const query = {
     query:
-      "INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, " +
-      "y2, tableTitle, continuationOf, creatorIp) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);",
+      "INSERT INTO tables (tableId,pdfName,page,pageWidth,pageHeight,x1,y1,x2,y2,tableTitle,continuationOf,creatorIp) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);",
     params: [
       tableId,
       pdfName,
@@ -217,6 +216,7 @@ const deleteTable = async (req, res) => {
   res.json(result);
 };
 
+// noinspection JSUnusedLocalSymbols
 const errorHandler = (err, req, res, next) => {
   res.status(500);
   logger.error(error);
