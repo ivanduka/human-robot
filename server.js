@@ -55,20 +55,23 @@ const db = async (q) => {
 
 const table_index = async (req, res) => {
     const result = await db({
-        query: `SELECT p.pdfId,
-                       p.pdfName,
-                       p.pdfSize,
-                       p.filingId,
-                       p.date,
-                       p.totalPages,
-                       p.status,
-                       COUNT(t.pdfName)     AS tableCount,
-                       COUNT(t.correct_csv) AS tablesValidated
-                FROM pdfs p
-                         LEFT JOIN
-                     tables t ON p.pdfName = t.pdfName
-                GROUP BY p.pdfId
-                ORDER BY p.pdfId;
+        query: `
+            SELECT p.pdfId,
+                   p.pdfName,
+                   p.pdfSize,
+                   p.filingId,
+                   p.date,
+                   p.totalPages,
+                   p.status,
+                   COUNT(t.correct_csv)                                 AS tablesValidated,
+                   COUNT(IF(t.relevancy = 0, 1, null))                  AS tablesIrrelevant,
+                   COUNT(IF(t.correct_csv || t.relevancy = 0, null, 0)) AS tablesNotValidated,
+                   COUNT(t.pdfName)                                     AS tableCount
+            FROM pdfs p
+                     LEFT JOIN
+                 tables t ON p.pdfName = t.pdfName
+            GROUP BY p.pdfId
+            ORDER BY p.pdfId;
         `,
     });
     if (result.error) {

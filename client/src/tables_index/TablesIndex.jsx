@@ -77,6 +77,12 @@ export default class ExtractionIndex extends Component {
                 width: 100,
             },
             {
+                label: "Tables Irrelevant",
+                field: "tablesIrrelevant",
+                sort: "asc",
+                width: 100,
+            },
+            {
                 label: "Tables Not Validated",
                 field: "tablesNotValidated",
                 sort: "asc",
@@ -131,7 +137,6 @@ export default class ExtractionIndex extends Component {
                             Validate
                         </Button>
                     ),
-                    tablesNotValidated: row["tableCount"] - row["tablesValidated"],
                 }));
                 this.setState({rows, loading: false});
             });
