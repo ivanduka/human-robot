@@ -67,7 +67,7 @@ const table_index = async (req, res) => {
                 FROM pdfs p
                          LEFT JOIN
                      tables t ON p.pdfName = t.pdfName
-                GROUP BY p.pdfName, p.pdfId
+                GROUP BY p.pdfId
                 ORDER BY p.pdfId;
         `,
     });
