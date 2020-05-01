@@ -524,9 +524,7 @@ export default class Extraction extends Component {
         };
 
         const coordinates = x1
-            ? `${Math.round(x1)}:${Math.round(y1)} => ${Math.round(x2)}:${Math.round(y2)} (page ${Math.round(
-                width,
-            )}x${Math.round(height)})`
+            ? `${Math.round(x1)}:${Math.round(y1)} => ${Math.round(x2)}:${Math.round(y2)} (page ${Math.round(width,)}x${Math.round(height)})`
             : "[NOT SELECTED YET]";
 
         const webPageTitle = (

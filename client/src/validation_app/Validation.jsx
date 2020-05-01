@@ -117,11 +117,25 @@ export default class Validation extends Component {
         });
 
         const {error, results} = await res.json();
-
-        if (error || res.status !== 200) throw new Error(JSON.stringify({error, results}));
-
+        if (error || res.status !== 200) alert(JSON.stringify({error, results}));
         await this.loadData(null, true);
     };
+
+    setRelevancy = async (tableId, relevancy) => {
+        await this.setResult(tableId, null)
+
+        const res = await fetch("/setRelevancy", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({tableId, relevancy}),
+        });
+
+        const {error, results} = await res.json();
+        if (error || res.status !== 200) alert(JSON.stringify({error, results}));
+        await this.loadData(null, true);
+    }
 
     render() {
         const {pdfName, csvs, tables, loading, tableId, imageLoaded} = this.state;
@@ -134,7 +148,7 @@ export default class Validation extends Component {
         }
 
         const currentIndex = tables.findIndex((t) => t.tableId === tableId);
-        const {continuationOf, correct_csv, tableTitle, page} = tables[currentIndex];
+        const {continuationOf, correct_csv, tableTitle, page, relevancy} = tables[currentIndex];
 
         const conTable = continuationOf ? tables.find((t) => t.tableId === continuationOf) : null;
         const conTableBlock = continuationOf ? (
@@ -148,11 +162,9 @@ export default class Validation extends Component {
         const constructTable = (table) => (
             <table>
                 <tbody>
-                {table.map((row) => (
-                    <tr>
-                        {row.map((col) => (
-                            <td>{col}</td>
-                        ))}
+                {table.map((row, idx) => (
+                    <tr key={idx}>
+                        {row.map((col, index) => (<td key={index}>{col}</td>))}
                     </tr>
                 ))}
                 </tbody>
@@ -194,6 +206,29 @@ export default class Validation extends Component {
             </Helmet>
         );
 
+        const csvsArea = relevancy === 0
+            ? <div className="border border-dark">
+                <Alert className="m-2" variant="warning">The table is marked as irrelevant</Alert>
+                <Button className="m-2" size="sm" variant="warning" onClick={() => this.setRelevancy(tableId, 1)}>
+                    MARK TABLE AS RELEVANT
+                </Button>
+            </div>
+            : <div className="border border-dark">
+                <Button className="m-2" size="sm" variant="danger" onClick={() => this.setRelevancy(tableId, 0)}>
+                    MARK TABLE AS IRRELEVANT
+                </Button>
+                {csvsBlock}
+                <Button
+                    disabled={!correct_csv}
+                    variant="warning"
+                    size="sm"
+                    className="ml-2 mb-3"
+                    onClick={() => this.setResult(tableId, null)}
+                >
+                    Unset Validation
+                </Button>
+            </div>
+
         const mainBlock = (
             <Container fluid>
                 <Row>
@@ -203,7 +238,7 @@ export default class Validation extends Component {
                                 Back to Index
                             </Button>
                         </Link>
-                        <Button size="sm" variant="warning" onClick={() => this.loadData()}>
+                        <Button size="sm" variant="primary" onClick={() => this.loadData()}>
                             Refresh Data
                         </Button>
                     </Col>
@@ -259,18 +294,7 @@ export default class Validation extends Component {
                             alt="Table screenshot from the PDF file"/>
                     </Col>
                     <Col>
-                        <div className="border border-dark">
-                            {csvsBlock}
-                            <Button
-                                disabled={!correct_csv}
-                                variant="warning"
-                                size="sm"
-                                className="ml-2 mb-3"
-                                onClick={() => this.setResult(tableId, null)}
-                            >
-                                Unset Validation
-                            </Button>
-                        </div>
+                        {csvsArea}
                     </Col>
                 </Row>
             </Container>
@@ -279,13 +303,7 @@ export default class Validation extends Component {
         return (
             <React.Fragment>
                 {webPageTitle}
-                {loading ? (
-                    <Spinner animation="border"/>
-                ) : tableId ? (
-                    mainBlock
-                ) : (
-                    <Alert variant="danger">Not tables captured/extracted for this PDF</Alert>
-                )}
+                {mainBlock}
             </React.Fragment>
         );
     }
