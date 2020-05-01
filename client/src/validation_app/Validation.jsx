@@ -153,9 +153,8 @@ export default class Validation extends Component {
         const conTable = continuationOf ? tables.find((t) => t.tableId === continuationOf) : null;
         const conTableBlock = continuationOf ? (
             <p>
-                <strong>Continuation Table Name: </strong>
-                {conTable.tableTitle}, <strong>Continuation Table ID: </strong>
-                {conTable.tableId}
+                Continuation Table Name: <strong>{conTable.tableTitle}</strong>, Continuation Table
+                ID: <strong>{conTable.tableId}</strong>
             </p>
         ) : null;
 
@@ -241,6 +240,9 @@ export default class Validation extends Component {
                         <Button size="sm" variant="primary" onClick={() => this.loadData()}>
                             Refresh Data
                         </Button>
+                        <Button size="sm" variant="dark" href={`/extraction/${pdfName}/${page}`} target="blank_">
+                            Open PDF
+                        </Button>
                     </Col>
                 </Row>
                 <Row>
@@ -254,9 +256,7 @@ export default class Validation extends Component {
                 <Row>
                     <Col>
                         <p>
-                            <strong>Table Name: </strong>
-                            {tableTitle}, <strong>Table ID: </strong>
-                            {tableId}
+                            Table Name: <strong>{tableTitle}</strong>, Table ID: <strong>{tableId}</strong>
                         </p>
                         {conTableBlock}
                     </Col>
