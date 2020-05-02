@@ -11,6 +11,7 @@ export default class Validation extends Component {
         tables: [],
         loading: true,
         tableId: null,
+        tags: [],
         imageLoaded: false,
     };
 
@@ -26,12 +27,12 @@ export default class Validation extends Component {
     }
 
     handleKeys = (event) => {
-        if (event.code === "ArrowLeft") {
+        if (event.key === "KeyA" || event.key.toLowerCase() === "a") {
             this.prevTable();
             event.preventDefault();
         }
 
-        if (event.code === "ArrowRight") {
+        if (event.key === "KeyD" || event.key.toLowerCase() === "d") {
             this.nextTable();
             event.preventDefault();
         }
@@ -45,19 +46,25 @@ export default class Validation extends Component {
         }
 
         try {
-            const req1 = fetch(`/getValidationCSVs`, {
+            const res1 = fetch(`/getValidationCSVs`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({pdfName}),
             });
 
-            const req2 = fetch(`/getValidationTables`, {
+            const res2 = fetch(`/getValidationTables`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({pdfName}),
             });
 
-            const [reqCsvs, reqTables] = await Promise.all([req1, req2]);
+            const res3 = await fetch("/getValidationTags", {
+                method: "POST",
+                headers: {"Content-Type": "application/json",},
+                body: JSON.stringify({pdfName}),
+            });
+
+            const [reqCsvs, reqTables, reqTags] = await Promise.all([res1, res2, res3]);
 
             const dataCsvs = await reqCsvs.json();
             const errorCsvs = dataCsvs.error;
@@ -67,8 +74,13 @@ export default class Validation extends Component {
             const errorTables = dataTables.error;
             const tables = dataTables.results;
 
+            const dataTags = await reqTags.json()
+            const errorTags = dataTags.error;
+            let tags = dataTags.results;
+
             if (errorCsvs || reqCsvs.status !== 200) return alert(JSON.stringify(dataCsvs));
             if (errorTables || reqTables.status !== 200) return alert(JSON.stringify(dataTables));
+            if (errorTags || reqTags.status !== 200) return alert(JSON.stringify(dataTags));
 
             const tableId = tables.find((table) => table.tableId === this.state.tableId)
                 ? this.state.tableId
@@ -81,9 +93,12 @@ export default class Validation extends Component {
                 .sort((a, b) => a.method.localeCompare(b.method))
                 .map((csv) => ({...csv, data: csv["csvText"]}));
 
-            this.setState({loading: false, csvs, tables, tableId});
+            tags = tags.filter(t => t.tableId === tableId)
+
+            this.setState({loading: false, csvs, tables, tableId, tags});
         } catch (e) {
-            alert(e);
+            console.log(e);
+            alert(e.toString());
         }
     };
 
@@ -110,9 +125,7 @@ export default class Validation extends Component {
     setResult = async (tableId, csvId) => {
         const res = await fetch("/setValidation", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: {"Content-Type": "application/json",},
             body: JSON.stringify({tableId, csvId}),
         });
 
@@ -126,9 +139,7 @@ export default class Validation extends Component {
 
         const res = await fetch("/setRelevancy", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: {"Content-Type": "application/json",},
             body: JSON.stringify({tableId, relevancy}),
         });
 
@@ -137,8 +148,25 @@ export default class Validation extends Component {
         await this.loadData(null, true);
     }
 
+    setUnsetTag = async (tableId, tagId, set) => {
+        const url = set ? "/tagTable" : "/unTagTable";
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {"Content-Type": "application/json",},
+            body: JSON.stringify({tableId, tagId}),
+        });
+
+        const data = await res.json();
+        console.log(data);
+        const {error, results} = data;
+        console.log(error)
+        console.log(results)
+        if (error || res.status !== 200) alert(JSON.stringify({error, results}));
+        await this.loadData(null, true);
+    }
+
     render() {
-        const {pdfName, csvs, tables, loading, tableId, imageLoaded} = this.state;
+        const {pdfName, csvs, tables, loading, tableId, imageLoaded, tags} = this.state;
         if (loading) {
             return <Spinner animation="border"/>;
         }
@@ -146,6 +174,8 @@ export default class Validation extends Component {
         if (!tableId) {
             return <Alert variant="danger">Not tables captured/extracted for this PDF</Alert>;
         }
+
+
 
         const currentIndex = tables.findIndex((t) => t.tableId === tableId);
         const {continuationOf, correct_csv, tableTitle, page, relevancy} = tables[currentIndex];
@@ -205,6 +235,19 @@ export default class Validation extends Component {
             </Helmet>
         );
 
+        const tagsBlock =
+            <div className="mb-5">
+                {tags.map(t => {
+                    const onClickFunc = t.count === 0
+                        ? () => this.setUnsetTag(tableId, t.tagId, true)
+                        : () => this.setUnsetTag(tableId, t.tagId, false)
+                    return <Button key={t.tagId} size="sm" variant={t.count === 0 ? "light" : "success"}
+                                   onClick={onClickFunc}>{t.tagName}</Button>
+                })
+                }
+            </div>
+
+
         const csvsArea = relevancy === 0
             ? <div className="border border-dark">
                 <Alert className="m-2" variant="warning">The table is marked as irrelevant</Alert>
@@ -213,9 +256,10 @@ export default class Validation extends Component {
                 </Button>
             </div>
             : <div className="border border-dark">
-                <Button className="m-2" size="sm" variant="danger" onClick={() => this.setRelevancy(tableId, 0)}>
+                <Button className="m-2 mb-5" size="sm" variant="danger" onClick={() => this.setRelevancy(tableId, 0)}>
                     MARK TABLE AS IRRELEVANT
                 </Button>
+                {tagsBlock}
                 {csvsBlock}
                 <Button
                     disabled={!correct_csv}
@@ -270,7 +314,7 @@ export default class Validation extends Component {
                             onClick={this.prevTable}
                             disabled={currentIndex + 1 === 1}
                         >
-                            Prev Table
+                            Prev Table (A)
                         </Button>
                         <strong>Table: </strong> {currentIndex + 1} of {tables.length}
                         <Button
@@ -279,7 +323,7 @@ export default class Validation extends Component {
                             onClick={this.nextTable}
                             disabled={currentIndex + 1 === tables.length}
                         >
-                            Next Table
+                            Next Table (D)
                         </Button>
                     </Col>
                 </Row>

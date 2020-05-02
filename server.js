@@ -35,18 +35,17 @@ const logger = log4js.getLogger();
 
 app.use(morgan("combined", {stream: {write: (str) => logger.debug(str)}}));
 
-const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_DATABASE,
-    connectionLimit: 50,
-});
-
 const db = async (q) => {
     try {
+        const conn = await mysql.createConnection({
+            host: process.env.DB_HOST,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASS,
+            database: process.env.DB_DATABASE,
+            connectionLimit: 50,
+        })
         logger.debug(q);
-        const [results] = await pool.execute(q.query, q.params);
+        const [results] = await conn.execute(q.query, q.params);
         return {results};
     } catch (error) {
         return {error};
@@ -76,92 +75,157 @@ const table_index = async (req, res) => {
     });
     if (result.error) {
         logger.error(result.error);
-        res.status(400);
+        return res.status(400).json({error: result.error.toString()});
     }
     res.json(result);
 };
 
 const getTables = async (req, res) => {
     const {pdfName} = req.body;
-    const query = `SELECT *
-                   FROM tables
-                   WHERE pdfName = ?
-                   ORDER BY page DESC, y1;`;
+    const query = `
+        SELECT *
+        FROM tables
+        WHERE pdfName = ?
+        ORDER BY page DESC, y1;
+    `;
     const result = await db({query, params: [pdfName]});
     if (result.error) {
         logger.error(result.error);
-        res.status(400);
+        return res.status(400).json({error: result.error.toString()});
     }
     res.json(result);
 };
 
 const getValidationTables = async (req, res) => {
     const {pdfName} = req.body;
-    const query = `SELECT *
-                   FROM tables
-                   WHERE pdfName = ?
-                   ORDER BY page, y1 DESC;`;
+    const query = `
+        SELECT *
+        FROM tables
+        WHERE pdfName = ?
+        ORDER BY page, y1 DESC;
+    `;
     const result = await db({query, params: [pdfName]});
     if (result.error) {
         logger.error(result.error);
-        res.status(400);
+        return res.status(400).json({error: result.error.toString()});
     }
     res.json(result);
 };
 
+const getValidationTags = async (req, res) => {
+    const {pdfName} = req.body;
+    const query = `
+        SELECT tb.tableId,
+               tg.tagId,
+               tg.tagName,
+               IF(tt.tagId IS NULL, 0, 1) AS count
+        FROM tables tb
+                 CROSS JOIN
+             tags tg
+                 LEFT JOIN
+             tables_tags tt ON (tb.tableId = tt.tableId
+                 AND tg.tagId = tt.tagId)
+        WHERE tb.pdfName = ?
+        ORDER BY tableId, tagName;
+    `;
+    const result = await db({query, params: [pdfName]});
+    if (result.error) {
+        logger.error(result.error);
+        return res.status(400).json({error: result.error.toString()});
+    }
+    res.json(result);
+}
+
+const tagTable = async (req, res) => {
+    const {tableId, tagId} = req.body;
+    const query = `
+        INSERT INTO tables_tags (tableId, tagId)
+        VALUES (?, ?);
+    `;
+    const result = await db({query, params: [tableId, tagId]});
+    if (result.error) {
+        logger.error(result.error);
+        return res.status(400).json({error: result.error.toString()});
+    }
+    res.json(result);
+}
+
+const unTagTable = async (req, res) => {
+    const {tableId, tagId} = req.body;
+    const query = `
+        DELETE
+        FROM tables_tags
+        WHERE tableId = ?
+          AND tagId = ?;
+    `;
+    const result = await db({query, params: [tableId, tagId]});
+    if (result.error) {
+        logger.error(result.error);
+        return res.status(400).json({error: result.error.toString()});
+    }
+    res.json(result);
+}
+
 const getValidationCSVs = async (req, res) => {
     const {pdfName} = req.body;
-    const query = `SELECT *
-                   FROM csvs
-                   WHERE tableId IN (
-                       SELECT tableId
-                       FROM tables
-                       WHERE pdfName = ?
-                   );
+    const query = `
+        SELECT *
+        FROM csvs
+        WHERE tableId IN (
+            SELECT tableId
+            FROM tables
+            WHERE pdfName = ?
+        );
     `;
     const result = await db({query, params: [pdfName]});
     if (result.error) {
         logger.error(error);
-        res.status(400);
+        return res.status(400).json({error: result.error.toString()});
     }
     res.json(result);
 };
 
 const setValidation = async (req, res) => {
     const {tableId, csvId} = req.body;
-    const query = `UPDATE tables
-                   SET correct_csv = ?
-                   WHERE tableId = ?;`;
+    const query = `
+        UPDATE tables
+        SET correct_csv = ?
+        WHERE tableId = ?;
+    `;
     const result = await db({query, params: [csvId, tableId]});
     if (result.error || result.results.affectedRows === 0) {
         logger.error(result.error);
-        res.status(400);
+        return res.status(400).json({error: result.error.toString()});
     }
     res.json(result);
 };
 
 const setPdfStatus = async (req, res) => {
     const {pdfName, status} = req.body;
-    const query = `UPDATE pdfs
-                   SET status = ?
-                   WHERE pdfName = ?;`;
+    const query = `
+        UPDATE pdfs
+        SET status = ?
+        WHERE pdfName = ?;
+    `;
     const result = await db({query, params: [status, pdfName]});
     if (result.error || result.results.affectedRows === 0) {
         logger.error(result.error);
-        res.status(400);
+        return res.status(400).json({error: result.error.toString()});
     }
     res.json(result);
 };
 
 const getPdfStatus = async (req, res) => {
     const {pdfName} = req.body;
-    const query = `SELECT *
-                   FROM pdfs
-                   WHERE pdfName = ?;`;
+    const query = `
+        SELECT *
+        FROM pdfs
+        WHERE pdfName = ?;
+    `;
     const result = await db({query, params: [pdfName]});
     if (result.error) {
         logger.error(result.error);
-        res.status(400);
+        return res.status(400).json({error: result.error.toString()});
     }
     res.json(result);
 };
@@ -185,10 +249,11 @@ const insertTable = async (req, res) => {
         req.headers["x-forwarded-for"] || req.connection.remoteAddress;
 
     const query = {
-        query:
-                `INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle,
-                                     continuationOf, creatorIp)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        query: `
+            INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle,
+                                continuationOf, creatorIp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `,
         params: [
             tableId,
             pdfName,
@@ -207,33 +272,37 @@ const insertTable = async (req, res) => {
     const result = await db(query);
     if (result.error || result.results.affectedRows === 0) {
         logger.error(result.error);
-        res.status(400);
+        return res.status(400).json({error: result.error.toString()});
     }
     res.json(result);
 };
 
 const deleteTable = async (req, res) => {
     const {tableId} = req.body;
-    const query = `DELETE
-                   FROM tables
-                   WHERE tableId = ?;`;
+    const query = `
+        DELETE
+        FROM tables
+        WHERE tableId = ?;
+    `;
     const result = await db({query, params: [tableId]});
     if (result.error || result.results.affectedRows === 0) {
         logger.error(result.error);
-        res.status(400);
+        return res.status(400).json({error: result.error.toString()});
     }
     res.json(result);
 };
 
 const setRelevancy = async (req, res) => {
     const {tableId, relevancy} = req.body;
-    const query = `UPDATE tables
-                   SET relevancy = ?
-                   WHERE tableId = ?;`;
+    const query = `
+        UPDATE tables
+        SET relevancy = ?
+        WHERE tableId = ?;
+    `;
     const result = await db({query, params: [relevancy, tableId]});
     if (result.error || result.results.affectedRows === 0) {
         logger.error(result.error);
-        res.status(400);
+        return res.status(400).json({error: result.error.toString()});
     }
     res.json(result);
 }
@@ -261,6 +330,9 @@ app.use("/getValidationTables", getValidationTables);
 app.use("/getValidationCSVs", getValidationCSVs);
 app.use("/setValidation", setValidation);
 app.use("/setRelevancy", setRelevancy);
+app.use("/getValidationTags", getValidationTags)
+app.use("/tagTable", tagTable)
+app.use("/untagTable", unTagTable)
 
 app.use("/pdf", express.static(pdfPath));
 app.use("/jpg", express.static(jpgPath));
