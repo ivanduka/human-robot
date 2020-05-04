@@ -52,7 +52,7 @@ export default class Validation extends Component {
                 body: JSON.stringify({pdfName}),
             });
 
-            const res2 = fetch(`/getTables`, {
+            const res2 = fetch(`/getValidationTables`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({pdfName}),
@@ -96,6 +96,14 @@ export default class Validation extends Component {
             tags = tags.filter(t => t.tableId === tableId)
 
             this.setState({loading: false, csvs, tables, tableId, tags});
+
+            // Pre-loading all the images for all the tables of the current PDF
+            if (!notFirstLoading) {
+                tables.forEach(t => {
+                    const img = new Image();
+                    img.src = `/jpg/${t.tableId}.jpg`;
+                })
+            }
         } catch (e) {
             console.log(e);
             alert(e.toString());

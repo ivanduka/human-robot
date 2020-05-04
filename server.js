@@ -18,8 +18,10 @@ for (let p of [csvPath, jpgPath, pdfPath]) {
 }
 
 const app = express();
-
 app.options("*", cors());
+app.use(cors());
+app.use("/pdf", express.static(pdfPath));
+app.use("/jpg", express.static(jpgPath));
 
 // LOGGING
 log4js.configure({
@@ -87,6 +89,22 @@ const getTables = async (req, res) => {
         FROM tables
         WHERE pdfName = ?
         ORDER BY page DESC, y1;
+    `;
+    const result = await db({query, params: [pdfName]});
+    if (result.error) {
+        logger.error(result.error);
+        return res.status(400).json({error: result.error.toString()});
+    }
+    res.json(result);
+};
+
+const getValidationTables = async (req, res) => {
+    const {pdfName} = req.body;
+    const query = `
+        SELECT *
+        FROM tables
+        WHERE pdfName = ?
+        ORDER BY page, y1 DESC;
     `;
     const result = await db({query, params: [pdfName]});
     if (result.error) {
@@ -313,9 +331,8 @@ const errorHandler = (err, req, res, next) => {
     res.send(JSON.stringify(err));
 };
 
-app.use(bodyParser.json());
 app.use(errorHandler);
-app.use(cors());
+app.use(bodyParser.json());
 
 app.use("/table_index", table_index);
 
@@ -326,6 +343,7 @@ app.use("/getPdfStatus", getPdfStatus);
 app.use("/setPdfStatus", setPdfStatus);
 
 app.use("/getValidationCSVs", getValidationCSVs);
+app.use("/getValidationTables", getValidationTables);
 app.use("/setValidation", setValidation);
 app.use("/setRelevancy", setRelevancy);
 app.use("/getValidationTags", getValidationTags)
@@ -333,9 +351,6 @@ app.use("/tagTable", tagTable)
 app.use("/untagTable", unTagTable)
 app.use("/removeAllTags", removeAllTags)
 
-app.use("/pdf", express.static(pdfPath));
-app.use("/jpg", express.static(jpgPath));
-app.use("/csv", express.static(csvPath));
 app.use("/", express.static(path.join(__dirname, "client", "build")));
 app.get("/*", (req, res) => {
     res.sendFile(path.join(__dirname, "client", "build", "index.html"));

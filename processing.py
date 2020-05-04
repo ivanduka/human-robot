@@ -15,6 +15,7 @@ import camelot
 from uuid import uuid4
 import traceback
 import json
+import numpy as np
 
 pdf_files_folder = Path("//luxor/data/board/Dev/PCMR/pdf_files")
 csv_tables_folder = Path("//luxor/data/board/Dev/PCMR/csv_tables")
@@ -288,7 +289,7 @@ def extract_csv(args):
         engine_ = create_engine(engine_string_)
 
         def save_table(tables_, method_):
-            if not tables or len(tables_) != 1:
+            if not tables_ or len(tables_) != 1:
                 return print(f"{table['tableId']}: ERROR! found {len(tables_)} tables with {method_}")
             csv_id = str(uuid4())
             csv_table = tables_[0]
@@ -320,6 +321,42 @@ def extract_csv(args):
                     str(pdf_file_path),
                     table_areas=table_areas, pages=str(table['page']),
                     strip_text='\n', line_scale=40, flag_size=True, copy_text=['v', 'h'], )
+                save_table(tables, method)
+            except Exception as e:
+                t_id = table['tableId']
+                p = table['page']
+                print(f"Table {t_id} csvs extraction error on page {p} with method {method}: {e}")
+
+            try:
+                method = "lattice-v"
+                tables = camelot.read_pdf(
+                    str(pdf_file_path),
+                    table_areas=table_areas, pages=str(table['page']),
+                    strip_text='\n', line_scale=40, flag_size=True, copy_text=['v'], )
+                save_table(tables, method)
+            except Exception as e:
+                t_id = table['tableId']
+                p = table['page']
+                print(f"Table {t_id} csvs extraction error on page {p} with method {method}: {e}")
+
+            try:
+                method = "lattice-h"
+                tables = camelot.read_pdf(
+                    str(pdf_file_path),
+                    table_areas=table_areas, pages=str(table['page']),
+                    strip_text='\n', line_scale=40, flag_size=True, copy_text=['h'], )
+                save_table(tables, method)
+            except Exception as e:
+                t_id = table['tableId']
+                p = table['page']
+                print(f"Table {t_id} csvs extraction error on page {p} with method {method}: {e}")
+
+            try:
+                method = "lattice"
+                tables = camelot.read_pdf(
+                    str(pdf_file_path),
+                    table_areas=table_areas, pages=str(table['page']),
+                    strip_text='\n', line_scale=40, flag_size=True)
                 save_table(tables, method)
             except Exception as e:
                 t_id = table['tableId']
@@ -372,9 +409,32 @@ def extract_csvs():
     print(f"Done {len(args)} in {dur} seconds ({round(dur / 60, 2)} min or {round(dur / 3600, 2)} hours)")
 
 
+def add_csv_manually(table_id, csv_id, csv_path):
+    if not Path(csv_path).exists():
+        return print(f"{table_id} does not exist!")
+    csv_file_name = csv_tables_folder.joinpath(f"{csv_id}.csv")
+    df = pd.read_csv(csv_path)
+    df = df.replace({np.nan: None})
+    csv_rows, csv_columns = df.shape
+    csv_headers = json.dumps(df.iloc[0].tolist())
+    csv_text = df.to_json(None, orient='values')
+    df.to_csv(csv_file_name, index=False, header=False, encoding="utf-8-sig")
+
+    with engine.connect() as conn:
+        stmt = text(
+            "INSERT INTO csvs (csvId, tableId, method, csvHeaders, csvRows, csvColumns, csvText) " +
+            "VALUE (:csvId, :tableId, :method, :csvHeaders, :csvRows, :csvColumns, :csvText);")
+        params = {"csvId": csv_id, "tableId": table_id, "method": "manual", "csvHeaders": csv_headers,
+                  "csvRows": csv_rows, "csvColumns": csv_columns, "csvText": csv_text}
+        conn.execute(stmt, params)
+    print(f"Inserted CSV ID {csv_id} for table {table_id}")
+
+
 if __name__ == "__main__":
     # insert_pdfs()
-    delete_csvs_and_images()
-    populate_coordinates()
-    extract_csvs()
+    # delete_csvs_and_images()
+    # populate_coordinates()
+    # extract_csvs()
     extract_images()
+    # add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
+    #                  r"C:\Users\T1Ivan\Desktop\data_.csv")
