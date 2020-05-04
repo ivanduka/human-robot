@@ -261,15 +261,19 @@ def create_args_for_csv_extraction():
 def extract_csv(args):
     # noinspection PyTypeChecker
     def cleanup_df(df):
-        r = re.compile(r"\S")  # Any non-whitespace character
-
         def row_has_content(row):
+            r = re.compile(r"\S")  # Any non-whitespace character
             for cell in row:
                 if r.search(cell):
                     return True
             return False
 
+        def remove_cid(rows_):
+            r = re.compile(r"\(cid:\d+\)")
+            return [[re.sub(r, " ", cell) for cell in row] for row in rows_]
+
         output = df.values.tolist()
+        output = remove_cid(output)
         output = [row for row in output if row_has_content(row)]
         output = pd.DataFrame(output).T.values.tolist()
         output = [row for row in output if row_has_content(row)]
@@ -370,7 +374,7 @@ def extract_csvs():
 
 if __name__ == "__main__":
     # insert_pdfs()
-    # delete_csvs_and_images()
+    delete_csvs_and_images()
     populate_coordinates()
-    extract_images()
     extract_csvs()
+    extract_images()

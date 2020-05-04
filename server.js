@@ -96,22 +96,6 @@ const getTables = async (req, res) => {
     res.json(result);
 };
 
-const getValidationTables = async (req, res) => {
-    const {pdfName} = req.body;
-    const query = `
-        SELECT *
-        FROM tables
-        WHERE pdfName = ?
-        ORDER BY page, y1 DESC;
-    `;
-    const result = await db({query, params: [pdfName]});
-    if (result.error) {
-        logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
-    }
-    res.json(result);
-};
-
 const getValidationTags = async (req, res) => {
     const {pdfName} = req.body;
     const query = `
@@ -159,6 +143,21 @@ const unTagTable = async (req, res) => {
           AND tagId = ?;
     `;
     const result = await db({query, params: [tableId, tagId]});
+    if (result.error) {
+        logger.error(result.error);
+        return res.status(400).json({error: result.error.toString()});
+    }
+    res.json(result);
+}
+
+const removeAllTags = async (req, res) => {
+    const {tableId} = req.body;
+    const query = `
+        DELETE
+        FROM tables_tags
+        WHERE tableId = ?;
+    `;
+    const result = await db({query, params: [tableId]});
     if (result.error) {
         logger.error(result.error);
         return res.status(400).json({error: result.error.toString()});
@@ -326,13 +325,13 @@ app.use("/deleteTable", deleteTable);
 app.use("/getPdfStatus", getPdfStatus);
 app.use("/setPdfStatus", setPdfStatus);
 
-app.use("/getValidationTables", getValidationTables);
 app.use("/getValidationCSVs", getValidationCSVs);
 app.use("/setValidation", setValidation);
 app.use("/setRelevancy", setRelevancy);
 app.use("/getValidationTags", getValidationTags)
 app.use("/tagTable", tagTable)
 app.use("/untagTable", unTagTable)
+app.use("/removeAllTags", removeAllTags)
 
 app.use("/pdf", express.static(pdfPath));
 app.use("/jpg", express.static(jpgPath));

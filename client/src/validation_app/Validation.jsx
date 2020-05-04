@@ -52,7 +52,7 @@ export default class Validation extends Component {
                 body: JSON.stringify({pdfName}),
             });
 
-            const res2 = fetch(`/getValidationTables`, {
+            const res2 = fetch(`/getTables`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({pdfName}),
@@ -134,8 +134,21 @@ export default class Validation extends Component {
         await this.loadData(null, true);
     };
 
+    removeAllTags = async (tableId) => {
+        const res = await fetch("/removeAllTags", {
+            method: "POST",
+            headers: {"Content-Type": "application/json",},
+            body: JSON.stringify({tableId}),
+        });
+
+        const {error, results} = await res.json();
+        if (error || res.status !== 200) alert(JSON.stringify({error, results}));
+        await this.loadData(null, true);
+    }
+
     setRelevancy = async (tableId, relevancy) => {
-        await this.setResult(tableId, null)
+        await this.setResult(tableId, null);
+        await this.removeAllTags(tableId);
 
         const res = await fetch("/setRelevancy", {
             method: "POST",
@@ -174,7 +187,6 @@ export default class Validation extends Component {
         if (!tableId) {
             return <Alert variant="danger">Not tables captured/extracted for this PDF</Alert>;
         }
-
 
 
         const currentIndex = tables.findIndex((t) => t.tableId === tableId);
@@ -292,8 +304,7 @@ export default class Validation extends Component {
                 <Row>
                     <Col>
                         <p>
-                            <strong>PDF Name: </strong>
-                            {pdfName}, <strong>Page: </strong> {page}
+                            PDF Name: <strong>{pdfName}</strong>, Page: <strong>{page}</strong>
                         </p>
                     </Col>
                 </Row>
