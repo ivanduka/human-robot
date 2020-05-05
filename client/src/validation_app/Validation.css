@@ -31,3 +31,8 @@ td {
 .btn-outline-dark {
     border: 1px black solid !important;
 }
+
+.dropdown {
+    max-width: fit-content;
+    display: initial;
+}

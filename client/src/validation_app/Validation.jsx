@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import {Link} from "react-router-dom";
-import {Button, Spinner, Alert, Container, Row, Col} from "react-bootstrap";
+import {Button, Spinner, Alert, Container, Row, Col, Form} from "react-bootstrap";
 import {Helmet} from "react-helmet";
 import "./Validation.css";
 
@@ -130,6 +130,13 @@ export default class Validation extends Component {
         this.loadData(null, true);
     };
 
+    goToTable = (event) => {
+        const {tables} = this.state;
+        const {value} = event.target;
+        this.setState({tableId: tables[value - 1].tableId, imageLoaded: false});
+        this.loadData(null, true);
+    }
+
     imageOnLoad = () => {
         this.setState({imageLoaded: true});
     };
@@ -207,7 +214,7 @@ export default class Validation extends Component {
                 Continuation Table Name: <strong>{conTable.tableTitle}</strong>, Continuation Table
                 ID: <strong>{conTable.tableId}</strong>
             </p>
-        ) : null;
+        ) : <p>(this table is not a continuation)</p>;
 
         const constructTable = (table) => (
             <table>
@@ -293,6 +300,22 @@ export default class Validation extends Component {
                 </Button>
             </div>
 
+        const tableSelect = (
+            <Form.Control
+                as="select"
+                value={currentIndex + 1}
+                size="sm"
+                onChange={(e) => this.goToTable(e)}
+                className="dropdown"
+            >
+                {tables.map((t, index) => (
+                    <option value={index + 1} key={index + 1}>
+                        {index + 1}
+                    </option>
+                ))}
+            </Form.Control>
+        );
+
         const mainBlock = (
             <Container fluid>
                 <Row>
@@ -336,7 +359,7 @@ export default class Validation extends Component {
                         >
                             Prev Table (A)
                         </Button>
-                        <strong>Table: </strong> {currentIndex + 1} of {tables.length}
+                        <strong>Table: </strong> {tableSelect} of {tables.length}
                         <Button
                             size="sm"
                             variant="secondary"
