@@ -64,10 +64,10 @@ const table_index = async (req, res) => {
                    p.date,
                    p.totalPages,
                    p.status,
-                   COUNT(t.correct_csv)                                 AS tablesValidated,
-                   COUNT(IF(t.relevancy = 0, 1, null))                  AS tablesIrrelevant,
-                   COUNT(IF(t.correct_csv || t.relevancy = 0, null, 0)) AS tablesNotValidated,
-                   COUNT(t.pdfName)                                     AS tableCount
+                   COUNT(t.correct_csv)                                          AS tablesValidated,
+                   COUNT(IF(t.relevancy = 0, 1, null))                           AS tablesIrrelevant,
+                   COUNT(IF(t.correct_csv IS NULL AND t.relevancy = 1, 1, NULL)) AS tablesNotValidated,
+                   COUNT(t.pdfName)                                              AS tableCount
             FROM pdfs p
                      LEFT JOIN
                  tables t ON p.pdfName = t.pdfName
