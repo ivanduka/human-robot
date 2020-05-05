@@ -310,7 +310,7 @@ export default class Validation extends Component {
             >
                 {tables.map((t, index) => (
                     <option value={index + 1} key={index + 1}>
-                        {index + 1}
+                        {index + 1} (p.{t.page})
                     </option>
                 ))}
             </Form.Control>
