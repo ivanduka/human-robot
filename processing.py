@@ -328,42 +328,6 @@ def extract_csv(args):
                 print(f"Table {t_id} csvs extraction error on page {p} with method {method}: {e}")
 
             try:
-                method = "lattice-v"
-                tables = camelot.read_pdf(
-                    str(pdf_file_path),
-                    table_areas=table_areas, pages=str(table['page']),
-                    strip_text='\n', line_scale=40, flag_size=True, copy_text=['v'], )
-                save_table(tables, method)
-            except Exception as e:
-                t_id = table['tableId']
-                p = table['page']
-                print(f"Table {t_id} csvs extraction error on page {p} with method {method}: {e}")
-
-            try:
-                method = "lattice-h"
-                tables = camelot.read_pdf(
-                    str(pdf_file_path),
-                    table_areas=table_areas, pages=str(table['page']),
-                    strip_text='\n', line_scale=40, flag_size=True, copy_text=['h'], )
-                save_table(tables, method)
-            except Exception as e:
-                t_id = table['tableId']
-                p = table['page']
-                print(f"Table {t_id} csvs extraction error on page {p} with method {method}: {e}")
-
-            try:
-                method = "lattice"
-                tables = camelot.read_pdf(
-                    str(pdf_file_path),
-                    table_areas=table_areas, pages=str(table['page']),
-                    strip_text='\n', line_scale=40, flag_size=True)
-                save_table(tables, method)
-            except Exception as e:
-                t_id = table['tableId']
-                p = table['page']
-                print(f"Table {t_id} csvs extraction error on page {p} with method {method}: {e}")
-
-            try:
                 method = "stream"
                 tables = camelot.read_pdf(str(pdf_file_path), table_areas=table_areas, pages=str(table['page']),
                                           strip_text='\n', flavor="stream", flag_size=True)
