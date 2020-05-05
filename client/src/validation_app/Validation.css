@@ -1,28 +1,33 @@
 .sticky {
-  position: sticky;
-  top: 20px;
+    position: sticky;
+    top: 2vh;
+    max-height: 96vh;
 }
 
 table,
 th,
 td {
-  border: 1px solid black;
-  vertical-align: top !important;
+    border: 1px solid black;
+    vertical-align: top !important;
 }
 
 table {
-  border-collapse: collapse;
-  border-spacing: 0;
+    border-collapse: collapse;
+    border-spacing: 0;
 }
 
 td {
-  padding: 3px;
+    padding: 3px;
 }
 
 .correct {
-  background-color: lightgreen;
+    background-color: lightgreen;
 }
 
 .incorrect {
-  background-color: lightcoral;
+    background-color: lightcoral;
+}
+
+.btn-outline-dark {
+    border: 1px black solid !important;
 }
