@@ -128,7 +128,7 @@ const getValidationTags = async (req, res) => {
              tables_tags tt ON (tb.tableId = tt.tableId
                  AND tg.tagId = tt.tagId)
         WHERE tb.pdfName = ?
-        ORDER BY tableId, tagName;
+        ORDER BY tableId, tagId;
     `;
     const result = await db({query, params: [pdfName]});
     if (result.error) {
