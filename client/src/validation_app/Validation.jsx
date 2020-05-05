@@ -66,6 +66,10 @@ export default class Validation extends Component {
 
             const [reqCsvs, reqTables, reqTags] = await Promise.all([res1, res2, res3]);
 
+            if (reqCsvs.status !== 200) return alert(`Server Error: ${reqCsvs.status}`);
+            if (reqTables.status !== 200) return alert(`Server Error: ${reqTables.status}`);
+            if (reqTags.status !== 200) return alert(`Server Error: ${reqTags.status}`);
+
             const dataCsvs = await reqCsvs.json();
             const errorCsvs = dataCsvs.error;
             let csvs = dataCsvs.results;
@@ -78,9 +82,9 @@ export default class Validation extends Component {
             const errorTags = dataTags.error;
             let tags = dataTags.results;
 
-            if (errorCsvs || reqCsvs.status !== 200) return alert(JSON.stringify(dataCsvs));
-            if (errorTables || reqTables.status !== 200) return alert(JSON.stringify(dataTables));
-            if (errorTags || reqTags.status !== 200) return alert(JSON.stringify(dataTags));
+            if (errorCsvs) return alert(JSON.stringify(dataCsvs));
+            if (errorTables) return alert(JSON.stringify(dataTables));
+            if (errorTags) return alert(JSON.stringify(dataTags));
 
             const tableId = tables.find((table) => table.tableId === this.state.tableId)
                 ? this.state.tableId
@@ -178,10 +182,7 @@ export default class Validation extends Component {
         });
 
         const data = await res.json();
-        console.log(data);
         const {error, results} = data;
-        console.log(error)
-        console.log(results)
         if (error || res.status !== 200) alert(JSON.stringify({error, results}));
         await this.loadData(null, true);
     }
@@ -261,7 +262,7 @@ export default class Validation extends Component {
                     const onClickFunc = t.count === 0
                         ? () => this.setUnsetTag(tableId, t.tagId, true)
                         : () => this.setUnsetTag(tableId, t.tagId, false)
-                    return <Button key={t.tagId} size="sm" variant={t.count === 0 ? "light" : "success"}
+                    return <Button key={t.tagId} size="sm" variant={t.count === 0 ? "outline-dark" : "success"}
                                    onClick={onClickFunc}>{t.tagName}</Button>
                 })
                 }
