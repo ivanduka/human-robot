@@ -38,8 +38,9 @@ const logger = log4js.getLogger();
 app.use(morgan("combined", {stream: {write: (str) => logger.debug(str)}}));
 
 const db = async (q) => {
+    let conn;
     try {
-        const conn = await mysql.createConnection({
+        conn = await mysql.createConnection({
             host: process.env.DB_HOST,
             user: process.env.DB_USER,
             password: process.env.DB_PASS,
@@ -48,9 +49,14 @@ const db = async (q) => {
         })
         logger.debug(q);
         const [results] = await conn.execute(q.query, q.params);
+        conn.close();
         return {results};
     } catch (error) {
         return {error};
+    } finally {
+        if (conn) {
+            conn.close()
+        }
     }
 };
 
