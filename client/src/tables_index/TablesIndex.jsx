@@ -107,7 +107,6 @@ export default class ExtractionIndex extends Component {
         this.setState({softUpdating: true})
         await this.loadData(true)
         this.setState({softUpdating: false})
-
     }
 
     loadData = async (notFirstLoad) => {

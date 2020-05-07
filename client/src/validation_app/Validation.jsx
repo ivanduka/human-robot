@@ -13,17 +13,20 @@ export default class Validation extends Component {
         tableId: null,
         tags: [],
         imageLoaded: false,
+        softLoading: false,
     };
 
     componentDidMount() {
         const {pdfName} = this.props.match.params;
         this.setState({pdfName});
-        document.addEventListener("keydown", this.handleKeys);
         this.loadData(pdfName);
+        document.addEventListener("keydown", this.handleKeys);
+        window.addEventListener("focus", this.softLoadData)
     }
 
     componentWillUnmount() {
         document.removeEventListener("keydown", this.handleKeys);
+        window.removeEventListener("focus", this.softLoadData)
     }
 
     handleKeys = (event) => {
@@ -38,8 +41,16 @@ export default class Validation extends Component {
         }
     };
 
+    softLoadData = async () => {
+        this.setState({softUpdating: true})
+        await this.loadData(null, true)
+        this.setState({softUpdating: false})
+    }
+
     loadData = async (pdfName, notFirstLoading) => {
-        this.setState(() => (notFirstLoading ? {} : {loading: true, imageLoaded: false}));
+        if (!notFirstLoading) {
+            this.setState({loading: true, imageLoaded: false})
+        }
 
         if (!pdfName) {
             pdfName = this.state.pdfName;
@@ -119,7 +130,7 @@ export default class Validation extends Component {
         const currentIndex = tables.findIndex((t) => t.tableId === tableId);
         if (currentIndex === 0) return;
         this.setState({tableId: tables[currentIndex - 1].tableId, imageLoaded: false});
-        this.loadData(null, true);
+        this.softLoadData();
     };
 
     nextTable = () => {
@@ -127,14 +138,14 @@ export default class Validation extends Component {
         const currentIndex = tables.findIndex((t) => t.tableId === tableId);
         if (currentIndex === tables.length - 1) return;
         this.setState({tableId: tables[currentIndex + 1].tableId, imageLoaded: false});
-        this.loadData(null, true);
+        this.softLoadData();
     };
 
     goToTable = (event) => {
         const {tables} = this.state;
         const {value} = event.target;
         this.setState({tableId: tables[value - 1].tableId, imageLoaded: false});
-        this.loadData(null, true);
+        this.softLoadData()
     }
 
     imageOnLoad = () => {
@@ -150,7 +161,7 @@ export default class Validation extends Component {
 
         const {error, results} = await res.json();
         if (error || res.status !== 200) alert(JSON.stringify({error, results}));
-        await this.loadData(null, true);
+        await this.softLoadData()
     };
 
     removeAllTags = async (tableId) => {
@@ -162,7 +173,7 @@ export default class Validation extends Component {
 
         const {error, results} = await res.json();
         if (error || res.status !== 200) alert(JSON.stringify({error, results}));
-        await this.loadData(null, true);
+        await this.softLoadData()
     }
 
     setRelevancy = async (tableId, relevancy) => {
@@ -177,7 +188,7 @@ export default class Validation extends Component {
 
         const {error, results} = await res.json();
         if (error || res.status !== 200) alert(JSON.stringify({error, results}));
-        await this.loadData(null, true);
+        await this.softLoadData()
     }
 
     setUnsetTag = async (tableId, tagId, set) => {
@@ -191,11 +202,11 @@ export default class Validation extends Component {
         const data = await res.json();
         const {error, results} = data;
         if (error || res.status !== 200) alert(JSON.stringify({error, results}));
-        await this.loadData(null, true);
+        await this.softLoadData()
     }
 
     render() {
-        const {pdfName, csvs, tables, loading, tableId, imageLoaded, tags} = this.state;
+        const {pdfName, csvs, tables, loading, tableId, imageLoaded, tags, softUpdating} = this.state;
         if (loading) {
             return <Spinner animation="border"/>;
         }
@@ -325,9 +336,9 @@ export default class Validation extends Component {
                                 Back to Index
                             </Button>
                         </Link>
-                        <Button size="sm" variant="primary" onClick={() => this.loadData(null, true)}>
-                            Refresh Data
-                        </Button>
+                        {softUpdating
+                            ? <Spinner animation="border"/>
+                            : <Button size="sm" variant="primary" onClick={this.softLoadData}> Refresh Data </Button>}
                         <Button size="sm" variant="dark" href={`/extraction/${pdfName}/${page}`} target="blank_">
                             Open PDF
                         </Button>
