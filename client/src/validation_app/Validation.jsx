@@ -325,7 +325,7 @@ export default class Validation extends Component {
                                 Back to Index
                             </Button>
                         </Link>
-                        <Button size="sm" variant="primary" onClick={() => this.loadData()}>
+                        <Button size="sm" variant="primary" onClick={() => this.loadData(null, true)}>
                             Refresh Data
                         </Button>
                         <Button size="sm" variant="dark" href={`/extraction/${pdfName}/${page}`} target="blank_">

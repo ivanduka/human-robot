@@ -396,9 +396,9 @@ def add_csv_manually(table_id, csv_id, csv_path):
 
 if __name__ == "__main__":
     # insert_pdfs()
-    # delete_csvs_and_images()
-    # populate_coordinates()
-    # extract_csvs()
+    delete_csvs_and_images()
+    populate_coordinates()
+    extract_csvs()
     extract_images()
-    # add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
-    #                  r"C:\Users\T1Ivan\Desktop\data_.csv")
+    add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
+                     r"B-14R Appendix MPLA-SAPL IR 43 b) - TERA Post Construction (A1A3A2)_page.97.csv")
