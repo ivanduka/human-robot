@@ -128,7 +128,7 @@ export default class ExtractionIndex extends Component {
                     ),
                     validatingLink: (
                         <Button size="sm" variant="info" href={`/validation/${row.pdfName}/`}>
-                            Capture
+                            Validate
                         </Button>
                     ),
                 }))
