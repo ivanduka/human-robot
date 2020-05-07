@@ -121,13 +121,13 @@ export default class ExtractionIndex extends Component {
                     ...row,
                     date: new Date(row.date).toISOString().split("T")[0],
                     capturingLink: (
-                        <Button size="sm" variant={row.status ? "warning" : "primary"} href={`/extraction/${row.pdfName}`}
-                                target="blank_">
+                        <Button size="sm" variant={row.status ? "warning" : "primary"}
+                                href={`/extraction/${row.pdfName}/`}>
                             Capture
                         </Button>
                     ),
                     validatingLink: (
-                        <Button size="sm" variant="info" href={`/validation/${row.pdfName}`} target="blank_">
+                        <Button size="sm" variant="info" href={`/validation/${row.pdfName}/`}>
                             Capture
                         </Button>
                     ),
