@@ -394,11 +394,60 @@ def add_csv_manually(table_id, csv_id, csv_path):
     print(f"Inserted CSV ID {csv_id} for table {table_id}")
 
 
+def apply_default_validation(table_id):
+    preferred_method = "lattice-vh"
+
+    def set_default(csv):
+        stmt = "UPDATE tables SET correct_csv = %s WHERE tableId = %s;"
+        with engine.connect() as conn_:
+            result = conn_.execute(stmt, (csv.csvId, table_id))
+            if result.rowcount != 1:
+                raise Exception(f"Error setting up the default correct_csv for {table_id}")
+
+    query = "SELECT t.tableId, c.csvId, c.method FROM tables t LEFT JOIN csvs c " \
+            "USING(tableId) WHERE t.tableId = %s ORDER BY method;"
+    with engine.connect() as conn:
+        df = pd.read_sql(query, conn, params=(table_id,))
+    # print(df)
+    # return
+
+    # there are no csvs associated so there is nothing to assign
+    if df.shape[0] == 0:
+        return
+
+    # handling the only option or if the first row is the preferred method
+    if df.shape[0] == 1 or df.iloc[0].method == preferred_method:
+        return set_default(df.iloc[0])
+
+    if df.iloc[1].method == preferred_method:
+        return set_default(df.iloc[1])
+
+    raise Exception(f"Invalid arguments for {table_id}")
+
+
+def apply_default_validations():
+    stmt = "SELECT tableId FROM tables WHERE correct_csv IS NULL;"
+    with engine.connect() as conn:
+        df = pd.read_sql(stmt, conn)
+    table_ids = df["tableId"].tolist()
+
+    print(f"Working on {len(table_ids)}...")
+
+    # for table_id in table_ids[0:8]:
+    #     apply_default_validation(table_id)
+
+    with Pool() as pool:
+        pool.map(apply_default_validation, table_ids, chunksize=1)
+
+    print(f"Done {len(table_ids)}.")
+
+
 if __name__ == "__main__":
     # insert_pdfs()
-    delete_csvs_and_images()
-    populate_coordinates()
-    extract_csvs()
-    extract_images()
-    add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
-                     r"B-14R Appendix MPLA-SAPL IR 43 b) - TERA Post Construction (A1A3A2)_page.97.csv")
+    # delete_csvs_and_images()
+    # populate_coordinates()
+    # extract_csvs()
+    # extract_images()
+    # add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
+    #                  r"B-14R Appendix MPLA-SAPL IR 43 b) - TERA Post Construction (A1A3A2)_page.97.csv")
+    apply_default_validations()
