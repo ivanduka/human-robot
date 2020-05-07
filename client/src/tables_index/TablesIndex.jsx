@@ -121,13 +121,16 @@ export default class ExtractionIndex extends Component {
                     ...row,
                     date: new Date(row.date).toISOString().split("T")[0],
                     capturingLink: (
-                        <Button size="sm" variant={row.status ? "warning" : "primary"}
-                                href={`/extraction/${row.pdfName}/`}>
+                        <Button
+                            variant={row.status ? "warning" : "primary"}
+                            size="sm"
+                            onClick={() => this.handleCapturingLink(row.pdfName)}
+                        >
                             Capture
                         </Button>
                     ),
                     validatingLink: (
-                        <Button size="sm" variant="info" href={`/validation/${row.pdfName}/`}>
+                        <Button variant="info" size="sm" onClick={() => this.handleValidatingLink(row.pdfName)}>
                             Validate
                         </Button>
                     ),
@@ -138,6 +141,18 @@ export default class ExtractionIndex extends Component {
             console.log(err)
             alert(err);
         }
+    };
+
+    handleCapturingLink = (pdfName) => {
+        this.props.history.push({
+            pathname: "/extraction/" + pdfName,
+        });
+    };
+
+    handleValidatingLink = (pdfName) => {
+        this.props.history.push({
+            pathname: "/validation/" + pdfName,
+        });
     };
 
     render() {
