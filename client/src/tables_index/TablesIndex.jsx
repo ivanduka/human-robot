@@ -95,6 +95,7 @@ export default class ExtractionIndex extends Component {
 
     componentDidMount() {
         this.loadData();
+        window.addEventListener("focus", this.softLoadData)
     }
 
     handleCapturingLink = (pdfName) => {
@@ -110,36 +111,45 @@ export default class ExtractionIndex extends Component {
     };
 
     componentWillUnmount() {
+        window.removeEventListener("focus", this.softLoadData)
     }
 
-    loadData = () => {
-        this.setState({loading: true});
-        fetch(`/table_index`)
-            .then((res) => res.json())
-            .then(({error, results}) => {
-                if (error) {
-                    return alert(JSON.stringify(error));
-                }
-                const rows = results.map((row) => ({
-                    ...row,
-                    date: new Date(row.date).toISOString().split("T")[0],
-                    capturingLink: (
-                        <Button
-                            variant={row.status ? "warning" : "primary"}
-                            size="sm"
-                            onClick={() => this.handleCapturingLink(row.pdfName)}
-                        >
-                            Capture
-                        </Button>
-                    ),
-                    validatingLink: (
-                        <Button variant="info" size="sm" onClick={() => this.handleValidatingLink(row.pdfName)}>
-                            Validate
-                        </Button>
-                    ),
-                }));
-                this.setState({rows, loading: false});
-            });
+    softLoadData = () => {
+        this.loadData(true)
+        console.log("Soft reload!")
+    }
+
+    loadData = async (notFirstLoad) => {
+        if (!notFirstLoad) {
+            this.setState({loading: true});
+        }
+
+        try {
+            const result = await fetch(`/table_index`)
+            const {results} = await result.json()
+            const rows = results.map((row) => ({
+                ...row,
+                date: new Date(row.date).toISOString().split("T")[0],
+                capturingLink: (
+                    <Button
+                        variant={row.status ? "warning" : "primary"}
+                        size="sm"
+                        onClick={() => this.handleCapturingLink(row.pdfName)}
+                    >
+                        Capture
+                    </Button>
+                ),
+                validatingLink: (
+                    <Button variant="info" size="sm" onClick={() => this.handleValidatingLink(row.pdfName)}>
+                        Validate
+                    </Button>
+                ),
+            }));
+            this.setState({rows, loading: false});
+        } catch (err) {
+            console.log(err)
+            alert(err);
+        }
     };
 
     render() {
