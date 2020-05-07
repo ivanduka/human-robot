@@ -27,6 +27,7 @@ export default class Extraction extends Component {
         locked: "locked",
         locking: false,
         scrollingAfterUpdate: false,
+        softUpdating: false,
     };
 
     componentDidUpdate(prevProps) {
@@ -53,12 +54,21 @@ export default class Extraction extends Component {
         window.onresize = this.updatePageDimensions;
         document.addEventListener("keydown", this.handleKeys);
         document.addEventListener("copy", this.handleCopy);
+        window.addEventListener("focus", this.softLoadData)
     }
 
     componentWillUnmount() {
         window.onresize = null;
         document.removeEventListener("keydown", this.handleKeys);
         document.removeEventListener("copy", this.handleCopy);
+        window.removeEventListener("focus", this.softLoadData)
+    }
+
+    softLoadData = async () => {
+        console.log("soft update!")
+        this.setState({softUpdating: true})
+        await Promise.all([this.loadTables(), this.loadPdfStatus()])
+        this.setState({softUpdating: false})
     }
 
     handleSave = async () => {
@@ -126,6 +136,10 @@ export default class Extraction extends Component {
 
     loadPdfStatus = async (pdfName) => {
         this.setState({locked: "locked", locking: true});
+
+        if (!pdfName) {
+            pdfName = this.state.pdfName;
+        }
 
         try {
             const req = await fetch(`/getPdfStatus`, {
@@ -484,6 +498,7 @@ export default class Extraction extends Component {
             locked,
             locking,
             continuationOf,
+            softUpdating,
         } = this.state;
 
         const continuations = new Set();
@@ -609,12 +624,6 @@ export default class Extraction extends Component {
             </div>
         );
 
-        const lockButton = (
-            <Button size="sm" variant={locked ? "warning" : "success"} onClick={this.setPdfStatus}>
-                {locked ? "Unlock PDF" : "Lock PDF"}
-            </Button>
-        );
-
         const topControls = (
             <div className="controls">
                 <div>
@@ -623,7 +632,12 @@ export default class Extraction extends Component {
                             Back to Index
                         </Button>
                     </Link>
-                    {lockButton}
+                    {softUpdating
+                        ? <Spinner animation="border"/>
+                        : <Button size="sm" variant="primary" onClick={this.softLoadData}>Refresh</Button>}
+                    <Button size="sm" variant={locked ? "warning" : "success"} onClick={this.setPdfStatus}>
+                        {locked ? "Unlock PDF" : "Lock PDF"}
+                    </Button>
                 </div>
                 {locking ? (
                     <Spinner animation="border"/>
