@@ -91,6 +91,7 @@ export default class ExtractionIndex extends Component {
         ],
         rows: null,
         loading: true,
+        softUpdating: false,
     };
 
     componentDidMount() {
@@ -98,25 +99,15 @@ export default class ExtractionIndex extends Component {
         window.addEventListener("focus", this.softLoadData)
     }
 
-    handleCapturingLink = (pdfName) => {
-        this.props.history.push({
-            pathname: "/extraction/" + pdfName,
-        });
-    };
-
-    handleValidatingLink = (pdfName) => {
-        this.props.history.push({
-            pathname: "/validation/" + pdfName,
-        });
-    };
-
     componentWillUnmount() {
         window.removeEventListener("focus", this.softLoadData)
     }
 
-    softLoadData = () => {
-        this.loadData(true)
-        console.log("Soft reload!")
+    softLoadData = async () => {
+        this.setState({softUpdating: true})
+        await this.loadData(true)
+        this.setState({softUpdating: false})
+
     }
 
     loadData = async (notFirstLoad) => {
@@ -128,23 +119,21 @@ export default class ExtractionIndex extends Component {
             const result = await fetch(`/table_index`)
             const {results} = await result.json()
             const rows = results.map((row) => ({
-                ...row,
-                date: new Date(row.date).toISOString().split("T")[0],
-                capturingLink: (
-                    <Button
-                        variant={row.status ? "warning" : "primary"}
-                        size="sm"
-                        onClick={() => this.handleCapturingLink(row.pdfName)}
-                    >
-                        Capture
-                    </Button>
-                ),
-                validatingLink: (
-                    <Button variant="info" size="sm" onClick={() => this.handleValidatingLink(row.pdfName)}>
-                        Validate
-                    </Button>
-                ),
-            }));
+                    ...row,
+                    date: new Date(row.date).toISOString().split("T")[0],
+                    capturingLink: (
+                        <Button size="sm" variant={row.status ? "warning" : "primary"} href={`/extraction/${row.pdfName}`}
+                                target="blank_">
+                            Capture
+                        </Button>
+                    ),
+                    validatingLink: (
+                        <Button size="sm" variant="info" href={`/validation/${row.pdfName}`} target="blank_">
+                            Capture
+                        </Button>
+                    ),
+                }))
+            ;
             this.setState({rows, loading: false});
         } catch (err) {
             console.log(err)
@@ -153,7 +142,7 @@ export default class ExtractionIndex extends Component {
     };
 
     render() {
-        const {rows, columns, loading} = this.state;
+        const {rows, columns, loading, softUpdating} = this.state;
         const table = loading ? (
             <Spinner animation="border"/>
         ) : (
@@ -186,9 +175,9 @@ export default class ExtractionIndex extends Component {
                                 Back to home
                             </Button>
                         </Link>
-                        <Button size="sm" variant="primary" onClick={this.loadData}>
-                            Refresh Data
-                        </Button>
+                        {softUpdating
+                            ? <Spinner animation="border"/>
+                            : <Button size="sm" variant="primary" onClick={this.softLoadData}> Refresh Data </Button>}
                     </Col>
                 </Row>
                 <Row>
