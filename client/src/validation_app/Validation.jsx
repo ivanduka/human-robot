@@ -106,7 +106,6 @@ export default class Validation extends Component {
             csvs = csvs
                 .filter((csv) => csv.tableId === tableId)
                 .sort((a, b) => a.method.localeCompare(b.method))
-                .map((csv) => ({...csv, data: csv["csvText"]}));
 
             tags = tags.filter(t => t.tableId === tableId)
 
@@ -124,6 +123,8 @@ export default class Validation extends Component {
             alert(e.toString());
         }
     };
+
+
 
     prevTable = () => {
         const {tables, tableId} = this.state;
@@ -239,7 +240,7 @@ export default class Validation extends Component {
             </table>
         );
 
-        const csvsBlock = csvs.map(({csvId, method, data}) => (
+        const csvsBlock = csvs.map(({csvId, method, csvText}) => (
             <div className="mb-5" key={csvId}>
                 <h6 className="ml-2">
                     <strong>Method: </strong>
@@ -263,7 +264,7 @@ export default class Validation extends Component {
                         csvId === correct_csv ? "ml-2 mr-2 correct" : correct_csv ? "ml-2 mr-2 incorrect" : "ml-2 mr-2 bg-light"
                     }
                 >
-                    {constructTable(data)}
+                    {constructTable(csvText)}
                 </div>
             </div>
         ));
