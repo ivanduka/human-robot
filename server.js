@@ -37,25 +37,23 @@ const logger = log4js.getLogger();
 
 app.use(morgan("combined", {stream: {write: (str) => logger.debug(str)}}));
 
+const pool = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_DATABASE,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+})
+
 const db = async (q) => {
-    let conn;
     try {
-        conn = await mysql.createConnection({
-            host: process.env.DB_HOST,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASS,
-            database: process.env.DB_DATABASE,
-            connectionLimit: 50,
-        })
-        const [results] = await conn.execute(q.query, q.params);
-        conn.close();
+        const [results] = await pool.execute(q.query, q.params);
         return {results};
     } catch (error) {
         return {error};
     } finally {
-        if (conn) {
-            conn.close()
-        }
     }
 };
 
@@ -144,86 +142,78 @@ const getValidationTags = async (req, res) => {
 }
 
 const tagUntagTable = async (req, res) => {
-    const {tableId, tagId, set, isHeadTable} = req.body;
-    let query = `
-        INSERT INTO tables_tags (tableId, tagId)
-        VALUES (?, ?);
-    `;
-    if (!set) {
-        query = `
-            DELETE
-            FROM tables_tags
-            WHERE tableId = ?
-              AND tagId = ?;
-        `;
-    }
-    const result = await db({query, params: [tableId, tagId]});
-    if (result.error) {
-        logger.error(result.error);
-        return res.status(400).json({error: result.error});
-    }
+    try {
+        const {tableId, tagId, set, isHeadTable} = req.body;
 
-    if (isHeadTable) {
-        const query1 = `
-            WITH RECURSIVE cte (tableId, continuationOf) AS (
-                SELECT tableId, continuationOf
-                FROM tables
+        let query = `
+            INSERT INTO tables_tags (tableId, tagId)
+            VALUES (?, ?);
+        `;
+        if (!set) {
+            query = `
+                DELETE
+                FROM tables_tags
                 WHERE tableId = ?
-                UNION ALL
-                SELECT t.tableId, t.continuationOf
-                FROM tables t
-                         INNER JOIN cte on t.continuationOf = cte.tableId)
-            SELECT *
-            FROM cte;
-        `;
-        const result1 = await db({query: query1, params: [tableId]});
-        if (result1.error || result1.results.affectedRows === 0) {
-            logger.error(result1.error);
-            return res.status(400).json({error: result1.error});
+                  AND tagId = ?;
+            `;
         }
+        await pool.execute(query, [tableId, tagId]);
 
-        const tables = result1.results.map(t => t.tableId);
+        if (isHeadTable) {
+            const query1 = `
+                WITH RECURSIVE cte (tableId, continuationOf) AS (
+                    SELECT tableId, continuationOf
+                    FROM tables
+                    WHERE tableId = ?
+                    UNION ALL
+                    SELECT t.tableId, t.continuationOf
+                    FROM tables t
+                             INNER JOIN cte on t.continuationOf = cte.tableId)
+                SELECT *
+                FROM cte;
+            `;
+            let result1 = pool.execute(query1, [tableId]);
 
-        const query2 = `
-            SELECT tagId
-            FROM tables_tags
-            WHERE tableId = ?;
-        `;
-        const result2 = await db({query: query2, params: [tableId]});
-        if (result2.error) {
-            logger.error(result2.error);
-            return res.status(400).json({error: result2.error});
-        }
+            const query2 = `
+                SELECT tagId
+                FROM tables_tags
+                WHERE tableId = ?;
+            `;
+            let result2 = pool.execute(query2, [tableId]);
 
-        const tags = result2.results.map(t => t.tagId);
+            [result1] = await result1;
+            const tables = result1
+                .map(t => t.tableId)
+                .filter(t => t !== tableId);
+            [result2] = await result2;
+            const tags = result2.map(t => t.tagId);
 
-        const query3 = `
+            const query3 = `
         DELETE
         FROM tables_tags
         WHERE tableId IN (${Array(tables.length).fill("?")});
     `
-        const result3 = await db({query: query3, params: [...tables]});
-        if (result3.error) {
-            logger.error(result3.error);
-            return res.status(400).json({error: result3.error});
-        }
+            await pool.execute(query3, [...tables]);
 
-        const query4 = `
-            INSERT INTO tables_tags (tableId, tagId)
-            VALUES (?, ?);;
-        `
-        for (let table of tables) {
-            for (let tag of tags) {
-                const result4 = await db({query: query4, params: [table, tag]});
-                if (result4.error) {
-                    logger.error(result4.error);
-                    return res.status(400).json({error: result4.error});
+            const query4 = `
+                INSERT INTO tables_tags (tableId, tagId)
+                VALUES (?, ?);;
+            `
+            const promises = []
+            for (let table of tables) {
+                for (let tag of tags) {
+                    promises.push(pool.execute(query4, [table, tag]));
                 }
             }
-        }
-    }
+            await Promise.all(promises)
 
-    return res.json({results: "OK"});
+        }
+
+        return res.json({results: "OK"});
+    } catch (err) {
+        logger.error(err);
+        return res.status(400).json({error: err});
+    }
 }
 
 
@@ -239,7 +229,6 @@ const removeAllTags = async (req, res) => {
         logger.error(result.error);
         return res.status(400).json({error: result.error});
     }
-    res.json(result);
 }
 
 const getValidationCSVs = async (req, res) => {
