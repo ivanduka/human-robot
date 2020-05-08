@@ -190,40 +190,17 @@ export default class Validation extends Component {
         await this.softLoadData()
     }
 
-    setUnsetTag = async (tableId, tagId, set) => {
-        const url = set ? "/tagTable" : "/unTagTable";
-        const res = await fetch(url, {
+    setUnsetTag = async (tableId, tagId, set, isHeadTable) => {
+        const res = await fetch("/tagUntagTable", {
             method: "POST",
             headers: {"Content-Type": "application/json",},
-            body: JSON.stringify({tableId, tagId}),
+            body: JSON.stringify({tableId, tagId, set, isHeadTable}),
         });
 
         const data = await res.json();
         const {error, results} = data;
         if (error || res.status !== 200) alert(JSON.stringify({error, results}));
         await this.softLoadData()
-    }
-
-    applyToChain = async (tableId) => {
-        if (window.confirm(`Do you really want to apply the same set of tags to all tables connected to` +
-            `this table? (this will erase all the tags that were applied to them previously)`)) {
-            try {
-                const req = await fetch(`/applyToChain`, {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({tableId}),
-                });
-
-                const data = await req.json();
-                const {results, error} = data;
-                if (error || req.status !== 200) return alert(JSON.stringify(data));
-
-                console.log(results);
-                await this.softLoadData()
-            } catch (e) {
-                alert(e);
-            }
-        }
     }
 
     render() {
@@ -301,23 +278,18 @@ export default class Validation extends Component {
 
         const tagsBlock =
             <div className="mb-5">
-                {tags.map(t => {
-                    const onClickFunc = t.count === 0
-                        ? () => this.setUnsetTag(tableId, t.tagId, true)
-                        : () => this.setUnsetTag(tableId, t.tagId, false)
-                    return <Button key={t.tagId} size="sm" variant={t.count === 0 ? "outline-dark" : "success"}
-                                   onClick={onClickFunc}>{t.tagName}</Button>
-                })
+                {tags.map(t =>
+                    (<Button key={t.tagId} size="sm" variant={t.count === 0 ? "outline-dark" : "success"}
+                             onClick={() => this.setUnsetTag(tableId, t.tagId, t.count === 0, isHeadTable)}>
+                        {t.tagName}
+                    </Button>)
+                )
                 }
                 {isHeadTable
-                    ?
-                    <div>
-                        <Button size="sm" variant="warning" onClick={() => this.applyToChain(tableId)}>
-                            Apply To The Rest of the Tables
-                        </Button>
-                    </div>
-                    : null
-                }
+                    ? <p className="ml-2">
+                        <strong>(this is a head table and the tags will be applied to the whole chain)</strong>
+                    </p>
+                    : null}
             </div>
 
 
