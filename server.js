@@ -47,7 +47,6 @@ const db = async (q) => {
             database: process.env.DB_DATABASE,
             connectionLimit: 50,
         })
-        logger.debug(q);
         const [results] = await conn.execute(q.query, q.params);
         conn.close();
         return {results};
@@ -83,7 +82,7 @@ const table_index = async (req, res) => {
     });
     if (result.error) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 };
@@ -99,7 +98,7 @@ const getTables = async (req, res) => {
     const result = await db({query, params: [pdfName]});
     if (result.error) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 };
@@ -115,7 +114,7 @@ const getValidationTables = async (req, res) => {
     const result = await db({query, params: [pdfName]});
     if (result.error) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 };
@@ -139,7 +138,7 @@ const getValidationTags = async (req, res) => {
     const result = await db({query, params: [pdfName]});
     if (result.error) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 }
@@ -153,7 +152,7 @@ const tagTable = async (req, res) => {
     const result = await db({query, params: [tableId, tagId]});
     if (result.error) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 }
@@ -169,7 +168,7 @@ const unTagTable = async (req, res) => {
     const result = await db({query, params: [tableId, tagId]});
     if (result.error) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 }
@@ -184,7 +183,7 @@ const removeAllTags = async (req, res) => {
     const result = await db({query, params: [tableId]});
     if (result.error) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 }
@@ -203,7 +202,7 @@ const getValidationCSVs = async (req, res) => {
     const result = await db({query, params: [pdfName]});
     if (result.error) {
         logger.error(error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 };
@@ -218,7 +217,7 @@ const setValidation = async (req, res) => {
     const result = await db({query, params: [csvId, tableId]});
     if (result.error || result.results.affectedRows === 0) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 };
@@ -233,7 +232,7 @@ const setPdfStatus = async (req, res) => {
     const result = await db({query, params: [status, pdfName]});
     if (result.error || result.results.affectedRows === 0) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 };
@@ -248,7 +247,7 @@ const getPdfStatus = async (req, res) => {
     const result = await db({query, params: [pdfName]});
     if (result.error) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 };
@@ -295,7 +294,7 @@ const insertTable = async (req, res) => {
     const result = await db(query);
     if (result.error || result.results.affectedRows === 0) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 };
@@ -310,7 +309,7 @@ const deleteTable = async (req, res) => {
     const result = await db({query, params: [tableId]});
     if (result.error || result.results.affectedRows === 0) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
 };
@@ -325,9 +324,72 @@ const setRelevancy = async (req, res) => {
     const result = await db({query, params: [relevancy, tableId]});
     if (result.error || result.results.affectedRows === 0) {
         logger.error(result.error);
-        return res.status(400).json({error: result.error.toString()});
+        return res.status(400).json({error: result.error});
     }
     res.json(result);
+}
+
+const applyToChain = async (req, res) => {
+    const {tableId} = req.body;
+    const query = `
+        WITH RECURSIVE cte (tableId, continuationOf) AS (
+            SELECT tableId, continuationOf
+            FROM tables
+            WHERE tableId = ?
+            UNION ALL
+            SELECT t.tableId, t.continuationOf
+            FROM tables t
+                     INNER JOIN cte on t.continuationOf = cte.tableId)
+        SELECT *
+        FROM cte;
+    `;
+    const result = await db({query, params: [tableId]});
+    if (result.error || result.results.affectedRows === 0) {
+        logger.error(result.error);
+        return res.status(400).json({error: result.error});
+    }
+
+    const tables = result.results.map(t => t.tableId);
+
+    const query2 = `
+        SELECT tagId
+        FROM tables_tags
+        WHERE tableId = ?;
+    `;
+    const result2 = await db({query: query2, params: [tableId]});
+    if (result2.error) {
+        logger.error(result2.error);
+        return res.status(400).json({error: result2.error});
+    }
+
+    const tags = result2.results.map(t => t.tagId);
+
+    const query3 = `
+        DELETE
+        FROM tables_tags
+        WHERE tableId IN (${Array(tables.length).fill("?")});
+    `
+    const result3 = await db({query: query3, params: [...tables]});
+    if (result3.error) {
+        logger.error(result3.error);
+        return res.status(400).json({error: result3.error});
+    }
+
+    const query4 = `
+        INSERT INTO tables_tags (tableId, tagId)
+        VALUES (?, ?);;
+    `
+    for (let table of tables) {
+        for (let tag of tags) {
+            const result4 = await db({query: query4, params: [table, tag]});
+            if (result4.error) {
+                logger.error(result4.error);
+                return res.status(400).json({error: result4.error});
+            }
+        }
+    }
+
+    return res.json({results: {tables, tags}});
 }
 
 // noinspection JSUnusedLocalSymbols
@@ -356,6 +418,7 @@ app.use("/getValidationTags", getValidationTags)
 app.use("/tagTable", tagTable)
 app.use("/untagTable", unTagTable)
 app.use("/removeAllTags", removeAllTags)
+app.use("/applyToChain", applyToChain)
 
 app.use("/", express.static(path.join(__dirname, "client", "build")));
 app.get("/*", (req, res) => {

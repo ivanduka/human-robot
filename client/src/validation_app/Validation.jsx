@@ -124,8 +124,6 @@ export default class Validation extends Component {
         }
     };
 
-
-
     prevTable = () => {
         const {tables, tableId} = this.state;
         const currentIndex = tables.findIndex((t) => t.tableId === tableId);
@@ -206,8 +204,31 @@ export default class Validation extends Component {
         await this.softLoadData()
     }
 
+    applyToChain = async (tableId) => {
+        if (window.confirm(`Do you really want to apply the same set of tags to all tables connected to` +
+            `this table? (this will erase all the tags that were applied to them previously)`)) {
+            try {
+                const req = await fetch(`/applyToChain`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({tableId}),
+                });
+
+                const data = await req.json();
+                const {results, error} = data;
+                if (error || req.status !== 200) return alert(JSON.stringify(data));
+
+                console.log(results);
+                await this.softLoadData()
+            } catch (e) {
+                alert(e);
+            }
+        }
+    }
+
     render() {
         const {pdfName, csvs, tables, loading, tableId, imageLoaded, tags, softUpdating} = this.state;
+
         if (loading) {
             return <Spinner animation="border"/>;
         }
@@ -216,9 +237,12 @@ export default class Validation extends Component {
             return <Alert variant="danger">Not tables captured/extracted for this PDF</Alert>;
         }
 
-
         const currentIndex = tables.findIndex((t) => t.tableId === tableId);
         const {continuationOf, correct_csv, tableTitle, page, relevancy} = tables[currentIndex];
+
+        const isHeadTable = continuationOf == null
+            ? tables.find(t => t.continuationOf === tableId) != null
+            : false;
 
         const conTable = continuationOf ? tables.find((t) => t.tableId === continuationOf) : null;
         const conTableBlock = continuationOf ? (
@@ -284,6 +308,15 @@ export default class Validation extends Component {
                     return <Button key={t.tagId} size="sm" variant={t.count === 0 ? "outline-dark" : "success"}
                                    onClick={onClickFunc}>{t.tagName}</Button>
                 })
+                }
+                {isHeadTable
+                    ?
+                    <div>
+                        <Button size="sm" variant="warning" onClick={() => this.applyToChain(tableId)}>
+                            Apply To The Rest of the Tables
+                        </Button>
+                    </div>
+                    : null
                 }
             </div>
 
