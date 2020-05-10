@@ -1,4 +1,5 @@
 import React, {Component} from "react";
+import ky from 'ky';
 import {Link} from "react-router-dom";
 import {Button, Spinner, Alert, Container, Row, Col, Form} from "react-bootstrap";
 import {Helmet} from "react-helmet";
@@ -41,89 +42,6 @@ export default class Validation extends Component {
         }
     };
 
-    softLoadData = async () => {
-        this.setState({softUpdating: true})
-        await this.loadData(null, true)
-        this.setState({softUpdating: false})
-    }
-
-    loadData = async (pdfName, notFirstLoading) => {
-        if (!notFirstLoading) {
-            this.setState({loading: true, imageLoaded: false})
-        }
-
-        if (!pdfName) {
-            pdfName = this.state.pdfName;
-        }
-
-        try {
-            const res1 = fetch(`/getValidationCSVs`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({pdfName}),
-            });
-
-            const res2 = fetch(`/getValidationTables`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({pdfName}),
-            });
-
-            const res3 = await fetch("/getValidationTags", {
-                method: "POST",
-                headers: {"Content-Type": "application/json",},
-                body: JSON.stringify({pdfName}),
-            });
-
-            const [reqCsvs, reqTables, reqTags] = await Promise.all([res1, res2, res3]);
-
-            if (reqCsvs.status !== 200) return alert(`Server Error: ${reqCsvs.status}`);
-            if (reqTables.status !== 200) return alert(`Server Error: ${reqTables.status}`);
-            if (reqTags.status !== 200) return alert(`Server Error: ${reqTags.status}`);
-
-            const dataCsvs = await reqCsvs.json();
-            const errorCsvs = dataCsvs.error;
-            let csvs = dataCsvs.results;
-
-            const dataTables = await reqTables.json();
-            const errorTables = dataTables.error;
-            const tables = dataTables.results;
-
-            const dataTags = await reqTags.json()
-            const errorTags = dataTags.error;
-            let tags = dataTags.results;
-
-            if (errorCsvs) return alert(JSON.stringify(dataCsvs));
-            if (errorTables) return alert(JSON.stringify(dataTables));
-            if (errorTags) return alert(JSON.stringify(dataTags));
-
-            const tableId = tables.find((table) => table.tableId === this.state.tableId)
-                ? this.state.tableId
-                : tables.length > 0
-                    ? tables[0].tableId
-                    : null;
-
-            csvs = csvs
-                .filter((csv) => csv.tableId === tableId)
-                .sort((a, b) => a.method.localeCompare(b.method))
-
-            tags = tags.filter(t => t.tableId === tableId)
-
-            this.setState({loading: false, csvs, tables, tableId, tags});
-
-            // Pre-loading all the images for all the tables of the current PDF
-            if (!notFirstLoading) {
-                tables.forEach(t => {
-                    const img = new Image();
-                    img.src = `/jpg/${t.tableId}.jpg`;
-                })
-            }
-        } catch (e) {
-            console.log(e);
-            alert(e.toString());
-        }
-    };
-
     prevTable = () => {
         const {tables, tableId} = this.state;
         const currentIndex = tables.findIndex((t) => t.tableId === tableId);
@@ -151,56 +69,108 @@ export default class Validation extends Component {
         this.setState({imageLoaded: true});
     };
 
-    setResult = async (tableId, csvId) => {
-        const res = await fetch("/setValidation", {
-            method: "POST",
-            headers: {"Content-Type": "application/json",},
-            body: JSON.stringify({tableId, csvId}),
-        });
+    softLoadData = async () => {
+        this.setState({softUpdating: true})
+        await this.loadData(null, true)
+        this.setState({softUpdating: false})
+    }
 
-        const {error, results} = await res.json();
-        if (error || res.status !== 200) alert(JSON.stringify({error, results}));
-        await this.softLoadData()
+    loadData = async (pdfName, notFirstLoading) => {
+        if (!notFirstLoading) {
+            this.setState({loading: true, imageLoaded: false})
+        }
+
+        if (!pdfName) {
+            pdfName = this.state.pdfName;
+        }
+
+        try {
+            const json = {pdfName}
+            const res1 = ky.post(`/getValidationCSVs`, {json}).json();
+            const res2 = ky.post(`/getValidationTables`, {json}).json();
+            const res3 = ky.post("/getValidationTags", {json}).json();
+
+            const [csvsResult, tables, tagsResult] = await Promise.all([res1, res2, res3]);
+
+            const tableId = tables.find((table) => table.tableId === this.state.tableId)
+                ? this.state.tableId
+                : tables.length > 0
+                    ? tables[0].tableId
+                    : null;
+
+            const csvs = csvsResult
+                .filter((csv) => csv.tableId === tableId)
+                .sort((a, b) => a.method.localeCompare(b.method))
+
+            const tags = tagsResult.filter(t => t.tableId === tableId)
+
+            this.setState({loading: false, csvs, tables, tableId, tags});
+            console.log({csvs, tables, tags});
+            // Pre-loading all the images for all the tables of the current PDF
+            if (!notFirstLoading) {
+                tables.forEach(t => {
+                    const img = new Image();
+                    img.src = `/jpg/${t.tableId}.jpg`;
+                })
+            }
+        } catch (error) {
+            console.log(error)
+            alert(error)
+        }
+    };
+
+    setValidation = async (tableId, csvId, doNotUpdateAfter) => {
+        try {
+            const json = {tableId, csvId}
+            const res = await ky.post("/setValidation", {json}).json();
+            console.log(res)
+
+            if (!doNotUpdateAfter) this.softLoadData()
+        } catch (error) {
+            console.log(error)
+            alert(error)
+        }
     };
 
     removeAllTags = async (tableId) => {
-        const res = await fetch("/removeAllTags", {
-            method: "POST",
-            headers: {"Content-Type": "application/json",},
-            body: JSON.stringify({tableId}),
-        });
-
-        const {error, results} = await res.json();
-        if (error || res.status !== 200) alert(JSON.stringify({error, results}));
-        await this.softLoadData()
+        try {
+            const json = {tableId}
+            const res = await ky.post("/removeAllTags", {json}).json();
+            console.log(res)
+        } catch (error) {
+            console.log(error)
+            alert(error)
+        }
     }
 
     setRelevancy = async (tableId, relevancy) => {
-        await this.setResult(tableId, null);
-        await this.removeAllTags(tableId);
+        try {
+            const promise1 = this.setValidation(tableId, null, true);
+            const promise2 = this.removeAllTags(tableId);
 
-        const res = await fetch("/setRelevancy", {
-            method: "POST",
-            headers: {"Content-Type": "application/json",},
-            body: JSON.stringify({tableId, relevancy}),
-        });
+            const json = {tableId, relevancy}
+            const res = await ky.post("/setRelevancy", {json}).json();
+            console.log(res)
 
-        const {error, results} = await res.json();
-        if (error || res.status !== 200) alert(JSON.stringify({error, results}));
-        await this.softLoadData()
+            await Promise.all([promise1, promise2])
+            this.softLoadData()
+        } catch (error) {
+            console.log(error)
+            alert(error)
+        }
     }
 
-    setUnsetTag = async (tableId, tagId, set, isHeadTable) => {
-        const res = await fetch("/tagUntagTable", {
-            method: "POST",
-            headers: {"Content-Type": "application/json",},
-            body: JSON.stringify({tableId, tagId, set, isHeadTable}),
-        });
+    tagUntagTable = async (tableId, tagId, set, isHeadTable) => {
+        try {
+            const json = {tableId, tagId, set, isHeadTable}
+            const res = await ky.post("/tagUntagTable", {json}).json();
 
-        const data = await res.json();
-        const {error, results} = data;
-        if (error || res.status !== 200) alert(JSON.stringify({error, results}));
-        await this.softLoadData()
+            console.log(res)
+            this.softLoadData()
+        } catch (error) {
+            console.log(error);
+            alert(error);
+        }
     }
 
     render() {
@@ -256,7 +226,7 @@ export default class Validation extends Component {
                     size="sm"
                     disabled={csvId === correct_csv}
                     className="ml-2"
-                    onClick={() => this.setResult(tableId, csvId)}
+                    onClick={() => this.setValidation(tableId, csvId)}
                 >
                     Select
                 </Button>
@@ -280,7 +250,7 @@ export default class Validation extends Component {
             <div className="mb-5">
                 {tags.map(t =>
                     (<Button key={t.tagId} size="sm" variant={t.count === 0 ? "outline-dark" : "success"}
-                             onClick={() => this.setUnsetTag(tableId, t.tagId, t.count === 0, isHeadTable)}>
+                             onClick={() => this.tagUntagTable(tableId, t.tagId, t.count === 0, isHeadTable)}>
                         {t.tagName}
                     </Button>)
                 )
@@ -311,7 +281,7 @@ export default class Validation extends Component {
                     variant="warning"
                     size="sm"
                     className="ml-2 mb-3"
-                    onClick={() => this.setResult(tableId, null)}
+                    onClick={() => this.setValidation(tableId, null)}
                 >
                     Unset Validation
                 </Button>
