@@ -273,31 +273,23 @@ const setValidation = async (req, res, next) => {
     }
 };
 
-const removeAllTags = async (req, res, next) => {
-    try {
-        const {tableId} = req.body;
-        const query = `
-            DELETE
-            FROM tables_tags
-            WHERE tableId = ?;
-        `;
-        await pool.execute(query, [tableId]);
-        res.json({result: "Removed All Tags OK", ...req.body});
-    } catch (error) {
-        next(error)
-    }
-}
-
 const setRelevancy = async (req, res, next) => {
     try {
         const {tableId, relevancy} = req.body;
-        const query = `
+        const query1 = `
             UPDATE tables
             SET relevancy = ?
             WHERE tableId = ?;
         `;
-        await pool.execute(query, [relevancy, tableId]);
-        res.json({result: "Set Relevancy OK", ...req.body});
+        const query2 = `
+            DELETE
+            FROM tables_tags
+            WHERE tableId = ?;
+        `;
+        const promise1 = pool.execute(query1, [relevancy, tableId]);
+        const promise2 = pool.execute(query2, [tableId]);
+        await Promise.all([promise1, promise2]);
+        res.json({result: "Set Relevancy and Removed Tags OK", ...req.body});
     } catch (error) {
         next(error)
     }
@@ -402,7 +394,6 @@ app.use("/setValidation", setValidation);
 app.use("/setRelevancy", setRelevancy);
 app.use("/getValidationTags", getValidationTags)
 app.use("/tagUntagTable", tagUntagTable)
-app.use("/removeAllTags", removeAllTags)
 
 app.use("/", express.static(path.join(__dirname, "client", "build")));
 app.get("/*", (req, res) => {

@@ -22,12 +22,10 @@ export default class Validation extends Component {
         this.setState({pdfName});
         this.loadData(pdfName);
         document.addEventListener("keydown", this.handleKeys);
-        window.addEventListener("focus", this.softLoadData)
     }
 
     componentWillUnmount() {
         document.removeEventListener("keydown", this.handleKeys);
-        window.removeEventListener("focus", this.softLoadData)
     }
 
     handleKeys = (event) => {
@@ -106,6 +104,7 @@ export default class Validation extends Component {
 
             this.setState({loading: false, csvs, tables, tableId, tags});
             console.log({csvs, tables, tags});
+
             // Pre-loading all the images for all the tables of the current PDF
             if (!notFirstLoading) {
                 tables.forEach(t => {
@@ -125,35 +124,23 @@ export default class Validation extends Component {
             const res = await ky.post("/setValidation", {json}).json();
             console.log(res)
 
-            if (!doNotUpdateAfter) this.softLoadData()
+            if (!doNotUpdateAfter) {
+                this.softLoadData()
+            }
         } catch (error) {
             console.log(error)
             alert(error)
         }
     };
 
-    removeAllTags = async (tableId) => {
-        try {
-            const json = {tableId}
-            const res = await ky.post("/removeAllTags", {json}).json();
-            console.log(res)
-        } catch (error) {
-            console.log(error)
-            alert(error)
-        }
-    }
-
     setRelevancy = async (tableId, relevancy) => {
         try {
-            const promise1 = this.setValidation(tableId, null, true);
-            const promise2 = this.removeAllTags(tableId);
+            const promise1 = ky.post("/setRelevancy", {json: {tableId, relevancy}}).json();
+            const promise2 = this.setValidation(tableId, null, true);
 
-            const json = {tableId, relevancy}
-            const res = await ky.post("/setRelevancy", {json}).json();
+            const [res,] = await Promise.all([promise1, promise2])
             console.log(res)
-
-            await Promise.all([promise1, promise2])
-            this.softLoadData()
+            await this.softLoadData()
         } catch (error) {
             console.log(error)
             alert(error)
