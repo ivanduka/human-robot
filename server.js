@@ -356,43 +356,31 @@ const assignTagsToTables = async (tableIds, tagIds) => {
     return Promise.all(promises)
 }
 
-const insertTag = async (tableId, tagId) => {
-    const query = `
+const insertRemoveTag = async (tableId, tagId, set) => {
+    let query = `
         INSERT INTO tables_tags (tableId, tagId)
         VALUES (?, ?);
     `;
-    return pool.execute(query, [tableId, tagId]);
-}
-
-const removeTag = async (tableId, tagId) => {
-    const query = `
-        DELETE
-        FROM tables_tags
-        WHERE tableId = ?
-          AND tagId = ?;
-    `;
+    if (!set) {
+        query = `
+            DELETE
+            FROM tables_tags
+            WHERE tableId = ?
+              AND tagId = ?;
+        `;
+    }
     return pool.execute(query, [tableId, tagId]);
 }
 
 const tagUntagTable = async (req, res, next) => {
     try {
         const {tableId, tagId, set, isHeadTable} = req.body;
-
-        if (set) {
-            await insertTag(tableId, tagId);
-        } else {
-            await removeTag(tableId, tagId);
-        }
+        await insertRemoveTag(tableId, tagId, set);
 
         if (isHeadTable) {
-            let tablesResult = getAllTablesInChain(tableId);
-            let tagsResult = getTagsForTable(tableId);
-
-            [tablesResult] = await tablesResult;
-            [tagsResult] = await tagsResult;
-            const tables = tablesResult
-                .map(t => t.tableId)
-                .filter(t => t !== tableId);
+            const promises = [getAllTablesInChain(tableId), getTagsForTable(tableId)]
+            const [[tablesResult], [tagsResult]] = await Promise.all(promises)
+            const tables = tablesResult.map(t => t.tableId)
             const tags = tagsResult.map(t => t.tagId);
 
             await deleteAllTags(tables);
