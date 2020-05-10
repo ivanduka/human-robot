@@ -133,9 +133,9 @@ export default class Validation extends Component {
         }
     };
 
-    setRelevancy = async (tableId, relevancy) => {
+    setRelevancy = async (tableId, relevancy, isHeadTable) => {
         try {
-            const promise1 = ky.post("/setRelevancy", {json: {tableId, relevancy}}).json();
+            const promise1 = ky.post("/setRelevancy", {json: {tableId, relevancy, isHeadTable}}).json();
             const promise2 = this.setValidation(tableId, null, true);
 
             const [res,] = await Promise.all([promise1, promise2])
@@ -253,12 +253,14 @@ export default class Validation extends Component {
         const csvsArea = relevancy === 0
             ? <div className="border border-dark">
                 <Alert className="m-2" variant="warning">The table is marked as irrelevant</Alert>
-                <Button className="m-2" size="sm" variant="warning" onClick={() => this.setRelevancy(tableId, 1)}>
+                <Button className="m-2" size="sm" variant="warning"
+                        onClick={() => this.setRelevancy(tableId, 1, isHeadTable)}>
                     MARK TABLE AS RELEVANT
                 </Button>
             </div>
             : <div className="border border-dark">
-                <Button className="m-2 mb-5" size="sm" variant="danger" onClick={() => this.setRelevancy(tableId, 0)}>
+                <Button className="m-2 mb-5" size="sm" variant="danger"
+                        onClick={() => this.setRelevancy(tableId, 0, isHeadTable)}>
                     MARK TABLE AS IRRELEVANT
                 </Button>
                 {tagsBlock}

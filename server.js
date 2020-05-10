@@ -273,22 +273,35 @@ const setValidation = async (req, res, next) => {
     }
 };
 
+const setRelevancyForOne = async (relevancy, tableId) => {
+    const query1 = `
+        UPDATE tables
+        SET relevancy = ?
+        WHERE tableId = ?;
+    `;
+    const query2 = `
+        DELETE
+        FROM tables_tags
+        WHERE tableId = ?;
+    `;
+    const promise1 = pool.execute(query1, [relevancy, tableId]);
+    const promise2 = pool.execute(query2, [tableId]);
+    return Promise.all([promise1, promise2]);
+}
+
 const setRelevancy = async (req, res, next) => {
     try {
-        const {tableId, relevancy} = req.body;
-        const query1 = `
-            UPDATE tables
-            SET relevancy = ?
-            WHERE tableId = ?;
-        `;
-        const query2 = `
-            DELETE
-            FROM tables_tags
-            WHERE tableId = ?;
-        `;
-        const promise1 = pool.execute(query1, [relevancy, tableId]);
-        const promise2 = pool.execute(query2, [tableId]);
-        await Promise.all([promise1, promise2]);
+        const {tableId, relevancy, isHeadTable} = req.body;
+
+        let tableIds = [tableId]
+        if (isHeadTable) {
+            [tableIds] = await getAllTablesInChain(tableId)
+            tableIds = tableIds.map(t => t.tableId);
+        }
+
+        const promises = tableIds.map(id => setRelevancyForOne(relevancy, id))
+        await Promise.all(promises)
+
         res.json({result: "Set Relevancy and Removed Tags OK", ...req.body});
     } catch (error) {
         next(error)
