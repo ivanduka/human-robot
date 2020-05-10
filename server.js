@@ -344,7 +344,7 @@ const assignTagsToTables = async (tableIds, tagIds) => {
 }
 
 const insertTag = async (tableId, tagId) => {
-    let query = `
+    const query = `
         INSERT INTO tables_tags (tableId, tagId)
         VALUES (?, ?);
     `;
@@ -352,7 +352,7 @@ const insertTag = async (tableId, tagId) => {
 }
 
 const removeTag = async (tableId, tagId) => {
-    query = `
+    const query = `
         DELETE
         FROM tables_tags
         WHERE tableId = ?
