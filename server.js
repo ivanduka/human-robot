@@ -295,8 +295,7 @@ const setRelevancy = async (req, res, next) => {
 
         let tableIds = [tableId]
         if (isHeadTable) {
-            [tableIds] = await getAllTablesInChain(tableId)
-            tableIds = tableIds.map(t => t.tableId);
+            tableIds = await getAllTablesInChain(tableId)
         }
 
         const promises = tableIds.map(id => setRelevancyForOne(relevancy, id))
@@ -321,7 +320,8 @@ const getAllTablesInChain = async (headTableId) => {
         SELECT *
         FROM cte;
     `;
-    return pool.execute(query1, [headTableId]);
+    const [tablesResult] = await pool.execute(query1, [headTableId]);
+    return tablesResult.map(t => t.tableId);
 }
 
 const getTagsForTable = async (tableId) => {
@@ -330,7 +330,8 @@ const getTagsForTable = async (tableId) => {
         FROM tables_tags
         WHERE tableId = ?;
     `;
-    return pool.execute(query2, [tableId]);
+    const [tagsResult] = await pool.execute(query2, [tableId]);
+    return tagsResult.map(t => t.tagId);
 }
 
 const deleteAllTags = async (tableIds) => {
@@ -378,11 +379,7 @@ const tagUntagTable = async (req, res, next) => {
         await insertRemoveTag(tableId, tagId, set);
 
         if (isHeadTable) {
-            const promises = [getAllTablesInChain(tableId), getTagsForTable(tableId)]
-            const [[tablesResult], [tagsResult]] = await Promise.all(promises)
-            const tables = tablesResult.map(t => t.tableId)
-            const tags = tagsResult.map(t => t.tagId);
-
+            const [tables, tags] = await Promise.all([getAllTablesInChain(tableId), getTagsForTable(tableId)]);
             await deleteAllTags(tables);
             await assignTagsToTables(tables, tags);
         }
