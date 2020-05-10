@@ -295,6 +295,31 @@ const setRelevancy = async (req, res, next) => {
     }
 }
 
+const getAllTablesInChain = async (headTableId) => {
+    const query1 = `
+        WITH RECURSIVE cte (tableId, continuationOf) AS (
+            SELECT tableId, continuationOf
+            FROM tables
+            WHERE tableId = ?
+            UNION ALL
+            SELECT t.tableId, t.continuationOf
+            FROM tables t
+                     INNER JOIN cte on t.continuationOf = cte.tableId)
+        SELECT *
+        FROM cte;
+    `;
+    return pool.execute(query1, [headTableId]);
+}
+
+const getTagsForTable = async (tableId) => {
+    const query2 = `
+        SELECT tagId
+        FROM tables_tags
+        WHERE tableId = ?;
+    `;
+    return pool.execute(query2, [tableId]);
+}
+
 const tagUntagTable = async (req, res, next) => {
     try {
         const {tableId, tagId, set, isHeadTable} = req.body;
@@ -314,32 +339,14 @@ const tagUntagTable = async (req, res, next) => {
         await pool.execute(query, [tableId, tagId]);
 
         if (isHeadTable) {
-            const query1 = `
-                WITH RECURSIVE cte (tableId, continuationOf) AS (
-                    SELECT tableId, continuationOf
-                    FROM tables
-                    WHERE tableId = ?
-                    UNION ALL
-                    SELECT t.tableId, t.continuationOf
-                    FROM tables t
-                             INNER JOIN cte on t.continuationOf = cte.tableId)
-                SELECT *
-                FROM cte;
-            `;
-            let tablesResult = pool.execute(query1, [tableId]);
-
-            const query2 = `
-                SELECT tagId
-                FROM tables_tags
-                WHERE tableId = ?;
-            `;
-            let tagsResult = pool.execute(query2, [tableId]);
+            let tablesResult = getAllTablesInChain(tableId);
+            let tagsResult = getTagsForTable(tableId);
 
             [tablesResult] = await tablesResult;
+            [tagsResult] = await tagsResult;
             const tables = tablesResult
                 .map(t => t.tableId)
                 .filter(t => t !== tableId);
-            [tagsResult] = await tagsResult;
             const tags = tagsResult.map(t => t.tagId);
 
             const query3 = `
