@@ -140,7 +140,7 @@ export default class Validation extends Component {
 
             const [res,] = await Promise.all([promise1, promise2])
             console.log(res)
-            await this.softLoadData()
+            this.softLoadData()
         } catch (error) {
             console.log(error)
             alert(error)

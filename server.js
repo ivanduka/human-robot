@@ -326,21 +326,21 @@ const tagUntagTable = async (req, res, next) => {
                 SELECT *
                 FROM cte;
             `;
-            let result1 = pool.execute(query1, [tableId]);
+            let tablesResult = pool.execute(query1, [tableId]);
 
             const query2 = `
                 SELECT tagId
                 FROM tables_tags
                 WHERE tableId = ?;
             `;
-            let result2 = pool.execute(query2, [tableId]);
+            let tagsResult = pool.execute(query2, [tableId]);
 
-            [result1] = await result1;
-            const tables = result1
+            [tablesResult] = await tablesResult;
+            const tables = tablesResult
                 .map(t => t.tableId)
                 .filter(t => t !== tableId);
-            [result2] = await result2;
-            const tags = result2.map(t => t.tagId);
+            [tagsResult] = await tagsResult;
+            const tags = tagsResult.map(t => t.tagId);
 
             const query3 = `
         DELETE
