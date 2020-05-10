@@ -320,23 +320,56 @@ const getTagsForTable = async (tableId) => {
     return pool.execute(query2, [tableId]);
 }
 
+const deleteAllTags = async (tableIds) => {
+    const query3 = `
+        DELETE
+        FROM tables_tags
+        WHERE tableId IN (${Array(tableIds.length).fill("?")});
+    `
+    return pool.execute(query3, [...tableIds]);
+}
+
+const assignTagsToTables = async (tableIds, tagIds) => {
+    const query4 = `
+        INSERT INTO tables_tags (tableId, tagId)
+        VALUES (?, ?);;
+    `
+    const promises = []
+    for (let table of tableIds) {
+        for (let tag of tagIds) {
+            promises.push(pool.execute(query4, [table, tag]));
+        }
+    }
+    return Promise.all(promises)
+}
+
+const insertTag = async (tableId, tagId) => {
+    let query = `
+        INSERT INTO tables_tags (tableId, tagId)
+        VALUES (?, ?);
+    `;
+    return pool.execute(query, [tableId, tagId]);
+}
+
+const removeTag = async (tableId, tagId) => {
+    query = `
+        DELETE
+        FROM tables_tags
+        WHERE tableId = ?
+          AND tagId = ?;
+    `;
+    return pool.execute(query, [tableId, tagId]);
+}
+
 const tagUntagTable = async (req, res, next) => {
     try {
         const {tableId, tagId, set, isHeadTable} = req.body;
 
-        let query = `
-            INSERT INTO tables_tags (tableId, tagId)
-            VALUES (?, ?);
-        `;
-        if (!set) {
-            query = `
-                DELETE
-                FROM tables_tags
-                WHERE tableId = ?
-                  AND tagId = ?;
-            `;
+        if (set) {
+            await insertTag(tableId, tagId);
+        } else {
+            await removeTag(tableId, tagId);
         }
-        await pool.execute(query, [tableId, tagId]);
 
         if (isHeadTable) {
             let tablesResult = getAllTablesInChain(tableId);
@@ -349,24 +382,8 @@ const tagUntagTable = async (req, res, next) => {
                 .filter(t => t !== tableId);
             const tags = tagsResult.map(t => t.tagId);
 
-            const query3 = `
-        DELETE
-        FROM tables_tags
-        WHERE tableId IN (${Array(tables.length).fill("?")});
-    `
-            await pool.execute(query3, [...tables]);
-
-            const query4 = `
-                INSERT INTO tables_tags (tableId, tagId)
-                VALUES (?, ?);;
-            `
-            const promises = []
-            for (let table of tables) {
-                for (let tag of tags) {
-                    promises.push(pool.execute(query4, [table, tag]));
-                }
-            }
-            await Promise.all(promises)
+            await deleteAllTags(tables);
+            await assignTagsToTables(tables, tags);
         }
         res.json({result: "Tagged OK", ...req.body});
     } catch (error) {
