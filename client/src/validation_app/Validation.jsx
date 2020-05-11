@@ -84,17 +84,18 @@ export default class Validation extends Component {
 
         try {
             const json = {pdfName}
-            const res1 = ky.post(`/getValidationCSVs`, {json}).json();
-            const res2 = ky.post(`/getValidationTables`, {json}).json();
-            const res3 = ky.post("/getValidationTags", {json}).json();
+            const result = await ky.post("/getValidationData", {json}).json();
+            const tables = result.tables;
+            const csvsResult = result.csvs;
+            const tagsResult = result.tags;
 
-            const [csvsResult, tables, tagsResult] = await Promise.all([res1, res2, res3]);
-
-            const tableId = tables.find((table) => table.tableId === this.state.tableId)
-                ? this.state.tableId
-                : tables.length > 0
-                    ? tables[0].tableId
-                    : null;
+            const tableId = tables
+                ? tables.find((table) => table.tableId === this.state.tableId)
+                    ? this.state.tableId
+                    : tables.length > 0
+                        ? tables[0].tableId
+                        : null
+                : null
 
             const csvs = csvsResult
                 .filter((csv) => csv.tableId === tableId)

@@ -159,10 +159,10 @@ const deleteTable = async (req, res, next) => {
 
 // Validation API
 
-const getValidationCSVs = async (req, res, next) => {
+const getValidationData = async (req, res, next) => {
     try {
         const {pdfName} = req.body;
-        const query = `
+        const csvsQuery = `
             SELECT *
             FROM csvs
             WHERE tableId IN (
@@ -171,33 +171,15 @@ const getValidationCSVs = async (req, res, next) => {
                 WHERE pdfName = ?
             );
         `;
-        const [result] = await pool.execute(query, [pdfName]);
-        res.json(result);
-    } catch (error) {
-        next(error)
-    }
-};
 
-const getValidationTables = async (req, res) => {
-    try {
-        const {pdfName} = req.body;
-        const query = `
+        const tablesQuery = `
             SELECT *
             FROM tables
             WHERE pdfName = ?
             ORDER BY page, y1 DESC;
         `;
-        const [result] = await pool.execute(query, [pdfName]);
-        res.json(result);
-    } catch (error) {
-        next(error)
-    }
-};
 
-const getValidationTags = async (req, res) => {
-    try {
-        const {pdfName} = req.body;
-        const query = `
+        const tagsQuery = `
             SELECT tb.tableId,
                    tg.tagId,
                    tg.tagName,
@@ -211,8 +193,13 @@ const getValidationTags = async (req, res) => {
             WHERE tb.pdfName = ?
             ORDER BY tableId, tagId;
         `;
-        const [result] = await pool.execute(query, [pdfName]);
-        res.json(result);
+
+        const csvsPromise = pool.execute(csvsQuery, [pdfName]);
+        const tablesPromise = pool.execute(tablesQuery, [pdfName]);
+        const tagsPromise = pool.execute(tagsQuery, [pdfName]);
+
+        const [[csvs], [tables], [tags]] = await Promise.all([csvsPromise, tablesPromise, tagsPromise]);
+        res.json({csvs, tables, tags})
     } catch (error) {
         next(error)
     }
@@ -369,11 +356,9 @@ app.use("/deleteTable", (req, res, next) => deleteTable(req, res, next));
 app.use("/getPdfStatus", (req, res, next) => getPdfStatus(req, res, next));
 app.use("/setPdfStatus", (req, res, next) => setPdfStatus(req, res, next));
 
-app.use("/getValidationCSVs", (req, res, next) => getValidationCSVs(req, res, next));
-app.use("/getValidationTables", (req, res, next) => getValidationTables(req, res, next));
+app.use("/getValidationData", (req, res, next) => getValidationData(req, res, next));
 app.use("/setValidation", (req, res, next) => setValidation(req, res, next));
 app.use("/setRelevancy", (req, res, next) => setRelevancy(req, res, next));
-app.use("/getValidationTags", (req, res, next) => getValidationTags(req, res, next))
 app.use("/tagUntagTable", (req, res, next) => tagUntagTable(req, res, next))
 
 app.use("/", express.static(path.join(__dirname, "client", "build")));
