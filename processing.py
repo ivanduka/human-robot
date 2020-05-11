@@ -181,7 +181,7 @@ def populate_coordinates():
     with engine.connect() as conn:
         df = pd.read_sql(statement, conn)
     tables = df.to_dict("records")
-    print(f"Working on {len(tables)} items:")
+    print(f"Populating coordinates on {len(tables)} tables:")
 
     # for table in tables:
     #     populate_coordinate(table)
@@ -231,7 +231,7 @@ def extract_images():
     args = [(table, engine_string, str(pdf_files_folder),
              str(jpg_tables_folder)) for table in tables]
 
-    print(f"Items to process: {len(args)}")
+    print(f"Extracting {len(args)} images:")
     start_time = time.time()
 
     # Sequential mode
@@ -316,11 +316,9 @@ def extract_csv(args):
             table_areas = [f"{table['pdfX1']},{table['pdfY1']},{table['pdfX2']},{table['pdfY2']}"]
 
             try:
-                method = "lattice-vh"
-                tables = camelot.read_pdf(
-                    str(pdf_file_path),
-                    table_areas=table_areas, pages=str(table['page']),
-                    strip_text='\n', line_scale=40, flag_size=True, copy_text=['v', 'h'], )
+                method = "lattice-v"
+                tables = camelot.read_pdf(str(pdf_file_path), table_areas=table_areas, pages=str(table['page']),
+                                          strip_text='\n', line_scale=40, flag_size=True, copy_text=['v'], )
                 save_table(tables, method)
             except Exception as e:
                 t_id = table['tableId']
@@ -356,7 +354,7 @@ def extract_csvs():
     args = [(table, engine_string, str(pdf_files_folder),
              str(csv_tables_folder)) for table in tables]
 
-    print(f"Items to process: {len(args)}")
+    print(f"Extracting CSVs for {len(args)} tables:")
     start_time = time.time()
 
     # Sequential mode
@@ -377,7 +375,7 @@ def add_csv_manually(table_id, csv_id, csv_path):
     if not Path(csv_path).exists():
         return print(f"{table_id} does not exist!")
     csv_file_name = csv_tables_folder.joinpath(f"{csv_id}.csv")
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(csv_path, header=None)
     df = df.replace({np.nan: None})
     csv_rows, csv_columns = df.shape
     csv_headers = json.dumps(df.iloc[0].tolist())
@@ -395,7 +393,7 @@ def add_csv_manually(table_id, csv_id, csv_path):
 
 
 def apply_default_validation(table_id):
-    preferred_method = "lattice-vh"
+    preferred_method = "lattice-v"
 
     def set_default(csv):
         stmt = "UPDATE tables SET correct_csv = %s WHERE tableId = %s;"
@@ -425,13 +423,13 @@ def apply_default_validations():
         df = pd.read_sql(stmt, conn)
     table_ids = df["tableId"].tolist()
 
-    print(f"Working on {len(table_ids)}...")
+    print(f"Applying default validation for {len(table_ids)} tables:")
 
-    for table_id in table_ids:
-        apply_default_validation(table_id)
+    # for table_id in table_ids:
+    #     apply_default_validation(table_id)
 
-    # with Pool() as pool:
-    #     pool.map(apply_default_validation, table_ids, chunksize=1)
+    with Pool() as pool:
+        pool.map(apply_default_validation, table_ids, chunksize=1)
 
     print(f"Done {len(table_ids)}.")
 
@@ -442,11 +440,11 @@ def delete_unreferenced_csvs_and_jpgs():
 
 if __name__ == "__main__":
     # insert_pdfs()
-    # delete_csvs_and_images()
+    delete_csvs_and_images()
     populate_coordinates()
     extract_csvs()
     extract_images()
-    # add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
-    #                  r"B-14R Appendix MPLA-SAPL IR 43 b) - TERA Post Construction (A1A3A2)_page.97.csv")
-    apply_default_validations()
-    delete_unreferenced_csvs_and_jpgs()
+    add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
+                     r"B-14R Appendix MPLA-SAPL IR 43 b) - TERA Post Construction (A1A3A2)_page.97.csv")
+    # apply_default_validations()
+    # delete_unreferenced_csvs_and_jpgs()
