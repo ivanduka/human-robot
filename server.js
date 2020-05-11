@@ -43,25 +43,15 @@ const pool = mysql.createPool({
     password: process.env.DB_PASS,
     database: process.env.DB_DATABASE,
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: 12,
     queueLimit: 0
 })
 
-const db = async (q) => {
-    try {
-        const [results] = await pool.execute(q.query, q.params);
-        return {results};
-    } catch (error) {
-        return {error};
-    } finally {
-    }
-};
-
 // Index API
 
-const table_index = async (req, res) => {
-    const result = await db({
-        query: `
+const table_index = async (req, res, next) => {
+    try {
+        const query = `
             SELECT p.pdfId,
                    p.pdfName,
                    p.pdfSize,
@@ -72,129 +62,99 @@ const table_index = async (req, res) => {
                    COUNT(t.correct_csv)                                          AS tablesValidated,
                    COUNT(IF(t.relevancy = 0, 1, null))                           AS tablesIrrelevant,
                    COUNT(IF(t.correct_csv IS NULL AND t.relevancy = 1, 1, NULL)) AS tablesNotValidated,
-                   COUNT(t.pdfName)                                              AS tableCount
+                   COUNT(t.tableId)                                              AS tableCount
             FROM pdfs p
                      LEFT JOIN
                  tables t ON p.pdfName = t.pdfName
             GROUP BY p.pdfId
             ORDER BY p.pdfId;
-        `,
-    });
-    if (result.error) {
-        logger.error(result.error);
-        return res.status(400).json({error: result.error});
+        `;
+        const [result] = await pool.execute(query);
+        res.json(result);
+    } catch (error) {
+        next(error)
     }
-    res.json(result);
 };
 
 // Table Extraction API
 
-const getTables = async (req, res) => {
-    const {pdfName} = req.body;
-    const query = `
-        SELECT *
-        FROM tables
-        WHERE pdfName = ?
-        ORDER BY page DESC, y1;
-    `;
-    const result = await db({query, params: [pdfName]});
-    if (result.error) {
-        logger.error(result.error);
-        return res.status(400).json({error: result.error});
+const getExtractionTables = async (req, res, next) => {
+    try {
+        const {pdfName} = req.body;
+        const query = `
+            SELECT *
+            FROM tables
+            WHERE pdfName = ?
+            ORDER BY page DESC, y1;
+        `;
+        const [result] = await pool.execute(query, [pdfName]);
+        res.json(result);
+    } catch (error) {
+        next(error)
     }
-    res.json(result);
 };
 
-const setPdfStatus = async (req, res) => {
-    const {pdfName, status} = req.body;
-    const query = `
-        UPDATE pdfs
-        SET status = ?
-        WHERE pdfName = ?;
-    `;
-    const result = await db({query, params: [status, pdfName]});
-    if (result.error || result.results.affectedRows === 0) {
-        logger.error(result.error);
-        return res.status(400).json({error: result.error});
+const setPdfStatus = async (req, res, next) => {
+    try {
+        const {status, pdfName} = req.body;
+        const query = `
+            UPDATE pdfs
+            SET status = ?
+            WHERE pdfName = ?;
+        `;
+        const [result] = await pool.execute(query, [status, pdfName]);
+        res.json(result);
+    } catch (error) {
+        next(error)
     }
-    res.json(result);
 };
 
-const getPdfStatus = async (req, res) => {
-    const {pdfName} = req.body;
-    const query = `
-        SELECT *
-        FROM pdfs
-        WHERE pdfName = ?;
-    `;
-    const result = await db({query, params: [pdfName]});
-    if (result.error) {
-        logger.error(result.error);
-        return res.status(400).json({error: result.error});
+const getPdfStatus = async (req, res, next) => {
+    try {
+        const {pdfName} = req.body;
+        const query = `
+            SELECT *
+            FROM pdfs
+            WHERE pdfName = ?;
+        `;
+        const [result] = await pool.execute(query, [pdfName]);
+        res.json(result);
+    } catch (error) {
+        next(error)
     }
-    res.json(result);
 };
 
-const insertTable = async (req, res) => {
-    const {
-        tableId,
-        pdfName,
-        page,
-        tableTitle,
-        x1,
-        x2,
-        y1,
-        y2,
-        pageHeight,
-        pageWidth,
-        continuationOf,
-    } = req.body;
-
-    const creatorIp =
-        req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-
-    const query = {
-        query: `
+const insertTable = async (req, res, next) => {
+    try {
+        const {tableId, pdfName, page, tableTitle, x1, x2, y1, y2, pageHeight, pageWidth, continuationOf,} = req.body;
+        const creatorIp = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+        const query = `
             INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle,
                                 continuationOf, creatorIp)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-        `,
-        params: [
-            tableId,
-            pdfName,
-            page,
-            pageWidth,
-            pageHeight,
-            x1,
-            y1,
-            x2,
-            y2,
-            tableTitle,
-            continuationOf,
-            creatorIp,
-        ],
-    };
-    const result = await db(query);
-    if (result.error || result.results.affectedRows === 0) {
-        logger.error(result.error);
-        return res.status(400).json({error: result.error});
+        `;
+        const params = [tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle, continuationOf,
+            creatorIp]
+        const [result] = await pool.execute(query, params);
+        res.json(result);
+    } catch (error) {
+        next(error)
     }
-    res.json(result);
 };
 
-const deleteTable = async (req, res) => {
-    const {tableId} = req.body;
-    const query = `
-        DELETE
-        FROM tables
-        WHERE tableId = ?;
-    `;
-    const result = await db({query, params: [tableId]});
-    if (result.error || result.results.affectedRows === 0) {
-        logger.error(result.error);
-        return res.status(400).json({error: result.error});
+const deleteTable = async (req, res, next) => {
+    try {
+        const {tableId} = req.body;
+        const query = `
+            DELETE
+            FROM tables
+            WHERE tableId = ?;
+        `;
+        const [result] = await pool.execute(query, [tableId]);
+        res.json(result);
+    } catch (error) {
+        next(error)
     }
-    res.json(result);
 };
 
 // Validation API
@@ -395,34 +355,33 @@ function errorHandler(err, req, res, next) {
     if (res.headersSent) {
         return next(err)
     }
-    // res.statusMessage = JSON.stringify(err, Object.getOwnPropertyNames(err)).replace(/[^\t\x20-\x7e\x80-\xff]/, "_");
     res.statusMessage = err.message.replace(/[^\t\x20-\x7e\x80-\xff]/, "_");
     res.status(500).send()
 }
 
 app.use(bodyParser.json());
 
-app.use("/table_index", table_index);
+app.use("/table_index", (req, res, next) => table_index(req, res, next));
 
-app.use("/getTables", getTables);
-app.use("/insertTable", insertTable);
-app.use("/deleteTable", deleteTable);
-app.use("/getPdfStatus", getPdfStatus);
-app.use("/setPdfStatus", setPdfStatus);
+app.use("/getExtractionTables", (req, res, next) => getExtractionTables(req, res, next));
+app.use("/insertTable", (req, res, next) => insertTable(req, res, next));
+app.use("/deleteTable", (req, res, next) => deleteTable(req, res, next));
+app.use("/getPdfStatus", (req, res, next) => getPdfStatus(req, res, next));
+app.use("/setPdfStatus", (req, res, next) => setPdfStatus(req, res, next));
 
-app.use("/getValidationCSVs", getValidationCSVs);
-app.use("/getValidationTables", getValidationTables);
-app.use("/setValidation", setValidation);
-app.use("/setRelevancy", setRelevancy);
-app.use("/getValidationTags", getValidationTags)
-app.use("/tagUntagTable", tagUntagTable)
+app.use("/getValidationCSVs", (req, res, next) => getValidationCSVs(req, res, next));
+app.use("/getValidationTables", (req, res, next) => getValidationTables(req, res, next));
+app.use("/setValidation", (req, res, next) => setValidation(req, res, next));
+app.use("/setRelevancy", (req, res, next) => setRelevancy(req, res, next));
+app.use("/getValidationTags", (req, res, next) => getValidationTags(req, res, next))
+app.use("/tagUntagTable", (req, res, next) => tagUntagTable(req, res, next))
 
 app.use("/", express.static(path.join(__dirname, "client", "build")));
 app.get("/*", (req, res) => {
     res.sendFile(path.join(__dirname, "client", "build", "index.html"));
 });
 
-app.use(errorHandler);
+app.use((err, req, res, next) => errorHandler(err, req, res, next));
 
-const port = 8080;
+const port = process.env.PORT;
 app.listen(port, () => console.log(`Listening on port ${port}...`));

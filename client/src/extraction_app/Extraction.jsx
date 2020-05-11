@@ -5,6 +5,7 @@ import {generatePath, Link} from "react-router-dom";
 import {Button, Spinner, Alert, Form} from "react-bootstrap";
 import {Helmet} from "react-helmet";
 import "./Extraction.css";
+import ky from 'ky';
 
 export default class Extraction extends Component {
     state = {
@@ -65,7 +66,6 @@ export default class Extraction extends Component {
     }
 
     softLoadData = async () => {
-        console.log("soft update!")
         this.setState({softUpdating: true})
         await Promise.all([this.loadTables(), this.loadPdfStatus()])
         this.setState({softUpdating: false})
@@ -79,33 +79,26 @@ export default class Extraction extends Component {
         }
 
         try {
-            const req = await fetch(`/insertTable`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    tableId,
-                    page: pageNumber,
-                    tableTitle: tableTitle.trim(),
-                    pdfName,
-                    x1,
-                    x2,
-                    y1,
-                    y2,
-                    pageWidth: width,
-                    pageHeight: height,
-                    continuationOf,
-                }),
-            });
-
-            const data = await req.json();
-            const {error} = data;
-            if (error || req.status !== 200) return alert(JSON.stringify(data));
-
+            const json = {
+                tableId,
+                page: pageNumber,
+                tableTitle: tableTitle.trim(),
+                pdfName,
+                x1,
+                x2,
+                y1,
+                y2,
+                pageWidth: width,
+                pageHeight: height,
+                continuationOf,
+            }
+            await ky.post(`/insertTable`, {json}).json();
             this.clearRectangle();
             this.setState({tableTitle: null, continuationOf: null});
             await this.loadTables();
-        } catch (e) {
-            alert(e);
+        } catch (error) {
+            console.log(error)
+            alert(error)
         }
     };
 
@@ -117,20 +110,13 @@ export default class Extraction extends Component {
         }
 
         try {
-            const req = await fetch(`/getTables`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({pdfName}),
-            });
-
-            const data = await req.json();
-            const {error, results} = data;
-            if (error || req.status !== 200) return alert(JSON.stringify(data));
-
-            this.setState({tables: results, scrollingAfterUpdate: true});
-            this.drawTables(results);
-        } catch (e) {
-            alert(e);
+            const json = {pdfName}
+            const tables = await ky.post(`/getExtractionTables`, {json}).json();
+            this.setState({tables, scrollingAfterUpdate: true});
+            this.drawTables(tables);
+        } catch (error) {
+            console.log(error)
+            alert(error)
         }
     };
 
@@ -142,20 +128,13 @@ export default class Extraction extends Component {
         }
 
         try {
-            const req = await fetch(`/getPdfStatus`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({pdfName}),
-            });
-
-            const data = await req.json();
-            const {error, results} = data;
-            if (error || req.status !== 200) return alert(JSON.stringify(data));
-
+            const json = {pdfName}
+            const results = await ky.post(`/getPdfStatus`, {json}).json();
             const {status} = results[0];
             this.setState({locked: status, locking: false});
-        } catch (e) {
-            alert(e);
+        } catch (error) {
+            console.log(error)
+            alert(error)
         }
     }
 
@@ -165,25 +144,13 @@ export default class Extraction extends Component {
             this.setState({locked: true, locking: true});
 
             try {
-                const req = await fetch(`/setPdfStatus`, {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({
-                        pdfName,
-                        status: locked === "locked" ? "" : "locked",
-                    }),
-                });
-
-                const data = await req.json();
-                const {error} = data;
-                if (error || req.status !== 200) return alert(JSON.stringify(data));
-
-                this.setState(() => ({
-                    locked: locked === "locked" ? "" : "locked",
-                    locking: false,
-                }));
-            } catch (e) {
-                alert(e);
+                const status = locked === "locked" ? "" : "locked"
+                const json = {pdfName, status}
+                await ky.post(`/setPdfStatus`, {json}).json();
+                this.setState(() => ({locked: status, locking: false}));
+            } catch (error) {
+                console.log(error)
+                alert(error)
             }
         }
     };

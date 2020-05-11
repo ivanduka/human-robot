@@ -125,7 +125,7 @@ export default class Validation extends Component {
             console.log(res)
 
             if (!doNotUpdateAfter) {
-                this.softLoadData()
+                await this.softLoadData()
             }
         } catch (error) {
             console.log(error)
@@ -140,7 +140,7 @@ export default class Validation extends Component {
 
             const [res,] = await Promise.all([promise1, promise2])
             console.log(res)
-            this.softLoadData()
+            await this.softLoadData()
         } catch (error) {
             console.log(error)
             alert(error)
@@ -153,7 +153,7 @@ export default class Validation extends Component {
             const res = await ky.post("/tagUntagTable", {json}).json();
 
             console.log(res)
-            this.softLoadData()
+            await this.softLoadData()
         } catch (error) {
             console.log(error);
             alert(error);

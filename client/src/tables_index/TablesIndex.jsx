@@ -3,6 +3,7 @@ import {Link} from "react-router-dom";
 import {MDBDataTable} from "mdbreact";
 import {Container, Row, Col, Button, Spinner} from "react-bootstrap";
 import {Helmet} from "react-helmet";
+import ky from 'ky';
 
 import "./TablesIndex.css";
 
@@ -96,11 +97,9 @@ export default class ExtractionIndex extends Component {
 
     componentDidMount() {
         this.loadData();
-        window.addEventListener("focus", this.softLoadData)
     }
 
     componentWillUnmount() {
-        window.removeEventListener("focus", this.softLoadData)
     }
 
     softLoadData = async () => {
@@ -115,31 +114,29 @@ export default class ExtractionIndex extends Component {
         }
 
         try {
-            const result = await fetch(`/table_index`)
-            const {results} = await result.json()
+            const results = await ky.post(`/table_index`).json();
             const rows = results.map((row) => ({
-                    ...row,
-                    date: new Date(row.date).toISOString().split("T")[0],
-                    capturingLink: (
-                        <Button
-                            variant={row.status ? "warning" : "primary"}
-                            size="sm"
-                            onClick={() => this.handleCapturingLink(row.pdfName)}
-                        >
-                            Capture
-                        </Button>
-                    ),
-                    validatingLink: (
-                        <Button variant="info" size="sm" onClick={() => this.handleValidatingLink(row.pdfName)}>
-                            Validate
-                        </Button>
-                    ),
-                }))
-            ;
+                ...row,
+                date: new Date(row.date).toISOString().split("T")[0],
+                capturingLink: (
+                    <Button
+                        variant={row.status ? "warning" : "primary"}
+                        size="sm"
+                        onClick={() => this.handleCapturingLink(row.pdfName)}
+                    >
+                        Capture
+                    </Button>
+                ),
+                validatingLink: (
+                    <Button variant="info" size="sm" onClick={() => this.handleValidatingLink(row.pdfName)}>
+                        Validate
+                    </Button>
+                ),
+            }));
             this.setState({rows, loading: false});
-        } catch (err) {
-            console.log(err)
-            alert(err);
+        } catch (error) {
+            console.log(error)
+            alert(error)
         }
     };
 
