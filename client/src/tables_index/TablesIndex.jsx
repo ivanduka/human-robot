@@ -1,8 +1,8 @@
-import React, {Component} from "react";
-import {Link} from "react-router-dom";
-import {MDBDataTable} from "mdbreact";
-import {Container, Row, Col, Button, Spinner} from "react-bootstrap";
-import {Helmet} from "react-helmet";
+import React, { Component } from "react";
+import { Link } from "react-router-dom";
+import { MDBDataTable } from "mdbreact";
+import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
+import { Helmet } from "react-helmet";
 import ky from 'ky';
 
 import "./TablesIndex.css";
@@ -103,14 +103,14 @@ export default class ExtractionIndex extends Component {
     }
 
     softLoadData = async () => {
-        this.setState({softUpdating: true})
+        this.setState({ softUpdating: true })
         await this.loadData(true)
-        this.setState({softUpdating: false})
+        this.setState({ softUpdating: false })
     }
 
     loadData = async (notFirstLoad) => {
         if (!notFirstLoad) {
-            this.setState({loading: true});
+            this.setState({ loading: true });
         }
 
         try {
@@ -133,7 +133,7 @@ export default class ExtractionIndex extends Component {
                     </Button>
                 ),
             }));
-            this.setState({rows, loading: false});
+            this.setState({ rows, loading: false });
         } catch (error) {
             console.log(error)
             alert(error)
@@ -153,7 +153,7 @@ export default class ExtractionIndex extends Component {
     };
 
     render() {
-        const {rows, columns, loading, softUpdating} = this.state;
+        const { rows, columns, loading, softUpdating } = this.state;
         const table = loading ? (
             <Spinner animation="border"/>
         ) : (
@@ -170,7 +170,7 @@ export default class ExtractionIndex extends Component {
                 theadColor="indigo"
                 theadTextWhite
                 tbodyColor="darkgray"
-                data={{rows, columns}}
+                data={{ rows, columns }}
             />
         );
 

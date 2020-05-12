@@ -1,9 +1,9 @@
-import React, {Component} from "react";
-import {Document, Page} from "react-pdf/dist/entry.webpack";
-import {uuid} from "uuidv4";
-import {generatePath, Link} from "react-router-dom";
-import {Button, Spinner, Alert, Form} from "react-bootstrap";
-import {Helmet} from "react-helmet";
+import React, { Component } from "react";
+import { Document, Page } from "react-pdf/dist/entry.webpack";
+import { uuid } from "uuidv4";
+import { generatePath, Link } from "react-router-dom";
+import { Button, Spinner, Alert, Form } from "react-bootstrap";
+import { Helmet } from "react-helmet";
 import "./Extraction.css";
 import ky from 'ky';
 
@@ -33,24 +33,24 @@ export default class Extraction extends Component {
 
     componentDidUpdate(prevProps) {
         if (this.props.match.params.pageNumber !== prevProps.match.params.pageNumber) {
-            let {pdfName, pageNumber} = this.props.match.params;
+            let { pdfName, pageNumber } = this.props.match.params;
             pdfName = decodeURIComponent(pdfName);
             this.loadTables(pdfName);
-            this.setState({pdfName, pageNumber: parseInt(pageNumber)});
+            this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
             this.loadPdfStatus(pdfName);
         }
         const current = document.querySelector(".current");
         if (current && this.state.scrollingAfterUpdate) {
-            this.setState({scrollingAfterUpdate: false});
+            this.setState({ scrollingAfterUpdate: false });
             current.scrollIntoView();
         }
     }
 
     componentDidMount() {
-        let {pdfName, pageNumber} = this.props.match.params;
+        let { pdfName, pageNumber } = this.props.match.params;
         pdfName = decodeURIComponent(pdfName);
         this.loadTables(pdfName);
-        this.setState({pdfName, pageNumber: parseInt(pageNumber)});
+        this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
         this.loadPdfStatus(pdfName);
         window.onresize = this.updatePageDimensions;
         document.addEventListener("keydown", this.handleKeys);
@@ -66,13 +66,13 @@ export default class Extraction extends Component {
     }
 
     softLoadData = async () => {
-        this.setState({softUpdating: true})
+        this.setState({ softUpdating: true })
         await Promise.all([this.loadTables(), this.loadPdfStatus()])
-        this.setState({softUpdating: false})
+        this.setState({ softUpdating: false })
     }
 
     handleSave = async () => {
-        const {tableId, pageNumber, tableTitle, pdfName, x1, x2, y1, y2, width, height, continuationOf} = this.state;
+        const { tableId, pageNumber, tableTitle, pdfName, x1, x2, y1, y2, width, height, continuationOf } = this.state;
 
         if (!tableTitle || !x1 || !tableTitle.trim()) {
             return alert("Please copy/enter the table title and select the table!");
@@ -92,9 +92,9 @@ export default class Extraction extends Component {
                 pageHeight: height,
                 continuationOf,
             }
-            await ky.post(`/insertTable`, {json}).json();
+            await ky.post(`/insertTable`, { json }).json();
             this.clearRectangle();
-            this.setState({tableTitle: null, continuationOf: null});
+            this.setState({ tableTitle: null, continuationOf: null });
             await this.loadTables();
         } catch (error) {
             console.log(error)
@@ -103,16 +103,16 @@ export default class Extraction extends Component {
     };
 
     loadTables = async (pdfName) => {
-        this.setState({tables: null});
+        this.setState({ tables: null });
 
         if (!pdfName) {
             pdfName = this.state.pdfName;
         }
 
         try {
-            const json = {pdfName}
-            const tables = await ky.post(`/getExtractionTables`, {json}).json();
-            this.setState({tables, scrollingAfterUpdate: true});
+            const json = { pdfName }
+            const tables = await ky.post(`/getExtractionTables`, { json }).json();
+            this.setState({ tables, scrollingAfterUpdate: true });
             this.drawTables(tables);
         } catch (error) {
             console.log(error)
@@ -121,17 +121,17 @@ export default class Extraction extends Component {
     };
 
     loadPdfStatus = async (pdfName) => {
-        this.setState({locked: "locked", locking: true});
+        this.setState({ locked: "locked", locking: true });
 
         if (!pdfName) {
             pdfName = this.state.pdfName;
         }
 
         try {
-            const json = {pdfName}
-            const results = await ky.post(`/getPdfStatus`, {json}).json();
-            const {status} = results[0];
-            this.setState({locked: status, locking: false});
+            const json = { pdfName }
+            const results = await ky.post(`/getPdfStatus`, { json }).json();
+            const { status } = results[0];
+            this.setState({ locked: status, locking: false });
         } catch (error) {
             console.log(error)
             alert(error)
@@ -139,15 +139,15 @@ export default class Extraction extends Component {
     }
 
     setPdfStatus = async () => {
-        const {pdfName, locked} = this.state;
+        const { pdfName, locked } = this.state;
         if (window.confirm(`Do you really want to ${locked ? "unlock" : "lock"} the file for change?`)) {
-            this.setState({locked: true, locking: true});
+            this.setState({ locked: true, locking: true });
 
             try {
                 const status = locked === "locked" ? "" : "locked"
-                const json = {pdfName, status}
-                await ky.post(`/setPdfStatus`, {json}).json();
-                this.setState(() => ({locked: status, locking: false}));
+                const json = { pdfName, status }
+                await ky.post(`/setPdfStatus`, { json }).json();
+                this.setState(() => ({ locked: status, locking: false }));
             } catch (error) {
                 console.log(error)
                 alert(error)
@@ -164,7 +164,7 @@ export default class Extraction extends Component {
             e.clipboardData.setData("text/plain", tableTitle);
         }
         e.preventDefault();
-        this.setState(() => ({tableTitle}));
+        this.setState(() => ({ tableTitle }));
         this.clearRectangle();
     };
 
@@ -213,7 +213,7 @@ export default class Extraction extends Component {
         canvasElement.id = "displaying";
         drawingCanvas.parentNode.insertBefore(canvasElement, drawingCanvas.nextSibling);
 
-        const {width, height} = drawingCanvas.getBoundingClientRect();
+        const { width, height } = drawingCanvas.getBoundingClientRect();
         canvasElement.setAttribute("height", String(height));
         canvasElement.setAttribute("width", String(width));
     };
@@ -230,7 +230,7 @@ export default class Extraction extends Component {
         canvasElement.id = "drawing";
         pdfCanvas.parentNode.insertBefore(canvasElement, pdfCanvas.nextSibling);
 
-        const {top, left, width, height} = pdfCanvas.getBoundingClientRect();
+        const { top, left, width, height } = pdfCanvas.getBoundingClientRect();
         const ctx = canvasElement.getContext("2d");
         let lastMouseX = 0;
         let lastMouseY = 0;
@@ -320,7 +320,7 @@ export default class Extraction extends Component {
             const pageHorBorders = 1;
             const pageVerBorders = 1;
 
-            const {width, height} = page.getBoundingClientRect();
+            const { width, height } = page.getBoundingClientRect();
             const availableWidth = window.innerWidth - controlsWidth - pageHorBorders;
             const availableHeight = window.innerHeight - pageVerBorders;
 
@@ -328,16 +328,16 @@ export default class Extraction extends Component {
             const heightFactor = availableHeight / height;
 
             if (widthFactor < heightFactor) {
-                this.setState({pageHeight: null, pageWidth: availableWidth});
+                this.setState({ pageHeight: null, pageWidth: availableWidth });
             } else {
-                this.setState({pageHeight: availableHeight, pageWidth: null});
+                this.setState({ pageHeight: availableHeight, pageWidth: null });
             }
         }
     };
 
     onDocumentLoadSuccess = (document) => {
-        const {numPages} = document;
-        this.setState({numPages});
+        const { numPages } = document;
+        this.setState({ numPages });
     };
 
     previousPage = () => this.changePage(-1);
@@ -361,7 +361,7 @@ export default class Extraction extends Component {
                 }),
             });
 
-            return {pageNumber};
+            return { pageNumber };
         });
 
         if (pageUpdated) {
@@ -374,12 +374,12 @@ export default class Extraction extends Component {
             try {
                 const req = await fetch(`/deleteTable`, {
                     method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({tableId}),
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tableId }),
                 });
 
                 const data = await req.json();
-                const {error} = data;
+                const { error } = data;
                 if (error || req.status !== 200) return alert(JSON.stringify(data));
 
                 this.clearRectangle();
@@ -396,12 +396,12 @@ export default class Extraction extends Component {
         if (!canvas || !tablesArray || tablesArray.length === 0) return;
 
         const ctx = canvas.getContext("2d");
-        const {width, height} = canvas;
+        const { width, height } = canvas;
         ctx.clearRect(0, 0, width, height);
-        const {pageNumber} = this.state;
+        const { pageNumber } = this.state;
 
         for (let table of tablesArray) {
-            const {x1, x2, y1, y2, page, pageHeight, pageWidth} = table;
+            const { x1, x2, y1, y2, page, pageHeight, pageWidth } = table;
             if (page !== pageNumber) continue;
             const newX1 = (x1 * width) / pageWidth;
             const newX2 = (x2 * width) / pageWidth;
@@ -420,18 +420,18 @@ export default class Extraction extends Component {
     handleContinuationChange(event) {
         const continuationOf = event.target.value || null;
         if (continuationOf) {
-            const {tableTitle} = this.state.tables.find((table) => table.tableId === continuationOf);
-            return this.setState({continuationOf, tableTitle});
+            const { tableTitle } = this.state.tables.find((table) => table.tableId === continuationOf);
+            return this.setState({ continuationOf, tableTitle });
         }
-        this.setState({continuationOf, tableTitle: null});
+        this.setState({ continuationOf, tableTitle: null });
     }
 
     handleTableTitleChange = (event) => {
-        this.setState({tableTitle: event.target.value});
+        this.setState({ tableTitle: event.target.value });
     };
 
     handleQuickSaveAsContinuation = () => {
-        const {tables, pageNumber} = this.state;
+        const { tables, pageNumber } = this.state;
         const prevPageTables = tables.filter((t) => pageNumber - t.page === 1);
         if (prevPageTables.length === 0) {
             alert("No tables on the previous page were found!");
@@ -440,8 +440,8 @@ export default class Extraction extends Component {
             alert("More than one table on the previous page was found! Use the regular save function!");
             return;
         }
-        const {tableTitle, tableId} = prevPageTables[0];
-        this.setState({tableTitle, continuationOf: tableId}, () => {
+        const { tableTitle, tableId } = prevPageTables[0];
+        this.setState({ tableTitle, continuationOf: tableId }, () => {
             this.handleSave();
             this.nextPage();
         });
@@ -481,7 +481,7 @@ export default class Extraction extends Component {
                     (table) =>
                         (pageNumber - table.page === 1 || pageNumber === table.page) && !continuations.has(table.tableId),
                 )
-                .map(({tableId, tableTitle, page}) => (
+                .map(({ tableId, tableTitle, page }) => (
                     <option value={tableId} key={tableId}>
                         {pageNumber === page ? "(this page)" : "(prev page)"} {tableTitle} ({tableId})
                     </option>
@@ -519,7 +519,7 @@ export default class Extraction extends Component {
             tables.length === 0 ? (
                 <div className="table_block">No tables saved for this PDF yet.</div>
             ) : (
-                tables.map(({tableId, page, x1, x2, y1, y2, continuationOf, tableTitle}, i) => (
+                tables.map(({ tableId, page, x1, x2, y1, y2, continuationOf, tableTitle }, i) => (
                     <div className={["table_block", page === pageNumber ? "current" : null].join(" ")} key={i}>
                         <div>
                             <strong>

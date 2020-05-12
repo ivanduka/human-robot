@@ -1,8 +1,8 @@
-import React, {Component} from "react";
+import React, { Component } from "react";
 import ky from 'ky';
-import {Link} from "react-router-dom";
-import {Button, Spinner, Alert, Container, Row, Col, Form} from "react-bootstrap";
-import {Helmet} from "react-helmet";
+import { Link } from "react-router-dom";
+import { Button, Spinner, Alert, Container, Row, Col, Form } from "react-bootstrap";
+import { Helmet } from "react-helmet";
 import "./Validation.css";
 
 export default class Validation extends Component {
@@ -18,8 +18,8 @@ export default class Validation extends Component {
     };
 
     componentDidMount() {
-        const {pdfName} = this.props.match.params;
-        this.setState({pdfName});
+        const { pdfName } = this.props.match.params;
+        this.setState({ pdfName });
         this.loadData(pdfName);
         document.addEventListener("keydown", this.handleKeys);
     }
@@ -41,41 +41,41 @@ export default class Validation extends Component {
     };
 
     prevTable = () => {
-        const {tables, tableId} = this.state;
+        const { tables, tableId } = this.state;
         const currentIndex = tables.findIndex((t) => t.tableId === tableId);
         if (currentIndex === 0) return;
-        this.setState({tableId: tables[currentIndex - 1].tableId, imageLoaded: false});
+        this.setState({ tableId: tables[currentIndex - 1].tableId, imageLoaded: false });
         this.softLoadData();
     };
 
     nextTable = () => {
-        const {tables, tableId} = this.state;
+        const { tables, tableId } = this.state;
         const currentIndex = tables.findIndex((t) => t.tableId === tableId);
         if (currentIndex === tables.length - 1) return;
-        this.setState({tableId: tables[currentIndex + 1].tableId, imageLoaded: false});
+        this.setState({ tableId: tables[currentIndex + 1].tableId, imageLoaded: false });
         this.softLoadData();
     };
 
     goToTable = (event) => {
-        const {tables} = this.state;
-        const {value} = event.target;
-        this.setState({tableId: tables[value - 1].tableId, imageLoaded: false});
+        const { tables } = this.state;
+        const { value } = event.target;
+        this.setState({ tableId: tables[value - 1].tableId, imageLoaded: false });
         this.softLoadData()
     }
 
     imageOnLoad = () => {
-        this.setState({imageLoaded: true});
+        this.setState({ imageLoaded: true });
     };
 
     softLoadData = async () => {
-        this.setState({softUpdating: true})
+        this.setState({ softUpdating: true })
         await this.loadData(null, true)
-        this.setState({softUpdating: false})
+        this.setState({ softUpdating: false })
     }
 
     loadData = async (pdfName, notFirstLoading) => {
         if (!notFirstLoading) {
-            this.setState({loading: true, imageLoaded: false})
+            this.setState({ loading: true, imageLoaded: false })
         }
 
         if (!pdfName) {
@@ -83,8 +83,8 @@ export default class Validation extends Component {
         }
 
         try {
-            const json = {pdfName}
-            const result = await ky.post("/getValidationData", {json}).json();
+            const json = { pdfName }
+            const result = await ky.post("/getValidationData", { json }).json();
             const tables = result.tables;
             const csvsResult = result.csvs;
             const tagsResult = result.tags;
@@ -103,8 +103,8 @@ export default class Validation extends Component {
 
             const tags = tagsResult.filter(t => t.tableId === tableId)
 
-            this.setState({loading: false, csvs, tables, tableId, tags});
-            console.log({csvs, tables, tags});
+            this.setState({ loading: false, csvs, tables, tableId, tags });
+            console.log({ csvs, tables, tags });
 
             // Pre-loading all the images for all the tables of the current PDF
             if (!notFirstLoading) {
@@ -119,10 +119,10 @@ export default class Validation extends Component {
         }
     };
 
-    setValidation = async (tableId, csvId, doNotUpdateAfter) => {
+    setValidation = async ({ tableId, csvId, method, isHeadTable, doNotUpdateAfter }) => {
         try {
-            const json = {tableId, csvId}
-            const res = await ky.post("/setValidation", {json}).json();
+            const json = { tableId, csvId, method, isHeadTable }
+            const res = await ky.post("/setValidation", { json }).json();
             console.log(res)
 
             if (!doNotUpdateAfter) {
@@ -136,8 +136,14 @@ export default class Validation extends Component {
 
     setRelevancy = async (tableId, relevancy, isHeadTable) => {
         try {
-            const promise1 = ky.post("/setRelevancy", {json: {tableId, relevancy, isHeadTable}}).json();
-            const promise2 = this.setValidation(tableId, null, true);
+            const promise1 = ky.post("/setRelevancy", { json: { tableId, relevancy, isHeadTable } }).json();
+            const promise2 = this.setValidation({
+                tableId,
+                csvId: null,
+                method: null,
+                isHeadTable,
+                doNotUpdateAfter: true
+            });
 
             const [res,] = await Promise.all([promise1, promise2])
             console.log(res)
@@ -150,8 +156,8 @@ export default class Validation extends Component {
 
     tagUntagTable = async (tableId, tagId, set, isHeadTable) => {
         try {
-            const json = {tableId, tagId, set, isHeadTable}
-            const res = await ky.post("/tagUntagTable", {json}).json();
+            const json = { tableId, tagId, set, isHeadTable }
+            const res = await ky.post("/tagUntagTable", { json }).json();
 
             console.log(res)
             await this.softLoadData()
@@ -162,7 +168,7 @@ export default class Validation extends Component {
     }
 
     render() {
-        const {pdfName, csvs, tables, loading, tableId, imageLoaded, tags, softUpdating} = this.state;
+        const { pdfName, csvs, tables, loading, tableId, imageLoaded, tags, softUpdating } = this.state;
 
         if (loading) {
             return <Spinner animation="border"/>;
@@ -173,7 +179,7 @@ export default class Validation extends Component {
         }
 
         const currentIndex = tables.findIndex((t) => t.tableId === tableId);
-        const {continuationOf, correct_csv, tableTitle, page, relevancy} = tables[currentIndex];
+        const { continuationOf, correct_csv, tableTitle, page, relevancy } = tables[currentIndex];
 
         const isHeadTable = continuationOf == null
             ? tables.find(t => t.continuationOf === tableId) != null
@@ -199,7 +205,7 @@ export default class Validation extends Component {
             </table>
         );
 
-        const csvsBlock = csvs.map(({csvId, method, csvText}) => (
+        const csvsBlock = csvs.map(({ csvId, method, csvText }) => (
             <div className="mb-5" key={csvId}>
                 <h6 className="ml-2">
                     <strong>Method: </strong>
@@ -214,7 +220,7 @@ export default class Validation extends Component {
                     size="sm"
                     disabled={csvId === correct_csv}
                     className="ml-2"
-                    onClick={() => this.setValidation(tableId, csvId)}
+                    onClick={() => this.setValidation({ tableId, csvId, method, isHeadTable })}
                 >
                     Select
                 </Button>
@@ -271,7 +277,7 @@ export default class Validation extends Component {
                     variant="warning"
                     size="sm"
                     className="ml-2 mb-3"
-                    onClick={() => this.setValidation(tableId, null)}
+                    onClick={() => this.setValidation({ tableId, csvId: null, method: null, isHeadTable })}
                 >
                     Unset Validation
                 </Button>
@@ -353,7 +359,7 @@ export default class Validation extends Component {
                         <img
                             src={`/jpg/${tableId}.jpg`}
                             className="img-fluid border border-dark sticky"
-                            style={imageLoaded ? {} : {visibility: "hidden"}}
+                            style={imageLoaded ? {} : { visibility: "hidden" }}
                             onLoad={this.imageOnLoad}
                             alt="Table screenshot from the PDF file"/>
                     </Col>

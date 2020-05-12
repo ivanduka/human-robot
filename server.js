@@ -26,11 +26,11 @@ app.use("/jpg", express.static(jpgPath));
 // LOGGING
 log4js.configure({
     appenders: {
-        default: {type: "file", filename: "access.log"},
-        console: {type: "console"},
+        default: { type: "file", filename: "access.log" },
+        console: { type: "console" },
     },
     categories: {
-        default: {appenders: ["default", "console"], level: "debug"},
+        default: { appenders: ["default", "console"], level: "debug" },
     },
 });
 const logger = log4js.getLogger();
@@ -80,7 +80,7 @@ const table_index = async (req, res, next) => {
 
 const getExtractionTables = async (req, res, next) => {
     try {
-        const {pdfName} = req.body;
+        const { pdfName } = req.body;
         const query = `
             SELECT *
             FROM tables
@@ -96,7 +96,7 @@ const getExtractionTables = async (req, res, next) => {
 
 const setPdfStatus = async (req, res, next) => {
     try {
-        const {status, pdfName} = req.body;
+        const { status, pdfName } = req.body;
         const query = `
             UPDATE pdfs
             SET status = ?
@@ -111,7 +111,7 @@ const setPdfStatus = async (req, res, next) => {
 
 const getPdfStatus = async (req, res, next) => {
     try {
-        const {pdfName} = req.body;
+        const { pdfName } = req.body;
         const query = `
             SELECT *
             FROM pdfs
@@ -126,7 +126,7 @@ const getPdfStatus = async (req, res, next) => {
 
 const insertTable = async (req, res, next) => {
     try {
-        const {tableId, pdfName, page, tableTitle, x1, x2, y1, y2, pageHeight, pageWidth, continuationOf,} = req.body;
+        const { tableId, pdfName, page, tableTitle, x1, x2, y1, y2, pageHeight, pageWidth, continuationOf, } = req.body;
         const creatorIp = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
         const query = `
             INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle,
@@ -144,7 +144,7 @@ const insertTable = async (req, res, next) => {
 
 const deleteTable = async (req, res, next) => {
     try {
-        const {tableId} = req.body;
+        const { tableId } = req.body;
         const query = `
             DELETE
             FROM tables
@@ -161,7 +161,7 @@ const deleteTable = async (req, res, next) => {
 
 const getValidationData = async (req, res, next) => {
     try {
-        const {pdfName} = req.body;
+        const { pdfName } = req.body;
         const csvsQuery = `
             SELECT *
             FROM csvs
@@ -199,22 +199,44 @@ const getValidationData = async (req, res, next) => {
         const tagsPromise = pool.execute(tagsQuery, [pdfName]);
 
         const [[csvs], [tables], [tags]] = await Promise.all([csvsPromise, tablesPromise, tagsPromise]);
-        res.json({csvs, tables, tags})
+        res.json({ csvs, tables, tags })
     } catch (error) {
         next(error)
     }
 }
 
+const setValidationForOne = async (tableId, csvId) => {
+    const query = `
+        UPDATE tables
+        SET correct_csv = ?
+        WHERE tableId = ?;
+    `;
+    return pool.execute(query, [csvId, tableId]);
+}
+
 const setValidation = async (req, res, next) => {
     try {
-        const {tableId, csvId} = req.body;
-        const query = `
-            UPDATE tables
-            SET correct_csv = ?
-            WHERE tableId = ?;
-        `;
-        await pool.execute(query, [csvId, tableId]);
-        res.json({result: "Set Validation OK", ...req.body});
+        const { tableId, csvId, method, isHeadTable } = req.body;
+        let pairsToProcess = [[tableId, csvId]]
+        if (isHeadTable && csvId === null) {
+            const tableIds = await getAllTablesInChain(tableId);
+            pairsToProcess = tableIds.map(t => [t, null])
+        } else if (isHeadTable) {
+            const tableIds = await getAllTablesInChain(tableId);
+            const query = `
+                SELECT t.tableId, c.csvId
+                FROM csvs c
+                         INNER JOIN tables t USING (tableId)
+                WHERE c.tableId IN (${Array(tableIds.length).fill("?")})
+                  AND method = ?;
+            `;
+            const [result] = await pool.execute(query, [...tableIds, method])
+            pairsToProcess = result.map(r => [r.tableId, r.csvId])
+        }
+
+        const promises = pairsToProcess.map(([tableId, csvId]) => setValidationForOne(tableId, csvId));
+        await Promise.all(promises);
+        res.json({ result: "Set Validation OK", ...req.body });
     } catch (error) {
         next(error)
     }
@@ -238,7 +260,7 @@ const setRelevancyForOne = async (relevancy, tableId) => {
 
 const setRelevancy = async (req, res, next) => {
     try {
-        const {tableId, relevancy, isHeadTable} = req.body;
+        const { tableId, relevancy, isHeadTable } = req.body;
 
         let tableIds = [tableId]
         if (isHeadTable) {
@@ -248,7 +270,7 @@ const setRelevancy = async (req, res, next) => {
         const promises = tableIds.map(id => setRelevancyForOne(relevancy, id))
         await Promise.all(promises)
 
-        res.json({result: "Set Relevancy and Removed Tags OK", ...req.body});
+        res.json({ result: "Set Relevancy and Removed Tags OK", ...req.body });
     } catch (error) {
         next(error)
     }
@@ -322,7 +344,7 @@ const insertRemoveTag = async (tableId, tagId, set) => {
 
 const tagUntagTable = async (req, res, next) => {
     try {
-        const {tableId, tagId, set, isHeadTable} = req.body;
+        const { tableId, tagId, set, isHeadTable } = req.body;
         await insertRemoveTag(tableId, tagId, set);
 
         if (isHeadTable) {
@@ -330,7 +352,7 @@ const tagUntagTable = async (req, res, next) => {
             await deleteAllTags(tables);
             await assignTagsToTables(tables, tags);
         }
-        res.json({result: "Tagged OK", ...req.body});
+        res.json({ result: "Tagged OK", ...req.body });
     } catch (error) {
         next(error)
     }
