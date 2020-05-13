@@ -161,9 +161,9 @@ const deleteTable = async (req, res, next) => {
 
 const getValidationData = async (req, res, next) => {
     try {
-        const { pdfName } = req.body;
+        const { pdfName, notFirstLoading } = req.body;
         const csvsQuery = `
-            SELECT *
+            SELECT csvId, tableId, csvText, method
             FROM csvs
             WHERE tableId IN (
                 SELECT tableId
@@ -173,7 +173,7 @@ const getValidationData = async (req, res, next) => {
         `;
 
         const tablesQuery = `
-            SELECT *
+            SELECT continuationOf, page, pdfName, relevancy, tableId, tableTitle, correct_csv
             FROM tables
             WHERE pdfName = ?
             ORDER BY page, y1 DESC;
@@ -193,6 +193,14 @@ const getValidationData = async (req, res, next) => {
             WHERE tb.pdfName = ?
             ORDER BY tableId, tagId;
         `;
+
+        if (notFirstLoading) {
+            const tablesPromise = pool.execute(tablesQuery, [pdfName]);
+            const tagsPromise = pool.execute(tagsQuery, [pdfName]);
+
+            const [[tables], [tags]] = await Promise.all([tablesPromise, tagsPromise]);
+            return res.json({ tables, tags })
+        }
 
         const csvsPromise = pool.execute(csvsQuery, [pdfName]);
         const tablesPromise = pool.execute(tablesQuery, [pdfName]);
