@@ -4,9 +4,9 @@
   "description": "semi-automatic pdf tables extraction system",
   "main": "server.js",
   "scripts": {
-    "start": "pm2 start server.js",
+    "start": "\"concurrently \"nodemon --inspect server\" \"cd client && npm start\" -n \"server,client\"",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prod": "npm install && cd client && npm install && npm run build"
+    "prod": "pm2 stop server.js && npm install && cd client && npm install && npm run build && cd .. && pm2 start server.js"
   },
   "repository": {
     "type": "git",
@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.6",
-    "@types/react-router-dom": "^5.1.5"
+    "@types/react-router-dom": "^5.1.5",
+    "concurrently": "^5.2.0"
   }
 }
