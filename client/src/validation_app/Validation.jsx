@@ -15,6 +15,7 @@ export default class Validation extends Component {
         tags: [],
         imageLoaded: false,
         softUpdating: false,
+        imagesLoading: false,
     };
 
     componentDidMount() {
@@ -109,10 +110,16 @@ export default class Validation extends Component {
 
             // Pre-loading all the images for all the tables of the current PDF
             if (!notFirstLoading) {
-                tables.forEach(t => {
+                this.setState({ imagesLoading: true });
+
+                const promises = tables.map(async (t) => {
                     const img = new Image();
                     img.src = `/jpg/${t.tableId}.jpg`;
+                    return new Promise(resolve => img.onload = async () => resolve(true))
                 })
+                await Promise.all(promises);
+
+                this.setState({ imagesLoading: false });
             }
         } catch (error) {
             console.log(error)
@@ -169,10 +176,10 @@ export default class Validation extends Component {
     }
 
     render() {
-        const { pdfName, csvs, tables, loading, tableId, imageLoaded, tags, softUpdating } = this.state;
+        const { pdfName, csvs, tables, loading, tableId, imageLoaded, tags, softUpdating, imagesLoading } = this.state;
 
         if (loading) {
-            return <Spinner animation="border" />;
+            return <Spinner animation="border"/>;
         }
 
         if (!tableId) {
@@ -197,11 +204,11 @@ export default class Validation extends Component {
         const constructTable = (table) => (
             <table>
                 <tbody>
-                    {table.map((row, idx) => (
-                        <tr key={idx}>
-                            {row.map((col, index) => (<td key={index}>{col}</td>))}
-                        </tr>
-                    ))}
+                {table.map((row, idx) => (
+                    <tr key={idx}>
+                        {row.map((col, index) => (<td key={index}>{col}</td>))}
+                    </tr>
+                ))}
                 </tbody>
             </table>
         );
@@ -226,7 +233,7 @@ export default class Validation extends Component {
                         onClick={() => this.setValidation({ tableId, csvId, method, isHeadTable })}
                     >
                         Select
-                </Button>
+                    </Button>
                     <div
                         className={
                             csvId === correct_csv ? "ml-2 mr-2 correct" : correct_csv ? "ml-2 mr-2 incorrect" : "ml-2 mr-2 bg-light"
@@ -247,8 +254,8 @@ export default class Validation extends Component {
             <div className="mb-5">
                 {tags.map(t =>
                     (<Button key={t.tagId} size="sm" variant={t.count === 0 ? "outline-dark" : "success"}
-                        onClick={() => this.tagUntagTable(tableId, t.tagId, t.count === 0, isHeadTable)}
-                        disabled={softUpdating}>
+                             onClick={() => this.tagUntagTable(tableId, t.tagId, t.count === 0, isHeadTable)}
+                             disabled={softUpdating}>
                         {t.tagName}
                     </Button>)
                 )
@@ -265,13 +272,13 @@ export default class Validation extends Component {
             ? <div className="border border-dark">
                 <Alert className="m-2" variant="warning">The table is marked as irrelevant</Alert>
                 <Button className="m-2" size="sm" variant="warning" disabled={softUpdating}
-                    onClick={() => this.setRelevancy(tableId, 1, isHeadTable)}>
+                        onClick={() => this.setRelevancy(tableId, 1, isHeadTable)}>
                     MARK TABLE AS RELEVANT
                 </Button>
             </div>
             : <div className="border border-dark">
                 <Button className="m-2 mb-5" size="sm" variant="danger" disabled={softUpdating}
-                    onClick={() => this.setRelevancy(tableId, 0, isHeadTable)}>
+                        onClick={() => this.setRelevancy(tableId, 0, isHeadTable)}>
                     MARK TABLE AS IRRELEVANT
                 </Button>
                 {tagsBlock}
@@ -313,12 +320,18 @@ export default class Validation extends Component {
                                 Back to Index
                             </Button>
                         </Link>
-                        <Button size="sm" variant="dark" href={`/extraction/${pdfName}/${page}`} target="blank_" disabled={softUpdating}>
+                        <Button size="sm" variant="dark" href={`/extraction/${pdfName}/${page}`} target="blank_"
+                                disabled={softUpdating}>
                             Open PDF
                         </Button>
                         <Button size="sm" variant="primary" disabled={softUpdating} onClick={this.softLoadData}>
                             Refresh Data
-                            </Button>
+                        </Button>
+                        <span className={imagesLoading ? "text-danger" : "text-success"}>
+                            {imagesLoading
+                                ? "Images are being preloaded (the app can be slow in the process until it's done)..."
+                                : "All images are preloaded! The app is working with the full speed!"}
+                        </span>
                     </Col>
                 </Row>
                 <Row>
@@ -360,13 +373,13 @@ export default class Validation extends Component {
                 </Row>
                 <Row>
                     <Col>
-                        {imageLoaded || <Spinner animation="border" />}
+                        {imageLoaded || <Spinner animation="border"/>}
                         <img
                             src={`/jpg/${tableId}.jpg`}
                             className="img-fluid border border-dark sticky"
                             style={imageLoaded ? {} : { visibility: "hidden" }}
                             onLoad={this.imageOnLoad}
-                            alt="Table screenshot from the PDF file" />
+                            alt="Table screenshot from the PDF file"/>
                     </Col>
                     <Col>
                         {csvsArea}
