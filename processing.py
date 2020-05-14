@@ -435,16 +435,41 @@ def apply_default_validations():
 
 
 def delete_unreferenced_csvs_and_jpgs():
-    pass
+    print(f"Starting the cleanup of unreferenced CSVs and JPGs...")
+    stmt1 = "SELECT csvId FROM csvs;"
+    stmt2 = "SELECT tableId FROM tables;"
+    with engine.connect() as conn:
+        df1 = pd.read_sql(stmt1, conn)
+        df2 = pd.read_sql(stmt2, conn)
+    csv_ids = set(df1["csvId"].tolist())
+    table_ids = set(df2["tableId"].tolist())
+
+    csvs = csv_tables_folder.glob("*.csv")
+    jpgs = jpg_tables_folder.glob("*.jpg")
+
+    counter1 = 0
+    for csv in csvs:
+        if csv.stem not in csv_ids:
+            print(f"Removing CSV {csv}")
+            counter1 += 1
+            csv.unlink()
+    counter2 = 0
+    for jpg in jpgs:
+        if jpg.stem not in table_ids:
+            print(f"Removing JPG {jpg}")
+            counter2 += 1
+            jpg.unlink()
+
+    print(f"Removed {counter1} unreferenced CSVs and {counter2} unreferenced JPGs")
 
 
 if __name__ == "__main__":
     # insert_pdfs()
-    delete_csvs_and_images()
-    populate_coordinates()
-    extract_csvs()
-    extract_images()
-    add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
-                     r"B-14R Appendix MPLA-SAPL IR 43 b) - TERA Post Construction (A1A3A2)_page.97.csv")
+    # delete_csvs_and_images()
+    # populate_coordinates()
+    # extract_csvs()
+    # extract_images()
+    # add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
+    #                  r"B-14R Appendix MPLA-SAPL IR 43 b) - TERA Post Construction (A1A3A2)_page.97.csv")
     # apply_default_validations()
-    # delete_unreferenced_csvs_and_jpgs()
+    delete_unreferenced_csvs_and_jpgs()
