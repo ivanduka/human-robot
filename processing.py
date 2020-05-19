@@ -17,6 +17,7 @@ import traceback
 import json
 import numpy as np
 
+pdfs_and_projects_file = Path("pdfs_table.csv")
 pdf_files_folder = Path("//luxor/data/board/Dev/PCMR/pdf_files")
 csv_tables_folder = Path("//luxor/data/board/Dev/PCMR/csv_tables")
 jpg_tables_folder = Path("//luxor/data/board/Dev/PCMR/jpg_tables")
@@ -463,8 +464,36 @@ def delete_unreferenced_csvs_and_jpgs():
     print(f"Removed {counter1} unreferenced CSVs and {counter2} unreferenced JPGs")
 
 
+def populate_projects():
+    df = pd.read_csv(pdfs_and_projects_file, encoding="cp1252", header=0)
+    stmt = "INSERT INTO projects (application_title, application_title_short, application_id) VALUES (%s,%s,%s)"
+
+    items = set()
+    with engine.connect() as conn:
+        for row in df.itertuples():
+            application_id = int(re.search(r"\d+$", row.ApplicationLink).group())
+            if application_id in items:
+                continue
+            items.add(application_id)
+            conn.execute(stmt, (row.ApplicationTitle, row.ApplicationTitleShort, application_id))
+
+
+def populate_submitter():
+    df = pd.read_csv(pdfs_and_projects_file, encoding="cp1252", header=0)
+    stmt = "UPDATE pdfs SET submitter=%s, application_id=%s WHERE pdfId = %s"
+
+    with engine.connect() as conn:
+        for row in df.itertuples():
+            if row.pdfId == 601829:
+                print(row)
+            application_id = int(re.search(r"\d+$", row.ApplicationLink).group())
+            conn.execute(stmt, (row.pdfSubmitter, application_id, row.pdfId))
+
+
 if __name__ == "__main__":
+    # populate_projects()
     # insert_pdfs()
+    populate_submitter()
     # delete_csvs_and_images()
     # populate_coordinates()
     # extract_csvs()
@@ -472,4 +501,4 @@ if __name__ == "__main__":
     # add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
     #                  r"B-14R Appendix MPLA-SAPL IR 43 b) - TERA Post Construction (A1A3A2)_page.97.csv")
     # apply_default_validations()
-    delete_unreferenced_csvs_and_jpgs()
+    # delete_unreferenced_csvs_and_jpgs()
