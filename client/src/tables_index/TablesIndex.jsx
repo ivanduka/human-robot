@@ -95,18 +95,6 @@ export default class ExtractionIndex extends Component {
     }
   };
 
-  handleCapturingLink = (pdfName) => {
-    this.props.history.push({
-      pathname: "/extraction/" + pdfName,
-    });
-  };
-
-  handleValidatingLink = (pdfName) => {
-    this.props.history.push({
-      pathname: "/validation/" + pdfName,
-    });
-  };
-
   render() {
     const { rows, columns, loading, softUpdating } = this.state;
     if (loading) return <Spinner animation="border" />;
@@ -127,7 +115,6 @@ export default class ExtractionIndex extends Component {
       ),
       validatingLink: (
         <Button
-          variant="info"
           size="sm"
           variant={row.tablesNotValidated > 0 ? "primary" : "warning"}
           href={`/validation/${row.pdfName}`}
