@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.5.0",
-    "@testing-library/user-event": "^7.2.1",
     "bootstrap": "^4.4.1",
     "mdbreact": "^4.25.4",
     "papaparse": "^5.2.0",
@@ -45,5 +42,11 @@
     "trailingComma": "all",
     "printWidth": 120
   },
-  "proxy": "http://localhost:7070"
+  "proxy": "http://localhost:7070",
+  "devDependencies": {
+    "@types/react-router-dom": "^5.1.5",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.5.0",
+    "@testing-library/user-event": "^7.2.1"
+  }
 }

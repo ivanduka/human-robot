@@ -26,7 +26,7 @@ const App = () => (
             <Route exact path="/tables_index" component={TablesIndex}/>
             <Route path="/extraction/:pdfName/:pageNumber" component={Extraction}/>
             <Redirect from="/extraction/:pdfName" to="/extraction/:pdfName/1"/>
-            <Route path="/validation/:pdfName" component={Validation}/>
+            <Route path="/validation/:pdfName/:tableId?" component={Validation}/>
             <Route exact path="/" component={Home}/>
             <Route path="*" component={NoMatch}/>
         </Switch>

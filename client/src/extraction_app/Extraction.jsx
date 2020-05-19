@@ -30,7 +30,7 @@ export default class Extraction extends Component {
     softUpdating: false,
   };
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     if (this.props.match.params.pageNumber !== prevProps.match.params.pageNumber) {
       let { pdfName, pageNumber } = this.props.match.params;
       pdfName = decodeURIComponent(pdfName);
@@ -613,18 +613,16 @@ export default class Extraction extends Component {
           <Button
             variant="secondary"
             size="sm"
-            disabled={pageNumber <= 1}
+            disabled={softUpdating || pageNumber <= 1}
             onClick={this.previousPage}
-            disabled={softUpdating}
           >
             Previous Page (SHIFT+A)
           </Button>
           <Button
             size="sm"
             variant="secondary"
-            disabled={pageNumber >= numPages}
+            disabled={softUpdating || pageNumber >= numPages}
             onClick={this.nextPage}
-            disabled={softUpdating}
           >
             Next Page (SHIFT+D)
           </Button>
