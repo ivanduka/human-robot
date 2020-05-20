@@ -25,7 +25,7 @@ export default class Validation extends Component {
     document.addEventListener("keydown", this.handleKeys);
   }
 
-  componentDidUpdate(prevProps, prevState, snapshot) {
+  componentDidUpdate(prevProps) {
     if (this.props.match.params.tableId !== prevProps.match.params.tableId) {
       let { tableId } = this.props.match.params;
       this.setState({ tableId });
@@ -224,6 +224,7 @@ export default class Validation extends Component {
 
     const isHeadTable = continuationOf == null ? tables.findIndex((t) => t.continuationOf === tableId) !== -1 : false;
 
+    // noinspection JSCheckFunctionSignatures
     const conTable = continuationOf ? tables.find((t) => t.tableId === continuationOf) : null;
 
     const conTableBlock = continuationOf ? (

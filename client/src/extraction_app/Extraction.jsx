@@ -30,7 +30,8 @@ export default class Extraction extends Component {
     softUpdating: false,
   };
 
-  componentDidUpdate(prevProps, prevState) {
+  // noinspection JSCheckFunctionSignatures
+  componentDidUpdate(prevProps) {
     if (this.props.match.params.pageNumber !== prevProps.match.params.pageNumber) {
       let { pdfName, pageNumber } = this.props.match.params;
       pdfName = decodeURIComponent(pdfName);

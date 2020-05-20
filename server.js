@@ -11,11 +11,11 @@ const log4js = require("log4js");
 const csvPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\csv_tables";
 const jpgPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\jpg_tables";
 const pdfPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\pdf_files";
-for (let p of [csvPath, jpgPath, pdfPath]) {
+[csvPath, jpgPath, pdfPath].forEach((p) =>
   fs.access(p, (err) => {
     if (err) throw new Error(`Path ${p} is not accessible`);
-  });
-}
+  }),
+);
 
 const app = express();
 app.options("*", cors());
@@ -49,7 +49,7 @@ const pool = mysql.createPool({
 
 // Index API
 
-const table_index = async (req, res, next) => {
+const tableIndex = async (req, res, next) => {
   try {
     const query = `
         SELECT p.pdfId,
@@ -211,7 +211,8 @@ const getValidationData = async (req, res, next) => {
       const tagsPromise = pool.execute(tagsQuery, [pdfName]);
 
       const [[tables], [tags]] = await Promise.all([tablesPromise, tagsPromise]);
-      return res.json({ tables, tags });
+      res.json({ tables, tags });
+      return;
     }
 
     const csvsPromise = pool.execute(csvsQuery, [pdfName]);
@@ -223,6 +224,23 @@ const getValidationData = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+const getAllTablesInChain = async (headTableId) => {
+  const query1 = `
+      WITH RECURSIVE cte (tableId, continuationOf) AS (
+          SELECT tableId, continuationOf
+          FROM tables
+          WHERE tableId = ?
+          UNION ALL
+          SELECT t.tableId, t.continuationOf
+          FROM tables t
+                   INNER JOIN cte on t.continuationOf = cte.tableId)
+      SELECT *
+      FROM cte;
+  `;
+  const [tablesResult] = await pool.execute(query1, [headTableId]);
+  return tablesResult.map((t) => t.tableId);
 };
 
 const setValidationForOne = async (tableId, csvId) => {
@@ -254,7 +272,7 @@ const setValidation = async (req, res, next) => {
       pairsToProcess = result.map((r) => [r.tableId, r.csvId]);
     }
 
-    const promises = pairsToProcess.map(([tableId, csvId]) => setValidationForOne(tableId, csvId));
+    const promises = pairsToProcess.map(([tableId_, csvId_]) => setValidationForOne(tableId_, csvId_));
     await Promise.all(promises);
     res.json({ result: "Set Validation OK", ...req.body });
   } catch (error) {
@@ -296,23 +314,6 @@ const setRelevancy = async (req, res, next) => {
   }
 };
 
-const getAllTablesInChain = async (headTableId) => {
-  const query1 = `
-      WITH RECURSIVE cte (tableId, continuationOf) AS (
-          SELECT tableId, continuationOf
-          FROM tables
-          WHERE tableId = ?
-          UNION ALL
-          SELECT t.tableId, t.continuationOf
-          FROM tables t
-                   INNER JOIN cte on t.continuationOf = cte.tableId)
-      SELECT *
-      FROM cte;
-  `;
-  const [tablesResult] = await pool.execute(query1, [headTableId]);
-  return tablesResult.map((t) => t.tableId);
-};
-
 const getTagsForTable = async (tableId) => {
   const query2 = `
       SELECT tagId
@@ -338,11 +339,13 @@ const assignTagsToTables = async (tableIds, tagIds) => {
       VALUES (?, ?);;
   `;
   const promises = [];
-  for (let table of tableIds) {
-    for (let tag of tagIds) {
+
+  tableIds.forEach((table) => {
+    tagIds.forEach((tag) => {
       promises.push(pool.execute(query4, [table, tag]));
-    }
-  }
+    });
+  });
+
   return Promise.all(promises);
 };
 
@@ -382,7 +385,8 @@ const tagUntagTable = async (req, res, next) => {
 function errorHandler(err, req, res, next) {
   logger.error(err);
   if (res.headersSent) {
-    return next(err);
+    next(err);
+    return;
   }
   res.statusMessage = err.message.replace(/[^\t\x20-\x7e\x80-\xff]/, "_");
   res.status(500).send();
@@ -390,7 +394,7 @@ function errorHandler(err, req, res, next) {
 
 app.use(bodyParser.json());
 
-app.use("/table_index", (req, res, next) => table_index(req, res, next));
+app.use("/tableIndex", (req, res, next) => tableIndex(req, res, next));
 
 app.use("/getExtractionTables", (req, res, next) => getExtractionTables(req, res, next));
 app.use("/insertTable", (req, res, next) => insertTable(req, res, next));
@@ -411,4 +415,5 @@ app.get("/*", (req, res) => {
 app.use((err, req, res, next) => errorHandler(err, req, res, next));
 
 const port = process.env.PORT;
+// eslint-disable-next-line no-console
 app.listen(port, () => console.log(`Listening on port ${port}...`));

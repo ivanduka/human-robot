@@ -87,7 +87,7 @@ export default class ExtractionIndex extends Component {
     }
 
     try {
-      const rows = await ky.post(`/table_index`).json();
+      const rows = await ky.post(`/tableIndex`).json();
       this.setState({ rows, loading: false });
     } catch (error) {
       console.log(error);
