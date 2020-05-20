@@ -610,12 +610,7 @@ export default class Extraction extends Component {
           </Button>
         </div>
         <div>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={softUpdating || pageNumber <= 1}
-            onClick={this.previousPage}
-          >
+          <Button variant="secondary" size="sm" disabled={softUpdating || pageNumber <= 1} onClick={this.previousPage}>
             Previous Page (SHIFT+A)
           </Button>
           <Button

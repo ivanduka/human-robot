@@ -212,7 +212,7 @@ export default class Validation extends Component {
     const { pdfName, csvs, tables, loading, tableId, imageLoaded, tags, softUpdating, imagesLoading } = this.state;
 
     if (loading) {
-      return <Spinner animation="border"/>;
+      return <Spinner animation="border" />;
     }
 
     if (!tableId || !tables) {
@@ -238,13 +238,13 @@ export default class Validation extends Component {
     const constructTable = (table) => (
       <table>
         <tbody>
-        {table.map((row, idx) => (
-          <tr key={idx}>
-            {row.map((col, index) => (
-              <td key={index}>{col}</td>
-            ))}
-          </tr>
-        ))}
+          {table.map((row, idx) => (
+            <tr key={idx}>
+              {row.map((col, index) => (
+                <td key={index}>{col}</td>
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
     );
@@ -432,7 +432,7 @@ export default class Validation extends Component {
         </Row>
         <Row>
           <Col>
-            {imageLoaded || <Spinner animation="border"/>}
+            {imageLoaded || <Spinner animation="border" />}
             <img
               src={`/jpg/${tableId}.jpg`}
               className="img-fluid border border-dark sticky"
