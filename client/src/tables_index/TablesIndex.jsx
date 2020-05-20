@@ -70,7 +70,7 @@ export default class ExtractionIndex extends Component {
   };
 
   componentDidMount() {
-    this.loadData();
+    this.loadData().then();
   }
 
   componentWillUnmount() {}
@@ -116,7 +116,7 @@ export default class ExtractionIndex extends Component {
       validatingLink: (
         <Button
           size="sm"
-          variant={row.tablesNotValidated > 0 ? "primary" : "warning"}
+          variant={row["tablesNotValidated"] > 0 ? "primary" : "warning"}
           href={`/validation/${row.pdfName}`}
           target="_blank"
           disabled={this.state.softUpdating}

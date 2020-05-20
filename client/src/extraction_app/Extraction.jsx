@@ -34,9 +34,9 @@ export default class Extraction extends Component {
     if (this.props.match.params.pageNumber !== prevProps.match.params.pageNumber) {
       let { pdfName, pageNumber } = this.props.match.params;
       pdfName = decodeURIComponent(pdfName);
-      this.loadTables(pdfName);
+      this.loadTables(pdfName).then();
       this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
-      this.loadPdfStatus(pdfName);
+      this.loadPdfStatus(pdfName).then();
     }
     const current = document.querySelector(".current");
     if (current && this.state.scrollingAfterUpdate) {
@@ -48,9 +48,9 @@ export default class Extraction extends Component {
   componentDidMount() {
     let { pdfName, pageNumber } = this.props.match.params;
     pdfName = decodeURIComponent(pdfName);
-    this.loadTables(pdfName);
+    this.loadTables(pdfName).then();
     this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
-    this.loadPdfStatus(pdfName);
+    this.loadPdfStatus(pdfName).then();
     window.onresize = this.updatePageDimensions;
     document.addEventListener("keydown", this.handleKeys);
     document.addEventListener("copy", this.handleCopy);
@@ -167,7 +167,7 @@ export default class Extraction extends Component {
 
   handleKeys = (event) => {
     if (event.shiftKey && (event.key === "KeyS" || event.key.toLowerCase() === "s")) {
-      this.handleSave();
+      this.handleSave().then();
       event.preventDefault();
     }
 
@@ -362,7 +362,7 @@ export default class Extraction extends Component {
     });
 
     if (pageUpdated) {
-      this.loadTables();
+      this.loadTables().then();
     }
   };
 
@@ -439,7 +439,7 @@ export default class Extraction extends Component {
     }
     const { tableTitle, tableId } = prevPageTables[0];
     this.setState({ tableTitle, continuationOf: tableId }, () => {
-      this.handleSave();
+      this.handleSave().then();
       this.nextPage();
     });
   };

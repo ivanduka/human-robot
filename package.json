@@ -33,5 +33,10 @@
     "@types/react-router-dom": "^5.1.5",
     "concurrently": "^5.2.0",
     "prettier": "^2.0.5"
+  },
+  "prettier": {
+    "quoteProps": "preserve",
+    "trailingComma": "all",
+    "printWidth": 120
   }
 }
