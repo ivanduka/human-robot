@@ -35,9 +35,8 @@ export default class Extraction extends Component {
     if (this.props.match.params.pageNumber !== prevProps.match.params.pageNumber) {
       let { pdfName, pageNumber } = this.props.match.params;
       pdfName = decodeURIComponent(pdfName);
-      this.loadTables(pdfName).then();
+      this.loadData(pdfName).then();
       this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
-      this.loadPdfStatus(pdfName).then();
     }
     const current = document.querySelector(".current");
     if (current && this.state.scrollingAfterUpdate) {
@@ -49,9 +48,8 @@ export default class Extraction extends Component {
   componentDidMount() {
     let { pdfName, pageNumber } = this.props.match.params;
     pdfName = decodeURIComponent(pdfName);
-    this.loadTables(pdfName).then();
+    this.loadData(pdfName).then();
     this.setState({ pdfName, pageNumber: parseInt(pageNumber) });
-    this.loadPdfStatus(pdfName).then();
     window.onresize = this.updatePageDimensions;
     document.addEventListener("keydown", this.handleKeys);
     document.addEventListener("copy", this.handleCopy);
@@ -67,7 +65,7 @@ export default class Extraction extends Component {
 
   softLoadData = async () => {
     this.setState({ softUpdating: true });
-    await Promise.all([this.loadTables(), this.loadPdfStatus()]);
+    await this.loadData();
     this.setState({ softUpdating: false });
   };
 
@@ -95,14 +93,14 @@ export default class Extraction extends Component {
       await ky.post(`/insertTable`, { json }).json();
       this.clearRectangle();
       this.setState({ tableTitle: null, continuationOf: null });
-      await this.loadTables();
+      this.loadData().then();
     } catch (error) {
       console.log(error);
       alert(error);
     }
   };
 
-  loadTables = async (pdfName) => {
+  loadData = async (pdfName) => {
     this.setState({ tables: null });
 
     if (!pdfName) {
@@ -111,25 +109,10 @@ export default class Extraction extends Component {
 
     try {
       const json = { pdfName };
-      const tables = await ky.post(`/getExtractionTables`, { json }).json();
-      this.setState({ tables, scrollingAfterUpdate: true });
+      const { tables, pdfStatus } = await ky.post(`/getExtractionData`, { json }).json();
+      const { status } = pdfStatus[0];
+      this.setState({ tables, locked: status, scrollingAfterUpdate: true });
       this.drawTables(tables);
-    } catch (error) {
-      console.log(error);
-      alert(error);
-    }
-  };
-
-  loadPdfStatus = async (pdfName) => {
-    if (!pdfName) {
-      pdfName = this.state.pdfName;
-    }
-
-    try {
-      const json = { pdfName };
-      const results = await ky.post(`/getPdfStatus`, { json }).json();
-      const { status } = results[0];
-      this.setState({ locked: status });
     } catch (error) {
       console.log(error);
       alert(error);
@@ -363,7 +346,7 @@ export default class Extraction extends Component {
     });
 
     if (pageUpdated) {
-      this.loadTables().then();
+      this.loadData().then();
     }
   };
 
@@ -381,7 +364,7 @@ export default class Extraction extends Component {
         if (error || req.status !== 200) return alert(JSON.stringify(data));
 
         this.clearRectangle();
-        await this.loadTables();
+        this.loadData().then();
       } catch (e) {
         alert(e);
       }

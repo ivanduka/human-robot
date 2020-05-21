@@ -78,17 +78,26 @@ const tableIndex = async (req, res, next) => {
 
 // Table Extraction API
 
-const getExtractionTables = async (req, res, next) => {
+const getExtractionData = async (req, res, next) => {
   try {
     const { pdfName } = req.body;
-    const query = `
+    const tablesQuery = `
         SELECT *
         FROM tables
         WHERE pdfName = ?
         ORDER BY page DESC, y1;
     `;
-    const [result] = await pool.execute(query, [pdfName]);
-    res.json(result);
+    const statusQuery = `
+        SELECT status
+        FROM pdfs
+        WHERE pdfName = ?;
+    `;
+
+    const tablesPromise = pool.execute(tablesQuery, [pdfName]);
+    const pdfStatusPromise = pool.execute(statusQuery, [pdfName]);
+
+    const [[tables], [pdfStatus]] = await Promise.all([tablesPromise, pdfStatusPromise]);
+    res.json({ tables, pdfStatus });
   } catch (error) {
     next(error);
   }
@@ -103,21 +112,6 @@ const setPdfStatus = async (req, res, next) => {
         WHERE pdfName = ?;
     `;
     const [result] = await pool.execute(query, [status, pdfName]);
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getPdfStatus = async (req, res, next) => {
-  try {
-    const { pdfName } = req.body;
-    const query = `
-        SELECT *
-        FROM pdfs
-        WHERE pdfName = ?;
-    `;
-    const [result] = await pool.execute(query, [pdfName]);
     res.json(result);
   } catch (error) {
     next(error);
@@ -394,20 +388,19 @@ function errorHandler(err, req, res, next) {
 
 app.use(bodyParser.json());
 
-app.use("/tableIndex", (req, res, next) => tableIndex(req, res, next));
+app.post("/tableIndex", (req, res, next) => tableIndex(req, res, next));
 
-app.use("/getExtractionTables", (req, res, next) => getExtractionTables(req, res, next));
-app.use("/insertTable", (req, res, next) => insertTable(req, res, next));
-app.use("/deleteTable", (req, res, next) => deleteTable(req, res, next));
-app.use("/getPdfStatus", (req, res, next) => getPdfStatus(req, res, next));
-app.use("/setPdfStatus", (req, res, next) => setPdfStatus(req, res, next));
+app.post("/getExtractionData", (req, res, next) => getExtractionData(req, res, next));
+app.post("/insertTable", (req, res, next) => insertTable(req, res, next));
+app.post("/deleteTable", (req, res, next) => deleteTable(req, res, next));
+app.post("/setPdfStatus", (req, res, next) => setPdfStatus(req, res, next));
 
-app.use("/getValidationData", (req, res, next) => getValidationData(req, res, next));
-app.use("/setValidation", (req, res, next) => setValidation(req, res, next));
-app.use("/setRelevancy", (req, res, next) => setRelevancy(req, res, next));
-app.use("/tagUntagTable", (req, res, next) => tagUntagTable(req, res, next));
+app.post("/getValidationData", (req, res, next) => getValidationData(req, res, next));
+app.post("/setValidation", (req, res, next) => setValidation(req, res, next));
+app.post("/setRelevancy", (req, res, next) => setRelevancy(req, res, next));
+app.post("/tagUntagTable", (req, res, next) => tagUntagTable(req, res, next));
 
-app.use("/", express.static(path.join(__dirname, "client", "build")));
+app.get("/", express.static(path.join(__dirname, "client", "build")));
 app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "client", "build", "index.html"));
 });
