@@ -72,19 +72,22 @@ export default class Validation extends Component {
   goToTable = (event) => {
     const { tables } = this.state;
     const { value } = event.target;
-    const tableId = tables[value - 1].tableId;
-    this.changeTable(tableId);
+    const newTableId = tables[value - 1].tableId;
+    this.changeTable(newTableId);
   };
 
   changeTable = (tableId) => {
-    this.setState((prevState) => {
+    const { pdfName } = this.state;
+
+    this.setState({ softUpdating: true }, () => {
       this.props.history.replace({
         pathname: generatePath(this.props.match.path, {
           tableId,
-          pdfName: prevState.pdfName,
+          pdfName,
         }),
       });
-      return { tableId, imageLoaded: false };
+
+      this.setState({ tableId, softUpdating: false, imageLoaded: false });
     });
   };
 

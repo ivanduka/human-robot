@@ -400,7 +400,7 @@ app.post("/setValidation", (req, res, next) => setValidation(req, res, next));
 app.post("/setRelevancy", (req, res, next) => setRelevancy(req, res, next));
 app.post("/tagUntagTable", (req, res, next) => tagUntagTable(req, res, next));
 
-app.get("/", express.static(path.join(__dirname, "client", "build")));
+app.use("/", express.static(path.join(__dirname, "client", "build")));
 app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "client", "build", "index.html"));
 });

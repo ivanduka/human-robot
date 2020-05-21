@@ -53,14 +53,12 @@ export default class Extraction extends Component {
     window.onresize = this.updatePageDimensions;
     document.addEventListener("keydown", this.handleKeys);
     document.addEventListener("copy", this.handleCopy);
-    window.addEventListener("focus", this.softLoadData);
   }
 
   componentWillUnmount() {
     window.onresize = null;
     document.removeEventListener("keydown", this.handleKeys);
     document.removeEventListener("copy", this.handleCopy);
-    window.removeEventListener("focus", this.softLoadData);
   }
 
   softLoadData = async () => {
@@ -75,6 +73,8 @@ export default class Extraction extends Component {
     if (!tableTitle || !x1 || !tableTitle.trim()) {
       return alert("Please copy/enter the table title and select the table!");
     }
+
+    this.setState({ softUpdating: true });
 
     try {
       const json = {
@@ -93,7 +93,7 @@ export default class Extraction extends Component {
       await ky.post(`/insertTable`, { json }).json();
       this.clearRectangle();
       this.setState({ tableTitle: null, continuationOf: null });
-      this.loadData().then();
+      this.softLoadData().then();
     } catch (error) {
       console.log(error);
       alert(error);
@@ -101,8 +101,6 @@ export default class Extraction extends Component {
   };
 
   loadData = async (pdfName) => {
-    this.setState({ tables: null });
-
     if (!pdfName) {
       pdfName = this.state.pdfName;
     }
@@ -122,13 +120,13 @@ export default class Extraction extends Component {
   setPdfStatus = async () => {
     const { pdfName, locked } = this.state;
     if (window.confirm(`Do you really want to ${locked ? "unlock" : "lock"} the file for change?`)) {
-      this.setState({ locked: true, locking: true });
+      this.setState({ locked: true, softUpdating: true });
 
       try {
         const status = locked === "locked" ? "" : "locked";
         const json = { pdfName, status };
         await ky.post(`/setPdfStatus`, { json }).json();
-        this.setState(() => ({ locked: status, locking: false }));
+        this.softLoadData().then();
       } catch (error) {
         console.log(error);
         alert(error);
@@ -353,6 +351,7 @@ export default class Extraction extends Component {
   handleDelete = async (tableId) => {
     if (window.confirm(`Do you really want to delete ${tableId}?`)) {
       try {
+        this.setState({ softUpdating: true });
         const req = await fetch(`/deleteTable`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -364,7 +363,7 @@ export default class Extraction extends Component {
         if (error || req.status !== 200) return alert(JSON.stringify(data));
 
         this.clearRectangle();
-        this.loadData().then();
+        this.softLoadData().then();
       } catch (e) {
         alert(e);
       }
@@ -473,6 +472,7 @@ export default class Extraction extends Component {
         as="select"
         value={continuationOf || ""}
         size="sm"
+        disabled={softUpdating}
         onChange={(e) => this.handleContinuationChange(e)}
       >
         <option value="">not a continuation</option>
@@ -505,7 +505,13 @@ export default class Extraction extends Component {
           <div className={["table_block", page === pageNumber ? "current" : null].join(" ")} key={i}>
             <div>
               <strong>
-                <Link to={`/extraction/${pdfName}/${page}`}>{tableTitle}</Link>
+                {softUpdating ? (
+                  tableTitle
+                ) : (
+                  <Link disabled={softUpdating} to={`/extraction/${pdfName}/${page}`}>
+                    {tableTitle}
+                  </Link>
+                )}
               </strong>
             </div>
             <div>
@@ -552,6 +558,7 @@ export default class Extraction extends Component {
             rows="2"
             placeholder="Select the table title on the page and copy it (CTRL+C or SHIFT+C) or just edit here"
             value={tableTitle || ""}
+            disabled={softUpdating}
             onChange={this.handleTableTitleChange}
           />
         </div>
@@ -563,11 +570,11 @@ export default class Extraction extends Component {
           onClick={this.handleSave}
           variant="success"
           size="sm"
-          disabled={!(tableTitle && x1 && tableTitle.trim())}
+          disabled={!(tableTitle && x1 && tableTitle.trim()) || softUpdating}
         >
           Save (SHIFT+S)
         </Button>
-        <Button onClick={this.handleQuickSaveAsContinuation} variant="warning" size="sm">
+        <Button onClick={this.handleQuickSaveAsContinuation} variant="warning" size="sm" disabled={softUpdating}>
           Save as a cont.(SHIFT+Q)
         </Button>
       </div>
