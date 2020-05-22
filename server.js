@@ -82,7 +82,7 @@ const getExtractionData = async (req, res, next) => {
   try {
     const { pdfName } = req.body;
     const tablesQuery = `
-        SELECT *
+        SELECT headTable, page, pageHeight, pageWidth, parentTable, tableId, tableTitle, x1, x2, y1, y2
         FROM tables
         WHERE pdfName = ?
         ORDER BY page DESC, y1;
@@ -120,14 +120,41 @@ const setPdfStatus = async (req, res, next) => {
 
 const insertTable = async (req, res, next) => {
   try {
-    const { tableId, pdfName, page, tableTitle, x1, x2, y1, y2, pageHeight, pageWidth, parentTable } = req.body;
+    const {
+      tableId,
+      pdfName,
+      page,
+      tableTitle,
+      x1,
+      x2,
+      y1,
+      y2,
+      pageHeight,
+      pageWidth,
+      parentTable,
+      headTable,
+    } = req.body;
     const creatorIp = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
     const query = `
         INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle,
-                            parentTable, creatorIp)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                            parentTable, creatorIp, headTable)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
-    const params = [tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle, parentTable, creatorIp];
+    const params = [
+      tableId,
+      pdfName,
+      page,
+      pageWidth,
+      pageHeight,
+      x1,
+      y1,
+      x2,
+      y2,
+      tableTitle,
+      parentTable,
+      creatorIp,
+      headTable,
+    ];
     const [result] = await pool.execute(query, params);
     res.json(result);
   } catch (error) {

@@ -68,11 +68,13 @@ export default class Extraction extends Component {
   };
 
   handleSave = async () => {
-    const { tableId, pageNumber, tableTitle, pdfName, x1, x2, y1, y2, width, height, parentTable } = this.state;
+    const { tables, tableId, pageNumber, tableTitle, pdfName, x1, x2, y1, y2, width, height, parentTable } = this.state;
 
     if (!tableTitle || !x1 || !tableTitle.trim()) {
       return alert("Please copy/enter the table title and select the table!");
     }
+
+    const headTable = parentTable === null ? tableId : tables.find((t) => t.tableId === parentTable).headTable;
 
     this.setState({ softUpdating: true });
 
@@ -89,6 +91,7 @@ export default class Extraction extends Component {
         pageWidth: width,
         pageHeight: height,
         parentTable,
+        headTable,
       };
       await ky.post(`/insertTable`, { json }).json();
       this.clearRectangle();
