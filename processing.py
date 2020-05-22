@@ -523,28 +523,34 @@ def get_stats(tables):
 
 
 def set_head_table():
-    stmt = 'SELECT tableId, parentTable, head_table FROM tables WHERE parentTable IS NULL;'
+    stmt = 'SELECT tableId, parentTable, headTable FROM tables WHERE parentTable IS NULL;'
     query = '''
-        WITH RECURSIVE cte (tableId, parentTable) AS (
-            SELECT tableId, parentTable
+        WITH RECURSIVE cte (tableId, parentTable, headTable) AS (
+            SELECT tableId, parentTable, headTable
             FROM tables
-            WHERE tableId = ?
+            WHERE tableId = %s
             UNION ALL
-            SELECT t.tableId, t.parentTable
+            SELECT t.tableId, t.parentTable, t.headTable
             FROM tables t
                     INNER JOIN cte on t.parentTable = cte.tableId)
         SELECT *
         FROM cte;
     '''
+    update_query = "UPDATE tables SET headTable = %s WHERE tableId = %s"
     with engine.connect() as conn:
-        df = pd.read_sql(stmt, conn)
-    for table in df.to_dict("records"):
-        print(table)
+        heads = pd.read_sql(stmt, conn)
+        for head in heads.to_dict("records"):
+            tables = pd.read_sql(query, conn, params=(head["tableId"],))
+            for table in tables.to_dict("records"):
+                conn.execute(update_query, (head["tableId"], table["tableId"]))
+    print("Done")
+
 
 if __name__ == "__main__":
     # populate_projects()
     # insert_pdfs()
     # populate_submitter()
+
     # delete_csvs_and_images()
     # populate_coordinates()
     # extract_csvs()
@@ -552,7 +558,10 @@ if __name__ == "__main__":
     # add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
     #                  r"B-14R Appendix MPLA-SAPL IR 43 b) - TERA Post Construction (A1A3A2)_page.97.csv")
     # apply_default_validations()
+
     # delete_unreferenced_csvs_and_jpgs()
+
     # data = get_tags()
     # get_stats(data)
+
     set_head_table()
