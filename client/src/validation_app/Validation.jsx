@@ -223,20 +223,19 @@ export default class Validation extends Component {
     }
 
     const currentIndex = tables.findIndex((t) => t.tableId === tableId);
-    const { continuationOf, correct_csv, tableTitle, page, relevancy } = tables[currentIndex];
+    const { parentTable, correct_csv, tableTitle, page, relevancy } = tables[currentIndex];
 
-    const isHeadTable = continuationOf == null ? tables.findIndex((t) => t.continuationOf === tableId) !== -1 : false;
+    const isHeadTable = parentTable == null ? tables.findIndex((t) => t.parentTable === tableId) !== -1 : false;
 
     // noinspection JSCheckFunctionSignatures
-    const conTable = continuationOf ? tables.find((t) => t.tableId === continuationOf) : null;
+    const conTable = parentTable ? tables.find((t) => t.tableId === parentTable) : null;
 
-    const conTableBlock = continuationOf ? (
+    const conTableBlock = parentTable ? (
       <p>
-        Continuation Table Name: <strong>{conTable.tableTitle}</strong>, Continuation Table ID:{" "}
-        <strong>{conTable.tableId}</strong>
+        Parent Table Name: <strong>{conTable.tableTitle}</strong>, Parent Table ID: <strong>{conTable.tableId}</strong>
       </p>
     ) : (
-      <p>(this table is not a continuation)</p>
+      <p>(this table has no parent table)</p>
     );
 
     const constructTable = (table) => (

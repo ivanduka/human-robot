@@ -491,7 +491,7 @@ def populate_submitter():
 
 
 def get_tags():
-    stmt = 'SELECT * FROM tags_json WHERE relevancy = 1 AND continuationOf IS NULL;'
+    stmt = 'SELECT * FROM tags_json WHERE relevancy = 1 AND parentTable IS NULL;'
     with engine.connect() as conn:
         df = pd.read_sql(stmt, conn)
     tags_data = []
@@ -522,6 +522,25 @@ def get_stats(tables):
     print(f"Total tables:      {total}")
 
 
+def set_head_table():
+    stmt = 'SELECT tableId, parentTable, head_table FROM tables WHERE parentTable IS NULL;'
+    query = '''
+        WITH RECURSIVE cte (tableId, parentTable) AS (
+            SELECT tableId, parentTable
+            FROM tables
+            WHERE tableId = ?
+            UNION ALL
+            SELECT t.tableId, t.parentTable
+            FROM tables t
+                    INNER JOIN cte on t.parentTable = cte.tableId)
+        SELECT *
+        FROM cte;
+    '''
+    with engine.connect() as conn:
+        df = pd.read_sql(stmt, conn)
+    for table in df.to_dict("records"):
+        print(table)
+
 if __name__ == "__main__":
     # populate_projects()
     # insert_pdfs()
@@ -534,5 +553,6 @@ if __name__ == "__main__":
     #                  r"B-14R Appendix MPLA-SAPL IR 43 b) - TERA Post Construction (A1A3A2)_page.97.csv")
     # apply_default_validations()
     # delete_unreferenced_csvs_and_jpgs()
-    data = get_tags()
-    get_stats(data)
+    # data = get_tags()
+    # get_stats(data)
+    set_head_table()

@@ -22,7 +22,7 @@ export default class Extraction extends Component {
     x2: null,
     y2: null,
     tableTitle: null,
-    continuationOf: null,
+    parentTable: null,
     tables: null,
     pagesWithTables: null,
     locked: "locked",
@@ -68,7 +68,7 @@ export default class Extraction extends Component {
   };
 
   handleSave = async () => {
-    const { tableId, pageNumber, tableTitle, pdfName, x1, x2, y1, y2, width, height, continuationOf } = this.state;
+    const { tableId, pageNumber, tableTitle, pdfName, x1, x2, y1, y2, width, height, parentTable } = this.state;
 
     if (!tableTitle || !x1 || !tableTitle.trim()) {
       return alert("Please copy/enter the table title and select the table!");
@@ -88,11 +88,11 @@ export default class Extraction extends Component {
         y2,
         pageWidth: width,
         pageHeight: height,
-        continuationOf,
+        parentTable,
       };
       await ky.post(`/insertTable`, { json }).json();
       this.clearRectangle();
-      this.setState({ tableTitle: null, continuationOf: null });
+      this.setState({ tableTitle: null, parentTable: null });
       this.softLoadData().then();
     } catch (error) {
       console.log(error);
@@ -398,12 +398,12 @@ export default class Extraction extends Component {
   };
 
   handleContinuationChange(event) {
-    const continuationOf = event.target.value || null;
-    if (continuationOf) {
-      const { tableTitle } = this.state.tables.find((table) => table.tableId === continuationOf);
-      return this.setState({ continuationOf, tableTitle });
+    const parentTable = event.target.value || null;
+    if (parentTable) {
+      const { tableTitle } = this.state.tables.find((table) => table.tableId === parentTable);
+      return this.setState({ parentTable, tableTitle });
     }
-    this.setState({ continuationOf, tableTitle: null });
+    this.setState({ parentTable, tableTitle: null });
   }
 
   handleTableTitleChange = (event) => {
@@ -421,7 +421,7 @@ export default class Extraction extends Component {
       return;
     }
     const { tableTitle, tableId } = prevPageTables[0];
-    this.setState({ tableTitle, continuationOf: tableId }, () => {
+    this.setState({ tableTitle, parentTable: tableId }, () => {
       this.handleSave().then();
       this.nextPage();
     });
@@ -443,14 +443,14 @@ export default class Extraction extends Component {
       width,
       height,
       locked,
-      continuationOf,
+      parentTable,
       softUpdating,
     } = this.state;
 
     const continuations = new Set();
     if (tables) {
       for (let table of tables) {
-        continuations.add(table.continuationOf);
+        continuations.add(table.parentTable);
       }
     }
 
@@ -467,15 +467,15 @@ export default class Extraction extends Component {
           ))
       : [];
 
-    const continuationOfSelect = (
+    const parentTableSelect = (
       <Form.Control
         as="select"
-        value={continuationOf || ""}
+        value={parentTable || ""}
         size="sm"
         disabled={softUpdating}
         onChange={(e) => this.handleContinuationChange(e)}
       >
-        <option value="">not a continuation</option>
+        <option value="">no parent table</option>
         {prevPageTables}
       </Form.Control>
     );
@@ -501,7 +501,7 @@ export default class Extraction extends Component {
       tables.length === 0 ? (
         <div className="table_block">No tables saved for this PDF yet.</div>
       ) : (
-        tables.map(({ tableId, page, x1, x2, y1, y2, continuationOf, tableTitle }, i) => (
+        tables.map(({ tableId, page, x1, x2, y1, y2, parentTable, tableTitle }, i) => (
           <div className={["table_block", page === pageNumber ? "current" : null].join(" ")} key={i}>
             <div>
               <strong>
@@ -523,9 +523,9 @@ export default class Extraction extends Component {
                 {x1}:{y1}=>{x2}:{y2}
               </strong>
             </div>
-            {continuationOf ? (
+            {parentTable ? (
               <div>
-                Continuation Of: <strong>{continuation(continuationOf)}</strong>
+                Parent Table:: <strong>{continuation(parentTable)}</strong>
               </div>
             ) : null}
             {page === pageNumber && !locked ? (
@@ -565,7 +565,7 @@ export default class Extraction extends Component {
         <div>
           Coordinates: <strong>{coordinates}</strong>
         </div>
-        <div>{prevPageTables.length > 0 ? continuationOfSelect : null}</div>
+        <div>{prevPageTables.length > 0 ? parentTableSelect : null}</div>
         <Button
           onClick={this.handleSave}
           variant="success"

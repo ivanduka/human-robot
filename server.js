@@ -120,27 +120,14 @@ const setPdfStatus = async (req, res, next) => {
 
 const insertTable = async (req, res, next) => {
   try {
-    const { tableId, pdfName, page, tableTitle, x1, x2, y1, y2, pageHeight, pageWidth, continuationOf } = req.body;
+    const { tableId, pdfName, page, tableTitle, x1, x2, y1, y2, pageHeight, pageWidth, parentTable } = req.body;
     const creatorIp = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
     const query = `
         INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle,
-                            continuationOf, creatorIp)
+                            parentTable, creatorIp)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
-    const params = [
-      tableId,
-      pdfName,
-      page,
-      pageWidth,
-      pageHeight,
-      x1,
-      y1,
-      x2,
-      y2,
-      tableTitle,
-      continuationOf,
-      creatorIp,
-    ];
+    const params = [tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle, parentTable, creatorIp];
     const [result] = await pool.execute(query, params);
     res.json(result);
   } catch (error) {
@@ -179,7 +166,7 @@ const getValidationData = async (req, res, next) => {
     `;
 
     const tablesQuery = `
-        SELECT continuationOf, page, pdfName, relevancy, tableId, tableTitle, correct_csv
+        SELECT parentTable, page, pdfName, relevancy, tableId, tableTitle, correct_csv
         FROM tables
         WHERE pdfName = ?
         ORDER BY page, y1 DESC;
@@ -222,14 +209,14 @@ const getValidationData = async (req, res, next) => {
 
 const getAllTablesInChain = async (headTableId) => {
   const query1 = `
-      WITH RECURSIVE cte (tableId, continuationOf) AS (
-          SELECT tableId, continuationOf
+      WITH RECURSIVE cte (tableId, parentTable) AS (
+          SELECT tableId, parentTable
           FROM tables
           WHERE tableId = ?
           UNION ALL
-          SELECT t.tableId, t.continuationOf
+          SELECT t.tableId, t.parentTable
           FROM tables t
-                   INNER JOIN cte on t.continuationOf = cte.tableId)
+                   INNER JOIN cte on t.parentTable = cte.tableId)
       SELECT *
       FROM cte;
   `;
@@ -374,6 +361,14 @@ const tagUntagTable = async (req, res, next) => {
     next(error);
   }
 };
+
+// Postprocessing API
+
+// const getHeadTables = async () => {};
+// const getProcTables = async () => {};
+// const setTDDStatus = async () => {};
+
+// Server setup
 
 // noinspection JSUnusedLocalSymbols
 function errorHandler(err, req, res, next) {

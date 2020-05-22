@@ -73,7 +73,7 @@ CREATE TABLE `tables` (
   `x2` int NOT NULL,
   `y2` int NOT NULL,
   `tableTitle` mediumtext NOT NULL,
-  `continuationOf` varchar(36) DEFAULT NULL,
+  `parentTable` varchar(36) DEFAULT NULL,
   `pdfWidth` int DEFAULT NULL,
   `pdfHeight` int DEFAULT NULL,
   `pdfX1` int DEFAULT NULL,
@@ -88,9 +88,9 @@ CREATE TABLE `tables` (
   PRIMARY KEY (`tableId`),
   UNIQUE KEY `uuid_UNIQUE` (`tableId`),
   KEY `pdf_idx` (`pdfName`),
-  KEY `continuation_idx` (`continuationOf`),
+  KEY `continuation_idx` (`parentTable`),
   KEY `correct_csv_idx` (`correctCsv`),
-  CONSTRAINT `continuation` FOREIGN KEY (`continuationOf`) REFERENCES `tables` (`tableId`),
+  CONSTRAINT `continuation` FOREIGN KEY (`parentTable`) REFERENCES `tables` (`tableId`),
   CONSTRAINT `correct_csv` FOREIGN KEY (`correctCsv`) REFERENCES `csvs` (`csvId`),
   CONSTRAINT `pdfName` FOREIGN KEY (`pdfName`) REFERENCES `pdfs` (`pdfName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
