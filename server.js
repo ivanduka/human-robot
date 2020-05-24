@@ -236,6 +236,8 @@ const getValidationData = async (req, res, next) => {
   }
 };
 
+// Getting all tables in chain
+
 const getAllTablesInChain = async (headTableId, res) => {
   const query1 = `
       WITH RECURSIVE cte (tableId, parentTable) AS (
@@ -252,6 +254,8 @@ const getAllTablesInChain = async (headTableId, res) => {
   const [tablesResult] = await res.locals.pool.execute(query1, [headTableId]);
   return tablesResult.map((t) => t.tableId);
 };
+
+// Setting validation to tables
 
 const setValidationForOne = async (tableId, csvId, res) => {
   const query = `
@@ -290,6 +294,8 @@ const setValidation = async (req, res, next) => {
   }
 };
 
+// Setting relevancy to tables
+
 const setRelevancyForOne = async (relevancy, tableId, res) => {
   const query1 = `
       UPDATE tables
@@ -323,6 +329,8 @@ const setRelevancy = async (req, res, next) => {
     next(error);
   }
 };
+
+// Tagging of tables
 
 const getTagsForTable = async (tableId, res) => {
   const query2 = `
@@ -399,7 +407,6 @@ const tagUntagTable = async (req, res, next) => {
 
 // Server setup
 
-// noinspection JSUnusedLocalSymbols
 function errorHandler(err, req, res, next) {
   logger.error(err);
   if (res.headersSent) {
