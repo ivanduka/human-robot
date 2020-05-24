@@ -5,7 +5,6 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
-// const morgan = require("morgan");
 const log4js = require("log4js");
 
 const csvPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\csv_tables";
@@ -35,8 +34,6 @@ log4js.configure({
 });
 const logger = log4js.getLogger();
 
-// app.use(morgan("combined", {stream: {write: (str) => logger.debug(str)}}));
-
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -45,6 +42,11 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 12,
   queueLimit: 0,
+});
+
+app.use((req, res, next) => {
+  res.locals.pool = pool;
+  next();
 });
 
 // Index API
@@ -69,7 +71,7 @@ const tableIndex = async (req, res, next) => {
         GROUP BY p.pdfId
         ORDER BY p.pdfId;
     `;
-    const [result] = await pool.execute(query);
+    const [result] = await res.locals.pool.execute(query);
     res.json(result);
   } catch (error) {
     next(error);
@@ -93,8 +95,8 @@ const getExtractionData = async (req, res, next) => {
         WHERE pdfName = ?;
     `;
 
-    const tablesPromise = pool.execute(tablesQuery, [pdfName]);
-    const pdfStatusPromise = pool.execute(statusQuery, [pdfName]);
+    const tablesPromise = res.locals.pool.execute(tablesQuery, [pdfName]);
+    const pdfStatusPromise = res.locals.pool.execute(statusQuery, [pdfName]);
 
     const [[tables], [pdfStatus]] = await Promise.all([tablesPromise, pdfStatusPromise]);
     res.json({ tables, pdfStatus });
@@ -111,7 +113,7 @@ const setPdfStatus = async (req, res, next) => {
         SET status = ?
         WHERE pdfName = ?;
     `;
-    const [result] = await pool.execute(query, [status, pdfName]);
+    const [result] = await res.locals.pool.execute(query, [status, pdfName]);
     res.json(result);
   } catch (error) {
     next(error);
@@ -155,7 +157,7 @@ const insertTable = async (req, res, next) => {
       creatorIp,
       headTable,
     ];
-    const [result] = await pool.execute(query, params);
+    const [result] = await res.locals.pool.execute(query, params);
     res.json(result);
   } catch (error) {
     next(error);
@@ -170,7 +172,7 @@ const deleteTable = async (req, res, next) => {
         FROM tables
         WHERE tableId = ?;
     `;
-    const [result] = await pool.execute(query, [tableId]);
+    const [result] = await res.locals.pool.execute(query, [tableId]);
     res.json(result);
   } catch (error) {
     next(error);
@@ -215,17 +217,17 @@ const getValidationData = async (req, res, next) => {
     `;
 
     if (notFirstLoading) {
-      const tablesPromise = pool.execute(tablesQuery, [pdfName]);
-      const tagsPromise = pool.execute(tagsQuery, [pdfName]);
+      const tablesPromise = res.locals.pool.execute(tablesQuery, [pdfName]);
+      const tagsPromise = res.locals.pool.execute(tagsQuery, [pdfName]);
 
       const [[tables], [tags]] = await Promise.all([tablesPromise, tagsPromise]);
       res.json({ tables, tags });
       return;
     }
 
-    const csvsPromise = pool.execute(csvsQuery, [pdfName]);
-    const tablesPromise = pool.execute(tablesQuery, [pdfName]);
-    const tagsPromise = pool.execute(tagsQuery, [pdfName]);
+    const csvsPromise = res.locals.pool.execute(csvsQuery, [pdfName]);
+    const tablesPromise = res.locals.pool.execute(tablesQuery, [pdfName]);
+    const tagsPromise = res.locals.pool.execute(tagsQuery, [pdfName]);
 
     const [[csvs], [tables], [tags]] = await Promise.all([csvsPromise, tablesPromise, tagsPromise]);
     res.json({ csvs, tables, tags });
@@ -234,7 +236,7 @@ const getValidationData = async (req, res, next) => {
   }
 };
 
-const getAllTablesInChain = async (headTableId) => {
+const getAllTablesInChain = async (headTableId, res) => {
   const query1 = `
       WITH RECURSIVE cte (tableId, parentTable) AS (
           SELECT tableId, parentTable
@@ -247,17 +249,17 @@ const getAllTablesInChain = async (headTableId) => {
       SELECT *
       FROM cte;
   `;
-  const [tablesResult] = await pool.execute(query1, [headTableId]);
+  const [tablesResult] = await res.locals.pool.execute(query1, [headTableId]);
   return tablesResult.map((t) => t.tableId);
 };
 
-const setValidationForOne = async (tableId, csvId) => {
+const setValidationForOne = async (tableId, csvId, res) => {
   const query = `
       UPDATE tables
       SET correct_csv = ?
       WHERE tableId = ?;
   `;
-  return pool.execute(query, [csvId, tableId]);
+  return res.locals.pool.execute(query, [csvId, tableId]);
 };
 
 const setValidation = async (req, res, next) => {
@@ -265,10 +267,10 @@ const setValidation = async (req, res, next) => {
     const { tableId, csvId, method, isHeadTable } = req.body;
     let pairsToProcess = [[tableId, csvId]];
     if (isHeadTable && csvId === null) {
-      const tableIds = await getAllTablesInChain(tableId);
+      const tableIds = await getAllTablesInChain(tableId, res);
       pairsToProcess = tableIds.map((t) => [t, null]);
     } else if (isHeadTable) {
-      const tableIds = await getAllTablesInChain(tableId);
+      const tableIds = await getAllTablesInChain(tableId, res);
       const query = `
                 SELECT t.tableId, c.csvId
                 FROM csvs c
@@ -276,11 +278,11 @@ const setValidation = async (req, res, next) => {
                 WHERE c.tableId IN (${Array(tableIds.length).fill("?")})
                   AND method = ?;
             `;
-      const [result] = await pool.execute(query, [...tableIds, method]);
+      const [result] = await res.locals.pool.execute(query, [...tableIds, method]);
       pairsToProcess = result.map((r) => [r.tableId, r.csvId]);
     }
 
-    const promises = pairsToProcess.map(([tableId_, csvId_]) => setValidationForOne(tableId_, csvId_));
+    const promises = pairsToProcess.map(([tableId_, csvId_]) => setValidationForOne(tableId_, csvId_, res));
     await Promise.all(promises);
     res.json({ result: "Set Validation OK", ...req.body });
   } catch (error) {
@@ -288,7 +290,7 @@ const setValidation = async (req, res, next) => {
   }
 };
 
-const setRelevancyForOne = async (relevancy, tableId) => {
+const setRelevancyForOne = async (relevancy, tableId, res) => {
   const query1 = `
       UPDATE tables
       SET relevancy = ?
@@ -299,8 +301,8 @@ const setRelevancyForOne = async (relevancy, tableId) => {
       FROM tables_tags
       WHERE tableId = ?;
   `;
-  const promise1 = pool.execute(query1, [relevancy, tableId]);
-  const promise2 = pool.execute(query2, [tableId]);
+  const promise1 = res.locals.pool.execute(query1, [relevancy, tableId]);
+  const promise2 = res.locals.pool.execute(query2, [tableId]);
   return Promise.all([promise1, promise2]);
 };
 
@@ -310,10 +312,10 @@ const setRelevancy = async (req, res, next) => {
 
     let tableIds = [tableId];
     if (isHeadTable) {
-      tableIds = await getAllTablesInChain(tableId);
+      tableIds = await getAllTablesInChain(tableId, res);
     }
 
-    const promises = tableIds.map((id) => setRelevancyForOne(relevancy, id));
+    const promises = tableIds.map((id) => setRelevancyForOne(relevancy, id, res));
     await Promise.all(promises);
 
     res.json({ result: "Set Relevancy and Removed Tags OK", ...req.body });
@@ -322,26 +324,26 @@ const setRelevancy = async (req, res, next) => {
   }
 };
 
-const getTagsForTable = async (tableId) => {
+const getTagsForTable = async (tableId, res) => {
   const query2 = `
       SELECT tagId
       FROM tables_tags
       WHERE tableId = ?;
   `;
-  const [tagsResult] = await pool.execute(query2, [tableId]);
+  const [tagsResult] = await res.locals.pool.execute(query2, [tableId]);
   return tagsResult.map((t) => t.tagId);
 };
 
-const deleteAllTags = async (tableIds) => {
+const deleteAllTags = async (tableIds, res) => {
   const query3 = `
         DELETE
         FROM tables_tags
         WHERE tableId IN (${Array(tableIds.length).fill("?")});
     `;
-  return pool.execute(query3, [...tableIds]);
+  return res.locals.pool.execute(query3, [...tableIds]);
 };
 
-const assignTagsToTables = async (tableIds, tagIds) => {
+const assignTagsToTables = async (tableIds, tagIds, res) => {
   const query4 = `
       INSERT INTO tables_tags (tableId, tagId)
       VALUES (?, ?);;
@@ -350,14 +352,14 @@ const assignTagsToTables = async (tableIds, tagIds) => {
 
   tableIds.forEach((table) => {
     tagIds.forEach((tag) => {
-      promises.push(pool.execute(query4, [table, tag]));
+      promises.push(res.locals.pool.execute(query4, [table, tag]));
     });
   });
 
   return Promise.all(promises);
 };
 
-const insertRemoveTag = async (tableId, tagId, set) => {
+const insertRemoveTag = async (tableId, tagId, set, res) => {
   let query = `
       INSERT INTO tables_tags (tableId, tagId)
       VALUES (?, ?);
@@ -370,18 +372,18 @@ const insertRemoveTag = async (tableId, tagId, set) => {
           AND tagId = ?;
     `;
   }
-  return pool.execute(query, [tableId, tagId]);
+  return res.locals.pool.execute(query, [tableId, tagId]);
 };
 
 const tagUntagTable = async (req, res, next) => {
   try {
     const { tableId, tagId, set, isHeadTable } = req.body;
-    await insertRemoveTag(tableId, tagId, set);
+    await insertRemoveTag(tableId, tagId, set, res);
 
     if (isHeadTable) {
-      const [tables, tags] = await Promise.all([getAllTablesInChain(tableId), getTagsForTable(tableId)]);
-      await deleteAllTags(tables);
-      await assignTagsToTables(tables, tags);
+      const [tables, tags] = await Promise.all([getAllTablesInChain(tableId, res), getTagsForTable(tableId, res)]);
+      await deleteAllTags(tables, res);
+      await assignTagsToTables(tables, tags, res);
     }
     res.json({ result: "Tagged OK", ...req.body });
   } catch (error) {
