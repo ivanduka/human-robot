@@ -1,15 +1,30 @@
 -- tables for main processing window
-select t.tableId,
-       t.pdfName,
-       t.page,
+select t.pdfName,
        t.tableTitle,
-       t.parentTable,
        t.headTable,
-       t.correct_csv,
-       c.tdd_status
+       COUNT(IF(c.tdd_status = 0, 1, NULL)) as noResults,
+       COUNT(IF(c.tdd_status = 1, 1, NULL)) as oks,
+       COUNT(IF(c.tdd_status = 2, 1, NULL)) as errors,
+       COUNT(*)                             as totalTables,
+       MIN(t.page)                          as page,
+       CASE
+           WHEN COUNT(IF(c.tdd_status = 2, 1, NULL)) > 0 THEN 'errors'
+           WHEN COUNT(IF(c.tdd_status = 0, 1, NULL)) = COUNT(*) THEN 'not_started'
+           WHEN COUNT(IF(c.tdd_status = 1, 1, NULL)) = COUNT(*) THEN 'OK'
+           ELSE 'in_progress'
+           END                              as status
+FROM tables t
+         INNER JOIN csvs c
+                    ON t.correct_csv = c.csvId
+WHERE relevancy = 1
+GROUP BY t.headTable
+ORDER BY errors DESC, noResults DESC, oks DESC;
+
+select t.headTable, COUNT(*) as tables
 FROM tables t
          INNER JOIN csvs c ON t.correct_csv = c.csvId
-WHERE relevancy = 1;
+WHERE relevancy = 1
+GROUP BY t.headTable;
 
 select *
 from tables
@@ -118,7 +133,7 @@ WITH del_tables AS (
          GROUP BY pr.application_title_short
      )
 SELECT t.application_title_short,
-       COALESCE(d.manual_processing, 0)                                             as manual_tables,
+       COALESCE(d.manual_processing, 0)                                as manual_tables,
        t.total_tables,
        round((COALESCE(manual_processing, 0) / total_tables * 100), 0) AS percentage_of_manual
 FROM totals t
@@ -148,6 +163,18 @@ with manuals AS (select count(tt.tagId) as manuals
                     AND count(t.tableId) != manuals)
 SELECT SUM(manuals) as do_manuals
 FROM manuals;
+
+-- CSVs to be processed manually
+SELECT t.pdfName, t.page, t.tableId, c.csvId
+FROM tables t
+         INNER JOIN csvs c on t.correct_csv = c.csvId
+         INNER JOIN tables_tags tt on (t.tableId = tt.tableId AND tt.tagId = 13)
+WHERE t.headTable IN (SELECT t.headTable
+                      FROM tables t
+                               LEFT JOIN tables_tags tt on t.tableId = tt.tableId AND tt.tagId = 13
+                      GROUP BY t.headTable
+                      HAVING count(tt.tagId) > 0
+                         AND count(t.tableId) != count(tt.tagId));
 
 -- #######################
 -- Tables with Stream but not manual
