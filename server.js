@@ -7,10 +7,9 @@ const path = require("path");
 const fs = require("fs");
 const log4js = require("log4js");
 
-const csvPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\csv_tables";
 const jpgPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\jpg_tables";
 const pdfPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\pdf_files";
-[csvPath, jpgPath, pdfPath].forEach((p) =>
+[jpgPath, pdfPath].forEach((p) =>
   fs.access(p, (err) => {
     if (err) throw new Error(`Path ${p} is not accessible`);
   }),

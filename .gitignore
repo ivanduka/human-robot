@@ -29,3 +29,4 @@ test.py
 /__pycache__
 /access.log
 .ipynb_checkpoints/processing-checkpoint.ipynb
+/app.exe
