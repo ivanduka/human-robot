@@ -95,7 +95,6 @@ export default class ExtractionIndex extends Component {
 
     const rowsWithButtons = rows.map((row) => ({
       ...row,
-      headTable: <span className="nowrap">{row.headTable}</span>,
       status: (
         <Button
           variant={statuses[row.status]}
