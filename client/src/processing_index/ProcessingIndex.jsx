@@ -32,14 +32,6 @@ export default class ExtractionIndex extends Component {
       {
         label: "Head Table ID",
         field: "headTable",
-        cellStyle: {
-          "minWidth": "500",
-          "width": "500"
-        },
-        headerStyle: {
-            "minWidth": "500",
-            "width": "500"
-        },
       },
       {
         label: "",
@@ -103,6 +95,7 @@ export default class ExtractionIndex extends Component {
 
     const rowsWithButtons = rows.map((row) => ({
       ...row,
+      headTable: <span className="nowrap">{row.headTable}</span>,
       status: (
         <Button
           variant={statuses[row.status]}
@@ -158,10 +151,11 @@ export default class ExtractionIndex extends Component {
         <Row>
           <Col>
             <MDBDataTable
+              info={false}
               striped
               small
               bordered
-              entries={10000}
+              entries={9999999}
               exportToCSV={true}
               hover
               noBottomColumns
