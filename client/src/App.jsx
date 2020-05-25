@@ -12,11 +12,13 @@ import "./App.css";
 import Extraction from "./extraction_app/Extraction";
 import TablesIndex from "./tables_index/TablesIndex";
 import Validation from "./validation_app/Validation";
+import ProcessingIndex from "./processing_index/ProcessingIndex";
 
 const App = () => (
   <BrowserRouter>
     <Switch>
       <Route exact path="/tables_index" component={TablesIndex} />
+      <Route exact path="/processing_index" component={ProcessingIndex} />
       <Route path="/extraction/:pdfName/:pageNumber" component={Extraction} />
       <Redirect from="/extraction/:pdfName" to="/extraction/:pdfName/1" />
       <Route path="/validation/:pdfName/:tableId?" component={Validation} />
@@ -35,9 +37,16 @@ const Home = () => {
       <Row>
         <Col>
           <h3>Available Options:</h3>
-          <Link to="/tables_index">
-            <Button variant="primary">Tables Index</Button>
-          </Link>
+          <div>
+            <Link to="/tables_index">
+              <Button variant="primary">Tables Index</Button>
+            </Link>
+          </div>
+          <div>
+            <Link to="/processing_index">
+              <Button variant="primary">Processing Index</Button>
+            </Link>
+          </div>
         </Col>
       </Row>
     </Container>

@@ -400,9 +400,36 @@ const tagUntagTable = async (req, res, next) => {
 
 // Postprocessing API
 
-// const getHeadTables = async () => {};
-// const getProcTables = async () => {};
-// const setTDDStatus = async () => {};
+const processingIndex = async (req, res, next) => {
+  try {
+    const query = `
+      SELECT t.pdfName,
+          t.tableTitle,
+          t.headTable,
+          COUNT(IF(c.tdd_status = 0, 1, NULL)) as noResults,
+          COUNT(IF(c.tdd_status = 1, 1, NULL)) as oks,
+          COUNT(IF(c.tdd_status = 2, 1, NULL)) as errors,
+          MIN(t.page)                          as page,
+          COUNT(*)                             as totalTables,
+          CASE
+              WHEN COUNT(IF(c.tdd_status = 2, 1, NULL)) > 0 THEN 'errors'
+              WHEN COUNT(IF(c.tdd_status = 0, 1, NULL)) = COUNT(*) THEN 'not_started'
+              WHEN COUNT(IF(c.tdd_status = 1, 1, NULL)) = COUNT(*) THEN 'OK'
+              ELSE 'in_progress'
+              END                              as status
+      FROM tables t
+            INNER JOIN csvs c
+                      ON t.correct_csv = c.csvId
+      WHERE relevancy = 1
+      GROUP BY t.headTable
+      ORDER BY errors DESC, noResults DESC, oks DESC;
+    `;
+    const [result] = await res.locals.pool.execute(query);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
 
 // Server setup
 
@@ -429,6 +456,8 @@ app.post("/getValidationData", (req, res, next) => getValidationData(req, res, n
 app.post("/setValidation", (req, res, next) => setValidation(req, res, next));
 app.post("/setRelevancy", (req, res, next) => setRelevancy(req, res, next));
 app.post("/tagUntagTable", (req, res, next) => tagUntagTable(req, res, next));
+
+app.post("/processingIndex", (req, res, next) => processingIndex(req, res, next));
 
 app.use("/", express.static(path.join(__dirname, "client", "build")));
 app.get("/*", (req, res) => {
