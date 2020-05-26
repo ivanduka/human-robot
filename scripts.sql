@@ -189,3 +189,11 @@ FROM tables t
          LEFT JOIN tables_tags tt ON (t.tableId = tt.tableId AND tt.tagId = 13)
 WHERE c.method = 'stream'
   AND tt.tagId IS NULL;
+
+
+-- tags for sequence
+SELECT t.tableId, t.parentTable, tj.tags
+FROM tables t
+         LEFT JOIN tags_json tj on t.tableId = tj.tableId
+WHERE headTable = '57fffa5e-ad29-4140-ba73-58290505443d'
+ORDER BY tags, t.parentTable;
