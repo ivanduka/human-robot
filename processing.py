@@ -522,30 +522,6 @@ def get_stats(tables):
     print(f"Total tables:      {total}")
 
 
-def set_head_table():
-    stmt = 'SELECT tableId, parentTable, headTable FROM tables WHERE parentTable IS NULL;'
-    query = '''
-        WITH RECURSIVE cte (tableId, parentTable, headTable) AS (
-            SELECT tableId, parentTable, headTable
-            FROM tables
-            WHERE tableId = %s
-            UNION ALL
-            SELECT t.tableId, t.parentTable, t.headTable
-            FROM tables t
-                    INNER JOIN cte on t.parentTable = cte.tableId)
-        SELECT *
-        FROM cte;
-    '''
-    update_query = "UPDATE tables SET headTable = %s WHERE tableId = %s"
-    with engine.connect() as conn:
-        heads = pd.read_sql(stmt, conn)
-        for head in heads.to_dict("records"):
-            tables = pd.read_sql(query, conn, params=(head["tableId"],))
-            for table in tables.to_dict("records"):
-                conn.execute(update_query, (head["tableId"], table["tableId"]))
-    print("Done")
-
-
 if __name__ == "__main__":
     # populate_projects()
     # insert_pdfs()
@@ -563,5 +539,4 @@ if __name__ == "__main__":
 
     # data = get_tags()
     # get_stats(data)
-
-    set_head_table()
+    pass
