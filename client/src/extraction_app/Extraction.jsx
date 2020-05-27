@@ -153,16 +153,6 @@ export default class Extraction extends Component {
   };
 
   handleKeys = (event) => {
-    if (event.shiftKey && (event.key === "KeyS" || event.key.toLowerCase() === "s")) {
-      this.handleSave().then();
-      event.preventDefault();
-    }
-
-    if (event.shiftKey && (event.key === "KeyQ" || event.key.toLowerCase() === "q")) {
-      this.handleQuickSaveAsContinuation();
-      event.preventDefault();
-    }
-
     if (event.shiftKey && (event.key === "KeyA" || event.key.toLowerCase() === "a")) {
       this.previousPage();
       event.preventDefault();
@@ -170,6 +160,19 @@ export default class Extraction extends Component {
 
     if (event.shiftKey && (event.key === "KeyD" || event.key.toLowerCase() === "d")) {
       this.nextPage();
+      event.preventDefault();
+    }
+
+    const { softUpdating, locked } = this.state;
+    if (softUpdating || locked === "locked") return;
+
+    if (event.shiftKey && (event.key === "KeyS" || event.key.toLowerCase() === "s")) {
+      this.handleSave().then();
+      event.preventDefault();
+    }
+
+    if (event.shiftKey && (event.key === "KeyQ" || event.key.toLowerCase() === "q")) {
+      this.handleQuickSaveAsContinuation();
       event.preventDefault();
     }
 
