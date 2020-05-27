@@ -34,19 +34,19 @@ export default class ExtractionIndex extends Component {
         field: "tableLink",
       },
       {
-        label: "Errors Count",
+        label: "Errors",
         field: "errors",
       },
       {
-        label: "No Results Count",
+        label: "No Results",
         field: "noResults",
       },
       {
-        label: "OKs Count",
+        label: "OK",
         field: "oks",
       },
       {
-        label: "Total Tables In Sequence",
+        label: "Total",
         field: "totalTables",
       },
       {
