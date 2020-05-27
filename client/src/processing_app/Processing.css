@@ -1,0 +1,23 @@
+.tableRow {
+  border-top: 1px solid black;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+.displayRow {
+  display: flex;
+  flex-flow: row;
+  width: 100%;
+}
+
+.displayColumn {
+  width: 100%;
+  margin-right: 10px;
+  margin-left: 10px;
+}
+
+span {
+  font-family: monospace, monospace;
+}

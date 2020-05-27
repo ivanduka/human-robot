@@ -13,12 +13,14 @@ import Extraction from "./extraction_app/Extraction";
 import TablesIndex from "./tables_index/TablesIndex";
 import Validation from "./validation_app/Validation";
 import ProcessingIndex from "./processing_index/ProcessingIndex";
+import Processing from "./processing_app/Processing";
 
 const App = () => (
   <BrowserRouter>
     <Switch>
       <Route exact path="/tables_index" component={TablesIndex} />
       <Route exact path="/processing_index" component={ProcessingIndex} />
+      <Route path="/processing/:headTable" component={Processing} />
       <Route path="/extraction/:pdfName/:pageNumber" component={Extraction} />
       <Redirect from="/extraction/:pdfName" to="/extraction/:pdfName/1" />
       <Route path="/validation/:pdfName/:tableId?" component={Validation} />

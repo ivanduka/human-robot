@@ -437,6 +437,54 @@ const processingIndex = async (req, res, next) => {
   }
 };
 
+const getSequence = async (req, res, next) => {
+  try {
+    const { headTable } = req.body;
+    const tagsQuery = `
+        SELECT tagId, tagName
+        FROM tags;
+    `;
+    const headQuery = `
+        SELECT tableTitle, pdfName, page
+        FROM tables
+        WHERE tableId = ?;
+    `;
+    const tablesQuery = `
+        SELECT t.tableId,
+            t.level,
+            c.processed_text,
+            c.accepted_text,
+            c.tdd_status,
+            c.csvId,
+            t.level,
+            c.csvText,
+            CAST(if(
+                (json_arrayagg(tt.tagId) = cast('[
+                  null
+                ]' as json)),
+                '[]',
+                json_arrayagg(tt.tagId)
+              ) as json) AS tags
+        FROM tables t
+            INNER JOIN csvs c on t.correct_csv = c.csvId
+            LEFT JOIN tables_tags tt on t.tableId = tt.tableId
+        WHERE headTable = '57fffa5e-ad29-4140-ba73-58290505443d'
+        GROUP BY t.tableId, t.level
+        ORDER BY t.level;
+    `;
+
+    const p = res.locals.pool;
+    const tagsPromise = p.execute(tagsQuery);
+    const headPromise = p.execute(headQuery, [headTable]);
+    const tablesPromise = p.execute(tablesQuery, [headTable]);
+
+    const [[tagsList], [head], [tables]] = await Promise.all([tagsPromise, headPromise, tablesPromise]);
+    res.json({ tagsList, head, tables });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Server setup
 
 function errorHandler(err, req, res, next) {
@@ -464,6 +512,7 @@ app.post("/setRelevancy", (req, res, next) => setRelevancy(req, res, next));
 app.post("/tagUntagTable", (req, res, next) => tagUntagTable(req, res, next));
 
 app.post("/processingIndex", (req, res, next) => processingIndex(req, res, next));
+app.post("/getSequence", (req, res, next) => getSequence(req, res, next));
 
 app.use("/", express.static(path.join(__dirname, "client", "build")));
 app.get("/*", (req, res) => {
