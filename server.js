@@ -404,7 +404,6 @@ const processingIndex = async (req, res, next) => {
   try {
     const query = `
       SELECT t.pdfName,
-          t.tableTitle,
           t.headTable,
           COUNT(IF(c.tdd_status = 0, 1, NULL)) as noResults,
           COUNT(IF(c.tdd_status = 1, 1, NULL)) as oks,

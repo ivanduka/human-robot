@@ -26,10 +26,6 @@ export default class ExtractionIndex extends Component {
         field: "pdfLink",
       },
       {
-        label: "Table Title",
-        field: "tableTitle",
-      },
-      {
         label: "Head Table ID",
         field: "headTable",
       },
@@ -114,7 +110,7 @@ export default class ExtractionIndex extends Component {
           target="_blank"
           disabled={this.state.softUpdating}
         >
-          Open PDF
+          Open&nbsp;PDF
         </Button>
       ),
       tableLink: (
@@ -125,7 +121,7 @@ export default class ExtractionIndex extends Component {
           target="_blank"
           disabled={this.state.softUpdating}
         >
-          Open Table
+          Open&nbsp;Table
         </Button>
       ),
     }));
