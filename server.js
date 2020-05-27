@@ -83,10 +83,21 @@ const getExtractionData = async (req, res, next) => {
   try {
     const { pdfName } = req.body;
     const tablesQuery = `
-        SELECT headTable, page, pageHeight, pageWidth, parentTable, tableId, tableTitle, x1, x2, y1, y2
+        SELECT headTable,
+               page,
+               pageHeight,
+               pageWidth,
+               parentTable,
+               tableId,
+               tableTitle,
+               x1,
+               x2,
+               y1,
+               y2,
+               level
         FROM tables
         WHERE pdfName = ?
-        ORDER BY page DESC, y1;
+        ORDER BY page DESC, level DESC;
     `;
     const statusQuery = `
         SELECT status
@@ -134,12 +145,13 @@ const insertTable = async (req, res, next) => {
       pageWidth,
       parentTable,
       headTable,
+      level,
     } = req.body;
     const creatorIp = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
     const query = `
         INSERT INTO tables (tableId, pdfName, page, pageWidth, pageHeight, x1, y1, x2, y2, tableTitle,
-                            parentTable, creatorIp, headTable)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                            parentTable, creatorIp, headTable, level)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
     const params = [
       tableId,
@@ -155,6 +167,7 @@ const insertTable = async (req, res, next) => {
       parentTable,
       creatorIp,
       headTable,
+      level,
     ];
     const [result] = await res.locals.pool.execute(query, params);
     res.json(result);
@@ -197,7 +210,7 @@ const getValidationData = async (req, res, next) => {
         SELECT parentTable, page, pdfName, relevancy, tableId, tableTitle, correct_csv
         FROM tables
         WHERE pdfName = ?
-        ORDER BY page, y1 DESC;
+        ORDER BY page, level;
     `;
 
     const tagsQuery = `
@@ -239,16 +252,10 @@ const getValidationData = async (req, res, next) => {
 
 const getAllTablesInChain = async (headTableId, res) => {
   const query1 = `
-      WITH RECURSIVE cte (tableId, parentTable) AS (
-          SELECT tableId, parentTable
-          FROM tables
-          WHERE tableId = ?
-          UNION ALL
-          SELECT t.tableId, t.parentTable
-          FROM tables t
-                   INNER JOIN cte on t.parentTable = cte.tableId)
-      SELECT *
-      FROM cte;
+      SELECT tableId, parentTable, level
+      FROM tables
+      WHERE headTable = ?
+      ORDER BY level;
   `;
   const [tablesResult] = await res.locals.pool.execute(query1, [headTableId]);
   return tablesResult.map((t) => t.tableId);
@@ -403,25 +410,25 @@ const tagUntagTable = async (req, res, next) => {
 const processingIndex = async (req, res, next) => {
   try {
     const query = `
-      SELECT t.pdfName,
-          t.headTable,
-          COUNT(IF(c.tdd_status = 0, 1, NULL)) as noResults,
-          COUNT(IF(c.tdd_status = 1, 1, NULL)) as oks,
-          COUNT(IF(c.tdd_status = 2, 1, NULL)) as errors,
-          MIN(t.page)                          as page,
-          COUNT(*)                             as totalTables,
-          CASE
-              WHEN COUNT(IF(c.tdd_status = 2, 1, NULL)) > 0 THEN 'errors'
-              WHEN COUNT(IF(c.tdd_status = 0, 1, NULL)) = COUNT(*) THEN 'not_started'
-              WHEN COUNT(IF(c.tdd_status = 1, 1, NULL)) = COUNT(*) THEN 'OK'
-              ELSE 'in_progress'
-              END                              as status
-      FROM tables t
-            INNER JOIN csvs c
-                      ON t.correct_csv = c.csvId
-      WHERE relevancy = 1
-      GROUP BY t.headTable
-      ORDER BY errors DESC, noResults DESC, oks DESC;
+        SELECT t.pdfName,
+               t.headTable,
+               COUNT(IF(c.tdd_status = 0, 1, NULL)) as noResults,
+               COUNT(IF(c.tdd_status = 1, 1, NULL)) as oks,
+               COUNT(IF(c.tdd_status = 2, 1, NULL)) as errors,
+               MIN(t.page)                          as page,
+               COUNT(*)                             as totalTables,
+               CASE
+                   WHEN COUNT(IF(c.tdd_status = 2, 1, NULL)) > 0 THEN 'errors'
+                   WHEN COUNT(IF(c.tdd_status = 0, 1, NULL)) = COUNT(*) THEN 'not_started'
+                   WHEN COUNT(IF(c.tdd_status = 1, 1, NULL)) = COUNT(*) THEN 'OK'
+                   ELSE 'in_progress'
+                   END                              as status
+        FROM tables t
+                 INNER JOIN csvs c
+                            ON t.correct_csv = c.csvId
+        WHERE relevancy = 1
+        GROUP BY t.headTable
+        ORDER BY errors DESC, noResults DESC, oks DESC;
     `;
     const [result] = await res.locals.pool.execute(query);
     res.json(result);

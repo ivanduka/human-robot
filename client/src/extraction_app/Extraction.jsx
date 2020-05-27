@@ -75,6 +75,7 @@ export default class Extraction extends Component {
     }
 
     const headTable = parentTable === null ? tableId : tables.find((t) => t.tableId === parentTable).headTable;
+    const level = parentTable === null ? 1 : tables.find((t) => t.tableId === parentTable).level + 1;
 
     this.setState({ softUpdating: true });
 
@@ -92,6 +93,7 @@ export default class Extraction extends Component {
         pageHeight: height,
         parentTable,
         headTable,
+        level,
       };
       await ky.post(`/insertTable`, { json }).json();
       this.clearRectangle();
@@ -546,7 +548,7 @@ export default class Extraction extends Component {
     const newTableBlock = (
       <div className="table_block">
         <div>
-          PDF Name: <strong>"{pdfName}"</strong>
+          PDF Name: <strong>{pdfName}</strong>
         </div>
         <div>
           Page{" "}
