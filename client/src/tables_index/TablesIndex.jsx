@@ -147,6 +147,7 @@ export default class ExtractionIndex extends Component {
         <Row>
           <Col>
             <MDBDataTable
+              paging={false}
               striped
               small
               bordered
