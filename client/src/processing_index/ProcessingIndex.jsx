@@ -18,8 +18,8 @@ export default class ExtractionIndex extends Component {
   state = {
     columns: [
       {
-        label: "PDF Name",
-        field: "pdfName",
+        label: "#",
+        field: "index",
       },
       {
         label: "",
@@ -34,20 +34,20 @@ export default class ExtractionIndex extends Component {
         field: "tableLink",
       },
       {
-        label: "Errors",
-        field: "errors",
+        label: "Accepted",
+        field: "accepted",
       },
       {
-        label: "No Results",
-        field: "noResults",
+        label: "Processed",
+        field: "processed",
       },
       {
-        label: "OK",
-        field: "oks",
-      },
-      {
-        label: "Total",
+        label: "Total Tables",
         field: "totalTables",
+      },
+      {
+        label: "All Manuals",
+        field: "allManuals",
       },
       {
         label: "Status",
@@ -89,8 +89,9 @@ export default class ExtractionIndex extends Component {
     const { rows, columns, loading, softUpdating } = this.state;
     if (loading) return <Spinner animation="border" />;
 
-    const rowsWithButtons = rows.map((row) => ({
+    const rowsWithButtons = rows.map((row, index) => ({
       ...row,
+      index: index + 1,
       status: (
         <Button
           variant={statuses[row.status]}

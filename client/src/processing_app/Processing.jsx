@@ -24,7 +24,7 @@ export default class Processing extends Component {
   state = {
     pdfName: "",
     tableTitle: "",
-    page: -1,
+    page: 0,
     headTable: "",
     tables: [],
     softUpdating: false,

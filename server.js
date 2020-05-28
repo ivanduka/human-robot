@@ -410,25 +410,32 @@ const tagUntagTable = async (req, res, next) => {
 const processingIndex = async (req, res, next) => {
   try {
     const query = `
+        WITH manuals AS (SELECT t.headTable
+                         FROM tables t
+                                  LEFT JOIN tables_tags tt on t.tableId = tt.tableId AND tt.tagId = 13
+                         WHERE relevancy = 1
+                         GROUP BY t.headTable
+                         HAVING count(tt.tagId) > 0
+                            AND count(t.tableId) = count(tt.tagId))
         SELECT t.pdfName,
                t.headTable,
-               COUNT(IF(c.tdd_status = 0, 1, NULL)) as noResults,
-               COUNT(IF(c.tdd_status = 1, 1, NULL)) as oks,
-               COUNT(IF(c.tdd_status = 2, 1, NULL)) as errors,
-               MIN(t.page)                          as page,
-               COUNT(*)                             as totalTables,
+               MIN(t.page)                      as page,
+               COUNT(c.accepted_text)           as accepted,
+               COUNT(c.processed_text)          as processed,
+               COUNT(c.csvId)                   as totalTables,
+               IF(m.headTable, 'true', '') as allManuals,
                CASE
-                   WHEN COUNT(IF(c.tdd_status = 2, 1, NULL)) > 0 THEN 'errors'
-                   WHEN COUNT(IF(c.tdd_status = 0, 1, NULL)) = COUNT(*) THEN 'not_started'
-                   WHEN COUNT(IF(c.tdd_status = 1, 1, NULL)) = COUNT(*) THEN 'OK'
-                   ELSE 'in_progress'
-                   END                              as status
+                   WHEN COUNT(c.accepted_text) = COUNT(c.csvId) THEN '3. DONE'
+                   WHEN COUNT(c.accepted_text) > 0 THEN '1. IN PROGRESS'
+                   ELSE '2. NOT STARTED'
+                   END                          as status
         FROM tables t
                  INNER JOIN csvs c
                             ON t.correct_csv = c.csvId
+                 LEFT JOIN manuals m ON t.headTable = m.headTable
         WHERE relevancy = 1
         GROUP BY t.headTable
-        ORDER BY errors DESC, noResults DESC, oks DESC;
+        ORDER BY status, accepted DESC, allManuals, totalTables DESC;
     `;
     const [result] = await res.locals.pool.execute(query);
     res.json(result);
@@ -451,23 +458,23 @@ const getSequence = async (req, res, next) => {
     `;
     const tablesQuery = `
         SELECT t.tableId,
-            t.level,
-            c.processed_text,
-            c.accepted_text,
-            c.tdd_status,
-            c.csvId,
-            t.level,
-            c.csvText,
-            CAST(if(
-                (json_arrayagg(tt.tagId) = cast('[
+               t.level,
+               c.processed_text,
+               c.accepted_text,
+               c.tdd_status,
+               c.csvId,
+               t.level,
+               c.csvText,
+               CAST(if(
+                       (json_arrayagg(tt.tagId) = cast('[
                   null
                 ]' as json)),
-                '[]',
-                json_arrayagg(tt.tagId)
-              ) as json) AS tags
+                       '[]',
+                       json_arrayagg(tt.tagId)
+                   ) as json) AS tags
         FROM tables t
-            INNER JOIN csvs c on t.correct_csv = c.csvId
-            LEFT JOIN tables_tags tt on t.tableId = tt.tableId
+                 INNER JOIN csvs c on t.correct_csv = c.csvId
+                 LEFT JOIN tables_tags tt on t.tableId = tt.tableId
         WHERE headTable = '57fffa5e-ad29-4140-ba73-58290505443d'
         GROUP BY t.tableId, t.level
         ORDER BY t.level;
