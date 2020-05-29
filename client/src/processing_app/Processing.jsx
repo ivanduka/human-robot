@@ -20,6 +20,11 @@ const constructTable = (table) =>
     </table>
   ) : null;
 
+const original = "Original";
+const image = "Image";
+const accepted = "Previously Accepted";
+const processed = "Processed";
+
 export default class Processing extends Component {
   state = {
     pdfName: "",
@@ -65,7 +70,8 @@ export default class Processing extends Component {
     try {
       const json = { headTable };
       const result = await ky.post("/getSequence", { json }).json();
-      const { tables, tagsList, head } = result;
+      let { tables, tagsList, head } = result;
+      tables = tables.map((t) => ({ ...t, mode: original }));
 
       if (head.length !== 1) {
         this.props.history.replace({
@@ -80,6 +86,11 @@ export default class Processing extends Component {
       console.log(error);
       alert(error);
     }
+  };
+
+  changeView = (tableId, newMode) => {
+    const tables = this.state.tables.map((t) => (t.tableId === tableId ? { ...t, mode: newMode } : t));
+    this.setState({ tables });
   };
 
   render() {
@@ -146,26 +157,66 @@ export default class Processing extends Component {
         </Button>
       ));
 
-    const tableRow = ({ csvText, accepted_text, csvId, level, processed_text, tableId, tags, tdd_status }) => (
+    const display = (table) => {
+      if (table.mode === image) {
+        return (
+          <img
+            src={`/jpg/${table.tableId}.jpg`}
+            className="img-fluid border border-dark"
+            alt="Table screenshot from the PDF file"
+          />
+        );
+      }
+      if (table.mode === accepted) {
+        return constructTable(table.accepted_text);
+      }
+      return constructTable(table.csvText);
+    };
+
+    const btn = (table, mode) => (
+      <Button
+        size="sm"
+        variant="primary"
+        onClick={() => this.changeView(table.tableId, mode)}
+        disabled={softUpdating || table.mode === mode}
+      >
+        {mode}
+      </Button>
+    );
+
+    const tableRow = (t) => (
       <React.Fragment>
         <div className="displayRow">
           <div className="displayColumn">
             <p>
-              <strong>{level}</strong>, Table ID: <strong>{tableId}</strong>, CSV ID: <strong>{csvId}</strong>
+              <strong>{t.level}</strong>, Table ID: <strong>{t.tableId}</strong>, CSV ID: <strong>{t.csvId}</strong>
             </p>
-            {tagsBlock(tags, csvId)}
+            {tagsBlock(t.tags, t.csvId)}
           </div>
         </div>
         <div className="displayRow">
           <div className="displayColumn">
-            <div>original:</div>
-            <div>{constructTable(csvText)}</div>
-            <div>accepted:</div>
-            <div>{constructTable(accepted_text)}</div>
+            <h3>{t.mode}</h3>
+            <div>
+              {btn(t, original)}
+              {btn(t, image)}
+              {t.accepted_text ? btn(t, accepted) : null}
+            </div>
+            <div>{display(t)}</div>
           </div>
           <div className="displayColumn">
-            <div>processed:</div>
-            <div>{constructTable(processed_text)}</div>
+            <h3>{processed}:</h3>
+            <div>
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => {}}
+                disabled={softUpdating || t.accepted_text === t.processed_text}
+              >
+                Set As Accepted
+              </Button>
+            </div>
+            <div>{constructTable(t.processed_text)}</div>
           </div>
         </div>
       </React.Fragment>

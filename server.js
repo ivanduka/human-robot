@@ -458,24 +458,23 @@ const getSequence = async (req, res, next) => {
     `;
     const tablesQuery = `
         SELECT t.tableId,
-               t.level,
-               c.processed_text,
-               c.accepted_text,
-               c.tdd_status,
-               c.csvId,
-               t.level,
-               c.csvText,
-               CAST(if(
-                       (json_arrayagg(tt.tagId) = cast('[
-                  null
-                ]' as json)),
-                       '[]',
-                       json_arrayagg(tt.tagId)
-                   ) as json) AS tags
+              t.level,
+              c.processed_text,
+              c.accepted_text,
+              c.csvId,
+              t.level,
+              c.csvText,
+              if(
+                  (json_arrayagg(tt.tagId) = cast('[
+                    null
+                  ]' as json)),
+                  CAST('[]' as json),
+                  json_arrayagg(tt.tagId)
+                ) AS tags
         FROM tables t
-                 INNER JOIN csvs c on t.correct_csv = c.csvId
-                 LEFT JOIN tables_tags tt on t.tableId = tt.tableId
-        WHERE headTable = '57fffa5e-ad29-4140-ba73-58290505443d'
+              INNER JOIN csvs c on t.correct_csv = c.csvId
+              LEFT JOIN tables_tags tt on t.tableId = tt.tableId
+        WHERE headTable = ?
         GROUP BY t.tableId, t.level
         ORDER BY t.level;
     `;

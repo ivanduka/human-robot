@@ -10,6 +10,7 @@
   display: flex;
   flex-flow: row;
   width: 100%;
+  margin-bottom: 20px;
 }
 
 .displayColumn {
@@ -20,4 +21,8 @@
 
 span {
   font-family: monospace, monospace;
+}
+
+body {
+  word-break: break-word;
 }
