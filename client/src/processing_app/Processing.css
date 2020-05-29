@@ -1,16 +1,13 @@
 .tableRow {
   border-top: 1px solid black;
-  margin-left: 0;
-  margin-right: 0;
-  margin-bottom: 20px;
-  margin-top: 20px;
+  margin: 20px 0;
 }
 
 .displayRow {
   display: flex;
   flex-flow: row;
   width: 100%;
-  margin-bottom: 20px;
+  padding-bottom: 20px;
 }
 
 .displayColumn {
@@ -25,4 +22,8 @@ span {
 
 body {
   word-break: break-word;
+}
+
+.hasAccepted {
+  background-color: lightgreen;
 }

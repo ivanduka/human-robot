@@ -186,7 +186,7 @@ export default class Processing extends Component {
 
     const tableRow = (t) => (
       <React.Fragment>
-        <div className="displayRow">
+        <div className={"displayRow " + (t.accepted_text ? "hasAccepted" : null)}>
           <div className="displayColumn">
             <p>
               <strong>{t.level}</strong>, Table ID: <strong>{t.tableId}</strong>, CSV ID: <strong>{t.csvId}</strong>
@@ -194,7 +194,7 @@ export default class Processing extends Component {
             {tagsBlock(t.tags, t.csvId)}
           </div>
         </div>
-        <div className="displayRow">
+        <div className={"displayRow " + (t.accepted_text ? "hasAccepted" : null)}>
           <div className="displayColumn">
             <h3>{t.mode}</h3>
             <div>
