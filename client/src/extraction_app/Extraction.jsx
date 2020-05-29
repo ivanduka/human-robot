@@ -566,7 +566,7 @@ export default class Extraction extends Component {
             rows="2"
             placeholder="Select the table title on the page and copy it (CTRL+C or SHIFT+C) or just edit here"
             value={tableTitle || ""}
-            disabled={softUpdating}
+            disabled={softUpdating || parentTable}
             onChange={this.handleTableTitleChange}
           />
         </div>
