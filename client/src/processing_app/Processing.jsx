@@ -34,6 +34,7 @@ export default class Processing extends Component {
     tables: [],
     softUpdating: false,
     tagsList: [],
+    showAccepted: false,
   };
 
   componentDidMount() {
@@ -93,8 +94,12 @@ export default class Processing extends Component {
     this.setState({ tables });
   };
 
+  changeViewAccepted = (showAccepted) => {
+    this.setState({ showAccepted });
+  };
+
   render() {
-    const { pdfName, tableTitle, page, headTable, tables, softUpdating, tagsList } = this.state;
+    const { pdfName, tableTitle, page, headTable, tables, softUpdating, tagsList, showAccepted } = this.state;
     const numTables = tables.length;
     if (pdfName === "") return <Spinner animation="border" />;
 
@@ -125,6 +130,14 @@ export default class Processing extends Component {
         </Button>
         <Button size="sm" variant="primary" disabled={softUpdating} onClick={this.reloadData}>
           Refresh Data
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={softUpdating}
+          onClick={() => this.changeViewAccepted(!showAccepted)}
+        >
+          {(showAccepted ? "Hide" : "Show") + " Accepted Tables"}
         </Button>
       </Col>
     );
@@ -191,34 +204,36 @@ export default class Processing extends Component {
             <p>
               <strong>{t.level}</strong>, Table ID: <strong>{t.tableId}</strong>, CSV ID: <strong>{t.csvId}</strong>
             </p>
-            {tagsBlock(t.tags, t.csvId)}
+            {showAccepted ? tagsBlock(t.tags, t.csvId) : null}
           </div>
         </div>
-        <div className={"displayRow " + (t.accepted_text ? "hasAccepted" : null)}>
-          <div className="displayColumn">
-            <h3>{t.mode}</h3>
-            <div>
-              {btn(t, original)}
-              {btn(t, image)}
-              {t.accepted_text ? btn(t, accepted) : null}
+        {showAccepted ? (
+          <div className={"displayRow " + (t.accepted_text ? "hasAccepted" : null)}>
+            <div className="displayColumn">
+              <h3>{t.mode}</h3>
+              <div>
+                {btn(t, original)}
+                {btn(t, image)}
+                {t.accepted_text ? btn(t, accepted) : null}
+              </div>
+              <div>{display(t)}</div>
             </div>
-            <div>{display(t)}</div>
-          </div>
-          <div className="displayColumn">
-            <h3>{processed}:</h3>
-            <div>
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => {}}
-                disabled={softUpdating || t.accepted_text === t.processed_text}
-              >
-                Set As Accepted
-              </Button>
+            <div className="displayColumn">
+              <h3>{processed}:</h3>
+              <div>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => {}}
+                  disabled={softUpdating || t.accepted_text === t.processed_text}
+                >
+                  Set As Accepted
+                </Button>
+              </div>
+              <div>{constructTable(t.processed_text)}</div>
             </div>
-            <div>{constructTable(t.processed_text)}</div>
           </div>
-        </div>
+        ) : null}
       </React.Fragment>
     );
 
