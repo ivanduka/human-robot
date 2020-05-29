@@ -490,38 +490,6 @@ def populate_submitter():
             conn.execute(stmt, (row.pdfSubmitter, application_id, row.pdfId))
 
 
-def get_tags():
-    stmt = 'SELECT * FROM tags_json WHERE relevancy = 1 AND parentTable IS NULL;'
-    with engine.connect() as conn:
-        df = pd.read_sql(stmt, conn)
-    tags_data = []
-    for table in df.to_dict("records"):
-        tags = json.loads(table["tags"])
-        if len(tags) == 1 and tags[0] is None:
-            tags = []
-        tags_data.append({"table_id": table["tableId"], "tags": tags})
-    return tags_data
-
-
-def get_stats(tables):
-    total = len(tables)
-    no_processing = 0
-    auto_processing = 0
-    manual_processing = 0
-    for table in tables:
-        t = table["tags"]
-        if len(t) == 1 and (t[0] == 2 or t[0] == 3):
-            no_processing += 1
-        elif 13 in t:
-            manual_processing += 1
-        else:
-            auto_processing += 1
-    print(f"No processing:     {no_processing}")
-    print(f"Auto processing:   {auto_processing}")
-    print(f"Manual processing: {manual_processing}")
-    print(f"Total tables:      {total}")
-
-
 if __name__ == "__main__":
     # populate_projects()
     # insert_pdfs()
@@ -536,7 +504,4 @@ if __name__ == "__main__":
     # apply_default_validations()
 
     # delete_unreferenced_csvs_and_jpgs()
-
-    # data = get_tags()
-    # get_stats(data)
     pass
