@@ -1,7 +1,11 @@
 .tableRow {
     border: 1px solid black;
     margin: 20px 0;
-    word-break: break-word;
+    /*word-break: keep-all;*/
+}
+
+.tableRow table {
+    table-layout: fixed;
 }
 
 .displayRow {

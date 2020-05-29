@@ -133,7 +133,7 @@ WITH del_tables AS (
          GROUP BY pr.application_title_short
      )
 SELECT t.application_title_short,
-       COALESCE(d.manual_processing, 0)                                as manual_tables,
+       COALESCE(d.manual_processing, 0) as                                manual_tables,
        t.total_tables,
        round((COALESCE(manual_processing, 0) / total_tables * 100), 0) AS percentage_of_manual
 FROM totals t
@@ -198,4 +198,24 @@ FROM tables t
 WHERE headTable = '57fffa5e-ad29-4140-ba73-58290505443d'
 ORDER BY tags, t.parentTable;
 
-UPDATE csvs SET processed_text = NULL, accepted_text = NULL;
+UPDATE csvs c INNER JOIN tables t on c.csvId = t.correct_csv
+SET processed_text = CAST('[
+  [
+    1,
+    2,
+    3
+  ],
+  [
+    4,
+    5,
+    6
+  ],
+  [
+    7,
+    8,
+    1111
+  ]
+]' as json)
+WHERE headTable = '768b2aaf-8d86-4a30-bec5-7f4a4e646311'
+
+UPDATE csvs SET accepted_text = NULL, processed_text = NULL;

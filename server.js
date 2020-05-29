@@ -494,7 +494,7 @@ const getSequence = async (req, res, next) => {
 const setAccepted = async (req, res, next) => {
   try {
     const { csvId, newAccepted } = req.body;
-    const newAcceptedJSON = JSON.stringify(newAccepted);
+    const newAcceptedJSON = newAccepted === null ? null : JSON.stringify(newAccepted);
     const tagsQuery = `
         UPDATE csvs
         SET accepted_text = ?

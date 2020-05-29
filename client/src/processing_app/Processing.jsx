@@ -18,7 +18,20 @@ const constructTable = (table) =>
         ))}
       </tbody>
     </table>
-  ) : null;
+  ) : (
+    "[NO DATA]"
+  );
+
+const tablesAreEqual = (t1, t2) => {
+  if (t1 === null || t2 === null || t1.length !== t2.length) return false;
+  for (let row = 0; row < t1.length; row++) {
+    if (t1[row].length !== t2[row].length) return false;
+    for (let cell = 0; cell < t1[row].length; cell++) {
+      if (t1[row][cell] !== t2[row][cell]) return false;
+    }
+  }
+  return true;
+};
 
 const original = "Original";
 const image = "Image";
@@ -72,7 +85,7 @@ export default class Processing extends Component {
       const json = { headTable };
       const result = await ky.post("/getSequence", { json }).json();
       let { tables, tagsList, head } = result;
-      tables = tables.map((t) => ({ ...t, mode: original }));
+      tables = tables.map((t) => ({ ...t, mode: t.accepted_text === null ? original : accepted }));
 
       if (head.length !== 1) {
         this.props.history.replace({
@@ -119,7 +132,7 @@ export default class Processing extends Component {
           ? {
               ...t,
               accepted_text: newAccepted,
-              mode: newAccepted === null ? original : t.mode,
+              mode: newAccepted === null ? original : accepted,
             }
           : t,
       );
@@ -236,7 +249,7 @@ export default class Processing extends Component {
             <p>
               <strong>{t.level}</strong>, Table ID: <strong>{t.tableId}</strong>, CSV ID: <strong>{t.csvId}</strong>
             </p>
-            {showAccepted ? tagsBlock(t.tags, t.csvId) : null}
+            {showAccepted || t.accepted_text === null ? tagsBlock(t.tags, t.csvId) : null}
           </div>
         </div>
         {showAccepted || t.accepted_text === null ? (
@@ -267,7 +280,9 @@ export default class Processing extends Component {
                   size="sm"
                   variant="success"
                   onClick={() => this.setAccepted(t.csvId, t.processed_text)}
-                  disabled={softUpdating || t.accepted_text === t.processed_text}
+                  disabled={
+                    softUpdating || tablesAreEqual(t.accepted_text, t.processed_text) || t.processed_text === null
+                  }
                 >
                   Set As Accepted
                 </Button>
