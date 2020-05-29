@@ -61,7 +61,7 @@ const tableIndex = async (req, res, next) => {
                p.totalPages,
                p.status,
                COUNT(t.correct_csv)                                          AS tablesValidated,
-               COUNT(IF(t.relevancy = 0, 1, null))                           AS tablesIrrelevant,
+               COUNT(IF(t.relevancy = 0, 1, NULL))                           AS tablesIrrelevant,
                COUNT(IF(t.correct_csv IS NULL AND t.relevancy = 1, 1, NULL)) AS tablesNotValidated,
                COUNT(t.tableId)                                              AS tableCount
         FROM pdfs p
@@ -412,23 +412,23 @@ const processingIndex = async (req, res, next) => {
     const query = `
         WITH manuals AS (SELECT t.headTable
                          FROM tables t
-                                  LEFT JOIN tables_tags tt on t.tableId = tt.tableId AND tt.tagId = 13
+                                  LEFT JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId = 13
                          WHERE relevancy = 1
                          GROUP BY t.headTable
                          HAVING count(tt.tagId) > 0
                             AND count(t.tableId) = count(tt.tagId))
         SELECT t.pdfName,
                t.headTable,
-               MIN(t.page)                 as page,
-               COUNT(c.accepted_text)      as accepted,
-               COUNT(c.processed_text)     as processed,
-               COUNT(c.csvId)              as totalTables,
-               IF(m.headTable, 'true', '') as allManuals,
+               MIN(t.page)                 AS page,
+               COUNT(c.accepted_text)      AS accepted,
+               COUNT(c.processed_text)     AS processed,
+               COUNT(c.csvId)              AS totalTables,
+               IF(m.headTable, 'true', '') AS allManuals,
                CASE
                    WHEN COUNT(c.accepted_text) = COUNT(c.csvId) THEN '3. DONE'
                    WHEN COUNT(c.accepted_text) > 0 THEN '1. IN PROGRESS'
                    ELSE '2. NOT STARTED'
-                   END                     as status
+                   END                     AS status
         FROM tables t
                  INNER JOIN csvs c
                             ON t.correct_csv = c.csvId
@@ -467,13 +467,13 @@ const getSequence = async (req, res, next) => {
                if(
                        (json_arrayagg(tt.tagId) = cast('[
                     null
-                  ]' as json)),
-                       CAST('[]' as json),
+                  ]' AS json)),
+                       CAST('[]' AS json),
                        json_arrayagg(tt.tagId)
                    ) AS tags
         FROM tables t
-                 INNER JOIN csvs c on t.correct_csv = c.csvId
-                 LEFT JOIN tables_tags tt on t.tableId = tt.tableId
+                 INNER JOIN csvs c ON t.correct_csv = c.csvId
+                 LEFT JOIN tables_tags tt ON t.tableId = tt.tableId
         WHERE headTable = ?
         GROUP BY t.tableId, t.level
         ORDER BY t.level;
