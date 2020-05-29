@@ -98,6 +98,38 @@ export default class Processing extends Component {
     this.setState({ showAccepted });
   };
 
+  setAccepted = async (csvId, newAccepted) => {
+    try {
+      const { tables } = this.state;
+      const { accepted_text } = tables.find((t) => t.csvId === csvId);
+      if (
+        (newAccepted === null || accepted_text !== null) &&
+        !window.confirm(
+          newAccepted === null
+            ? "Do you really want to unset the accepted result?"
+            : "Do you really want to overwrite accepted result?",
+        )
+      ) {
+        return;
+      }
+      this.setState({ softUpdating: true });
+      await ky.post("/setAccepted", { json: { csvId, newAccepted } }).json();
+      const updatedTables = tables.map((t) =>
+        t.csvId === csvId
+          ? {
+              ...t,
+              accepted_text: newAccepted,
+              mode: newAccepted === null ? original : t.mode,
+            }
+          : t,
+      );
+      this.setState({ tables: updatedTables, softUpdating: false });
+    } catch (error) {
+      console.log(error);
+      alert(error);
+    }
+  };
+
   render() {
     const { pdfName, tableTitle, page, headTable, tables, softUpdating, tagsList, showAccepted } = this.state;
     const numTables = tables.length;
@@ -105,7 +137,7 @@ export default class Processing extends Component {
 
     const topButtons = (
       <Col>
-        <Link to="/tables_index">
+        <Link to="/processing_index">
           <Button className="ml-0" size="sm" variant="info" disabled={softUpdating}>
             Back to Index
           </Button>
@@ -164,7 +196,7 @@ export default class Processing extends Component {
           size="sm"
           variant={tags.includes(tagId) ? "success" : "outline-dark"}
           onClick={() => console.log(tagId, csvId)}
-          disabled={softUpdating}
+          disabled
         >
           {tagName}
         </Button>
@@ -207,7 +239,7 @@ export default class Processing extends Component {
             {showAccepted ? tagsBlock(t.tags, t.csvId) : null}
           </div>
         </div>
-        {showAccepted ? (
+        {showAccepted || t.accepted_text === null ? (
           <div className={"displayRow " + (t.accepted_text ? "hasAccepted" : null)}>
             <div className="displayColumn">
               <h3>{t.mode}</h3>
@@ -215,6 +247,16 @@ export default class Processing extends Component {
                 {btn(t, original)}
                 {btn(t, image)}
                 {t.accepted_text ? btn(t, accepted) : null}
+                {t.accepted_text ? (
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => this.setAccepted(t.csvId, null)}
+                    disabled={softUpdating}
+                  >
+                    Unset Accepted
+                  </Button>
+                ) : null}
               </div>
               <div>{display(t)}</div>
             </div>
@@ -223,8 +265,8 @@ export default class Processing extends Component {
               <div>
                 <Button
                   size="sm"
-                  variant="primary"
-                  onClick={() => {}}
+                  variant="success"
+                  onClick={() => this.setAccepted(t.csvId, t.processed_text)}
                   disabled={softUpdating || t.accepted_text === t.processed_text}
                 >
                   Set As Accepted

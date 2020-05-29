@@ -197,3 +197,5 @@ FROM tables t
          LEFT JOIN tags_json tj on t.tableId = tj.tableId
 WHERE headTable = '57fffa5e-ad29-4140-ba73-58290505443d'
 ORDER BY tags, t.parentTable;
+
+UPDATE csvs SET processed_text = NULL, accepted_text = NULL;
