@@ -435,7 +435,7 @@ const processingIndex = async (req, res, next) => {
                  LEFT JOIN manuals m ON t.headTable = m.headTable
         WHERE relevancy = 1
         GROUP BY t.headTable
-        ORDER BY status, accepted DESC, allManuals, totalTables DESC;
+        ORDER BY status, accepted DESC, allManuals, processed DESC, totalTables DESC;
     `;
     const [result] = await res.locals.pool.execute(query);
     res.json(result);
