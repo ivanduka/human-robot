@@ -230,3 +230,47 @@ GROUP BY t.tableId;
 SELECT *
 FROM tables_tags
 ORDER BY tagId;
+
+
+
+WITH heads_tags AS (
+    SELECT t.headTable, tt.tagId
+    FROM tables t
+             LEFT JOIN tables_tags tt
+                       ON t.tableId = tt.tableId
+    WHERE relevancy = 1
+    GROUP BY tt.tagId, t.headTable
+),
+     heads_tags_json AS (
+         SELECT headTable, JSON_ARRAYAGG(tagId) AS all_tags
+         FROM heads_tags
+         GROUP BY headTable
+     ),
+     all_manuals AS (
+         SELECT t.headTable
+         FROM tables t
+                  LEFT JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId = 13
+         WHERE relevancy = 1
+         GROUP BY t.headTable
+         HAVING count(tt.tagId) > 0
+            AND count(t.tableId) = count(tt.tagId)
+     )
+SELECT t.tableId,
+       t.headTable,
+       t.correct_csv,
+       c.csvText,
+       htj.all_tags,
+       JSON_ARRAYAGG(tt.tagId)                   AS tags,
+       IF(am.headTable IS NULL, 'false', 'true') AS all_manual
+FROM tables t
+         LEFT JOIN heads_tags_json htj ON htj.headTable = t.headTable
+         LEFT JOIN csvs c ON t.correct_csv = c.csvId
+         LEFT JOIN tables_tags tt ON t.tableId = tt.tableId
+         LEFT JOIN all_manuals am ON t.headTable = am.headTable
+WHERE t.relevancy = 1
+  AND c.accepted_text IS NULL
+GROUP BY t.tableId;
+
+SELECT count(*)
+FROM csvs
+WHERE processed_text IS NOT NULL;
