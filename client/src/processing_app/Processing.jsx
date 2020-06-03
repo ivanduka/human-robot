@@ -185,7 +185,7 @@ export default class Processing extends Component {
           disabled={softUpdating}
           onClick={() => this.changeViewAccepted(!showAccepted)}
         >
-          {(showAccepted ? "Hide" : "Show") + " Accepted Tables"}
+          {(showAccepted ? "Hide" : "Show") + " Accepted/Not Processed Tables"}
         </Button>
       </Col>
     );
@@ -271,37 +271,47 @@ export default class Processing extends Component {
       </div>
     );
 
-    const tableRow = (t) => (
-      <React.Fragment>
-        <div className={"displayRow " + (t.accepted_text ? "hasAccepted" : null)}>
-          <div className="displayColumn">
-            <p>
-              <strong>{t.level}</strong>, Table ID:{" "}
-              <a href={`/validation/${pdfName}/${t.tableId}`} target="_blank">
-                <strong>{t.tableId}</strong>
-              </a>
-              , CSV ID: <strong>{t.csvId}</strong>
-            </p>
-            {showAccepted || t.accepted_text === null ? tagsBlock(t.tags, t.csvId) : null}
-          </div>
-        </div>
-        {showAccepted || t.accepted_text === null ? (
-          <div className={"displayRow " + (t.accepted_text ? "hasAccepted" : null)}>
+    const tableRow = (t) => {
+      const showTable = showAccepted || (t.accepted_text === null && t.processed_text !== null);
+      return (
+        <React.Fragment>
+          <div
+            className={
+              "displayRow " + (t.processed_text ? null : " notProcessed ") + (t.accepted_text ? " hasAccepted " : null)
+            }
+          >
             <div className="displayColumn">
-              <h3>{t.mode}</h3>
-              {originalButtons(t)}
-              <div>{display(t)}</div>
-            </div>
-            <div className="displayColumn">
-              <h3>{processed}:</h3>
-              {processedButton(t)}
-              <div>{constructTable(t.processed_text)}</div>
-              {t.processed_text === null ? null : processedButton(t)}
+              <p>
+                <strong>{t.level}</strong>, Table ID:{" "}
+                <a href={`/validation/${pdfName}/${t.tableId}`} target="_blank" rel="noreferrer">
+                  <strong>{t.tableId}</strong>
+                </a>
+                , CSV ID: <strong>{t.csvId}</strong>
+              </p>
+              {showTable ? tagsBlock(t.tags, t.csvId) : null}
             </div>
           </div>
-        ) : null}
-      </React.Fragment>
-    );
+          {showTable ? (
+            <div
+              className={
+                "displayRow " + (t.processed_text ? null : " notProcessed ") + (t.accepted_text ? "hasAccepted" : null)
+              }
+            >
+              <div className="displayColumn">
+                <h3>{t.mode}</h3>
+                {originalButtons(t)}
+                <div>{display(t)}</div>
+              </div>
+              <div className="displayColumn">
+                <h3>{processed}:</h3>
+                {processedButton(t)}
+                <div>{constructTable(t.processed_text)}</div>
+              </div>
+            </div>
+          ) : null}
+        </React.Fragment>
+      );
+    };
 
     return (
       <React.Fragment>

@@ -1,31 +1,35 @@
 .tableRow {
-    border: 1px solid black;
-    margin: 20px 0;
+  border: 1px solid black;
+  margin: 20px 0;
 }
 
 .tableRow table {
-    table-layout: fixed;
-    width: 100%;
-    overflow-wrap: break-word;
+  table-layout: fixed;
+  width: 100%;
+  overflow-wrap: break-word;
 }
 
 .displayRow {
-    display: flex;
-    flex-flow: row;
-    width: 100%;
-    padding-bottom: 20px;
+  display: flex;
+  flex-flow: row;
+  width: 100%;
+  padding-bottom: 20px;
 }
 
 .displayColumn {
-    width: 100%;
-    margin-right: 10px;
-    margin-left: 10px;
+  width: 100%;
+  margin-right: 10px;
+  margin-left: 10px;
 }
 
 span {
-    font-family: monospace, monospace;
+  font-family: monospace, monospace;
+}
+
+.notProcessed {
+  background-color: RGB(200, 200, 200);
 }
 
 .hasAccepted {
-    background-color: RGBA(0, 255, 0, 0.2);
+  background-color: RGBA(0, 255, 0, 0.2);
 }
