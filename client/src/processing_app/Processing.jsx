@@ -242,12 +242,42 @@ export default class Processing extends Component {
       </Button>
     );
 
+    const originalButtons = (t) => (
+      <div>
+        {btn(t, original)}
+        {btn(t, image)}
+        {t.accepted_text ? btn(t, accepted) : null}
+        {t.accepted_text ? (
+          <Button size="sm" variant="danger" onClick={() => this.setAccepted(t.csvId, null)} disabled={softUpdating}>
+            Unset Accepted
+          </Button>
+        ) : null}
+      </div>
+    );
+
+    const processedButton = (t) => (
+      <div>
+        <Button
+          size="sm"
+          variant="success"
+          onClick={() => this.setAccepted(t.csvId, t.processed_text)}
+          disabled={softUpdating || tablesAreEqual(t.accepted_text, t.processed_text) || t.processed_text === null}
+        >
+          Set As Accepted
+        </Button>
+      </div>
+    );
+
     const tableRow = (t) => (
       <React.Fragment>
         <div className={"displayRow " + (t.accepted_text ? "hasAccepted" : null)}>
           <div className="displayColumn">
             <p>
-              <strong>{t.level}</strong>, Table ID: <strong>{t.tableId}</strong>, CSV ID: <strong>{t.csvId}</strong>
+              <strong>{t.level}</strong>, Table ID:{" "}
+              <a href={`/validation/${pdfName}/${t.tableId}`} target="_blank">
+                <strong>{t.tableId}</strong>
+              </a>
+              , CSV ID: <strong>{t.csvId}</strong>
             </p>
             {showAccepted || t.accepted_text === null ? tagsBlock(t.tags, t.csvId) : null}
           </div>
@@ -256,38 +286,14 @@ export default class Processing extends Component {
           <div className={"displayRow " + (t.accepted_text ? "hasAccepted" : null)}>
             <div className="displayColumn">
               <h3>{t.mode}</h3>
-              <div>
-                {btn(t, original)}
-                {btn(t, image)}
-                {t.accepted_text ? btn(t, accepted) : null}
-                {t.accepted_text ? (
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    onClick={() => this.setAccepted(t.csvId, null)}
-                    disabled={softUpdating}
-                  >
-                    Unset Accepted
-                  </Button>
-                ) : null}
-              </div>
+              {originalButtons(t)}
               <div>{display(t)}</div>
             </div>
             <div className="displayColumn">
               <h3>{processed}:</h3>
-              <div>
-                <Button
-                  size="sm"
-                  variant="success"
-                  onClick={() => this.setAccepted(t.csvId, t.processed_text)}
-                  disabled={
-                    softUpdating || tablesAreEqual(t.accepted_text, t.processed_text) || t.processed_text === null
-                  }
-                >
-                  Set As Accepted
-                </Button>
-              </div>
+              {processedButton(t)}
               <div>{constructTable(t.processed_text)}</div>
+              {processedButton(t)}
             </div>
           </div>
         ) : null}

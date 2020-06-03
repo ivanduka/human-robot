@@ -14,10 +14,12 @@ import TablesIndex from "./tables_index/TablesIndex";
 import Validation from "./validation_app/Validation";
 import ProcessingIndex from "./processing_index/ProcessingIndex";
 import Processing from "./processing_app/Processing";
+import ProcessingHelper from "./processing_helper/ProcessingHelper";
 
 const App = () => (
   <BrowserRouter>
     <Switch>
+      <Route exact path="/processing_helper" component={ProcessingHelper} />
       <Route exact path="/tables_index" component={TablesIndex} />
       <Route exact path="/processing_index" component={ProcessingIndex} />
       <Route path="/processing/:headTable" component={Processing} />
@@ -47,6 +49,11 @@ const Home = () => {
           <div>
             <Link to="/processing_index">
               <Button variant="primary">Processing Index</Button>
+            </Link>
+          </div>
+          <div>
+            <Link to="/processing_helper">
+              <Button variant="primary">Processing Helper</Button>
             </Link>
           </div>
         </Col>

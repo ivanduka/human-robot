@@ -1,0 +1,10 @@
+.tableRow2 table {
+    table-layout: fixed;
+    width: 100%;
+    overflow-wrap: break-word;
+    background-color: RGB(220, 220, 220);
+}
+
+.itemRow {
+    margin-bottom: 50px;
+}
