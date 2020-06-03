@@ -518,7 +518,7 @@ const processingHelper = async (req, res, next) => {
         WITH wanted_tables AS (
             SELECT tableId
             FROM tables_tags
-            WHERE tagId = 6
+            WHERE tagId = 4
         ),
              heads_tags AS (
                  SELECT t.headTable, tt.tagId
@@ -537,6 +537,7 @@ const processingHelper = async (req, res, next) => {
                t.pdfName,
                t.correct_csv,
                c.csvText,
+               t.level,
                if((json_arrayagg(tt.tagId) = cast('[
          null
        ]' AS json)), CAST('[]' AS json), json_arrayagg(tt.tagId)

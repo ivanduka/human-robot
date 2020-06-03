@@ -66,7 +66,7 @@ def get_tables():
 
 
 def db(table, processed_text):
-    query = "UPDATE csvs SET processed_text = %s WHERE csvId = %s;"
+    query = "UPDATE csvs SET processed_text = CAST(%s AS json) WHERE csvId = %s;"
     with engine.connect() as conn:
         result = conn.execute(query, (json.dumps(processed_text), table.csv_id))
         if result.rowcount != 1:
@@ -81,7 +81,7 @@ def clear_processed():
 
 def load(csv_id):
     df = pd.read_csv(manual_csvs_folder.joinpath(csv_id + ".csv"), header=None, encoding="cp1252")
-    return df.to_json(None, orient='values', indent=2)
+    return json.loads(df.to_json(None, orient='values'))
 
 
 def test_manuals():
@@ -90,43 +90,54 @@ def test_manuals():
             pd.read_csv(manual_csvs_folder.joinpath(manual_csv + ".csv"), header=None, encoding="cp1252")
         except Exception as e:
             print(f"ERROR! {manual_csv}.csv: {str(e).strip()}")
+    print(f"Done testing {len(manual_csvs)} manual csvs")
 
 
 def processing():
     tables = get_tables()
     print(f"Got {len(tables)} tables to process")
     clear_processed()
-    print("cleaned up the DB")
+    print("Cleaned up the DB")
 
     counter = 0
-    manuals = 0
 
     for table in tables:
         all_tags = table.all_tags
         tags = table.tags
 
+        def remove_tags(*removing_tags):
+            for tag in removing_tags:
+                if tag in all_tags:
+                    table.all_tags.remove(tag)
+                if tag in tags:
+                    table.tags.remove(tag)
+
+        # removing non-functional headers
+        remove_tags(1, 2, 3)
+
         # Dealing with manually processed tables
         if table.all_manual:
-            manuals += 1
             continue
         if 13 in tags:
-            # db(table, load(table.csv_id))
-            manuals += 1
+            db(table, load(table.csv_id))
+            counter += 1
             continue
-        if 13 in all_tags:
-            table.all_tags.remove(13)
+        remove_tags(13)
 
         # `pass-through` tables that need no transformation
-        if (len(all_tags) == 1) and (2 in all_tags or 3 in all_tags):
+        if len(all_tags) == 0:
             db(table, table.table)
             counter += 1
             continue
 
+        # tables with notes (removing last row and first column)
+        if 6 in tags:
+            pass
+
     print(f"Done {counter} tables; {len(tables) - counter} were not processed.")
-    print(manuals)
 
 
 if __name__ == "__main__":
-    # test_manuals()
+    test_manuals()
     processing()
     pass

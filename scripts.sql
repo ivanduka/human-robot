@@ -274,3 +274,37 @@ GROUP BY t.tableId;
 SELECT count(*)
 FROM csvs
 WHERE processed_text IS NOT NULL;
+
+WITH wanted_tables AS (
+    SELECT tableId
+    FROM tables_tags
+    WHERE tagId = 6
+),
+     heads_tags AS (
+         SELECT t.headTable, tt.tagId
+         FROM tables t
+                  LEFT JOIN tables_tags tt
+                            ON t.tableId = tt.tableId
+         WHERE relevancy = 1
+         GROUP BY tt.tagId, t.headTable
+     ),
+     heads_tags_json AS (
+         SELECT headTable, JSON_ARRAYAGG(tagId) AS all_tags
+         FROM heads_tags
+         GROUP BY headTable
+     )
+SELECT t.tableId,
+       t.pdfName,
+       t.correct_csv,
+       c.csvText,
+       if((json_arrayagg(tt.tagId) = cast('[
+         null
+       ]' AS json)), CAST('[]' AS json), json_arrayagg(tt.tagId)
+           ) AS tags,
+       htj.all_tags
+FROM wanted_tables wt
+         LEFT JOIN tables t ON t.tableId = wt.tableId
+         LEFT JOIN csvs c ON t.correct_csv = c.csvId
+         LEFT JOIN tables_tags tt ON t.tableId = tt.tableId
+         LEFT JOIN heads_tags_json htj ON htj.headTable = t.headTable
+GROUP BY t.tableId;

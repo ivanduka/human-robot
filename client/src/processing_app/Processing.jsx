@@ -85,7 +85,10 @@ export default class Processing extends Component {
       const json = { headTable };
       const result = await ky.post("/getSequence", { json }).json();
       let { tables, tagsList, head } = result;
-      tables = tables.map((t) => ({ ...t, mode: t.accepted_text === null ? original : accepted }));
+      tables = tables.map((t) => ({
+        ...t,
+        mode: t.accepted_text === null ? original : accepted,
+      }));
 
       if (head.length !== 1) {
         this.props.history.replace({
@@ -293,7 +296,7 @@ export default class Processing extends Component {
               <h3>{processed}:</h3>
               {processedButton(t)}
               <div>{constructTable(t.processed_text)}</div>
-              {processedButton(t)}
+              {t.processed_text === null ? null : processedButton(t)}
             </div>
           </div>
         ) : null}

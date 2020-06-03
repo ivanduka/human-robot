@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
 import { Helmet } from "react-helmet";
 import ky from "ky";
+import SyntaxHighlighter from "react-syntax-highlighter";
+import { monokai } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 import "./ProcessingHelper.css";
 
@@ -55,7 +57,7 @@ export default class ProcessingHelper extends Component {
             <a href={`/validation/${t.pdfName}/${t.tableId}`} target="_blank">
               {t.tableId}
             </a>
-            ; tags: {JSON.stringify(t.tags)}; all_tags: {JSON.stringify(t.all_tags)}
+            ; level: {t.level}; tags: {JSON.stringify(t.tags.sort())}; all_tags: {JSON.stringify(t.all_tags.sort())}
           </strong>
         </div>
         <div>{constructTable(t.csvText)}</div>
@@ -73,7 +75,16 @@ export default class ProcessingHelper extends Component {
               <Button onClick={this.loadData} size="sm" disabled={loading}>
                 Refresh Data
               </Button>
-              <strong> Results: {data.length}</strong>
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              <div>
+                <h4>Query ({data.length} results):</h4>
+              </div>
+              <SyntaxHighlighter language="sql" style={monokai}>
+                {query.trim()}
+              </SyntaxHighlighter>
             </Col>
           </Row>
           <Row className="tableRow2">
