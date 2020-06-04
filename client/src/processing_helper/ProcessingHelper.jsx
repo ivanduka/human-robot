@@ -54,7 +54,7 @@ export default class ProcessingHelper extends Component {
       <div className="itemRow" key={t.tableId}>
         <div>
           <strong>
-            <a href={`/validation/${t.pdfName}/${t.tableId}`} target="_blank">
+            <a href={`/validation/${t.pdfName}/${t.tableId}`} target="_blank" rel="noreferrer">
               {t.tableId}
             </a>
             ; level: {t.level}; tags: {JSON.stringify(t.tags.sort())}; all_tags: {JSON.stringify(t.all_tags.sort())}
