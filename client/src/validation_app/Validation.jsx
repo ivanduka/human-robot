@@ -434,7 +434,7 @@ export default class Validation extends Component {
           </Col>
         </Row>
         <Row>
-          <Col>
+          <Col className="equal">
             {imageLoaded || <Spinner animation="border" />}
             <img
               src={`/jpg/${tableId}.jpg`}
@@ -444,7 +444,7 @@ export default class Validation extends Component {
               alt="Table screenshot from the PDF file"
             />
           </Col>
-          <Col>{csvsArea}</Col>
+          <Col className="equal">{csvsArea}</Col>
         </Row>
       </Container>
     );
