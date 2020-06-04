@@ -29,6 +29,7 @@ export default class ProcessingHelper extends Component {
     data: [],
     loading: false,
     query: "",
+    showProcessed: false,
   };
 
   componentDidMount() {
@@ -46,8 +47,12 @@ export default class ProcessingHelper extends Component {
     }
   };
 
+  toggleProcessed = async (showProcessed) => {
+    this.setState({ showProcessed });
+  };
+
   render() {
-    const { data, loading, query } = this.state;
+    const { data, loading, query, showProcessed } = this.state;
     if (loading) return <Spinner animation="border" />;
 
     const tables = data.map((t) => (
@@ -60,7 +65,7 @@ export default class ProcessingHelper extends Component {
             ; level: {t.level}; tags: {JSON.stringify(t.tags.sort())}; all_tags: {JSON.stringify(t.all_tags.sort())}
           </strong>
         </div>
-        <div>{constructTable(t.csvText)}</div>
+        <div>{constructTable(showProcessed ? t.processed_text : t.csvText)}</div>
       </div>
     ));
 
@@ -74,6 +79,14 @@ export default class ProcessingHelper extends Component {
             <Col>
               <Button onClick={this.loadData} size="sm" disabled={loading}>
                 Refresh Data
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => this.toggleProcessed(!showProcessed)}
+                size="sm"
+                disabled={loading}
+              >
+                {showProcessed ? "Show Original" : "Show Processed"}
               </Button>
             </Col>
           </Row>
