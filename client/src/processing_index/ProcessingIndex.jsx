@@ -57,6 +57,7 @@ export default class ExtractionIndex extends Component {
     rows: null,
     loading: true,
     softUpdating: false,
+    showOnlyProcessed: false,
   };
 
   componentDidMount() {
@@ -85,8 +86,14 @@ export default class ExtractionIndex extends Component {
     }
   };
 
+  toggleShowOnlyProcessed = async (enable) => {
+    this.setState({ showOnlyProcessed: enable });
+    await this.softLoadData();
+  };
+
   render() {
-    const { rows, columns, loading, softUpdating } = this.state;
+    const { columns, loading, softUpdating, showOnlyProcessed } = this.state;
+    const rows = showOnlyProcessed ? this.state.rows.filter((r) => r.processed > 0) : this.state.rows;
     if (loading) return <Spinner animation="border" />;
 
     const rowsWithButtons = rows.map((row, index) => ({
@@ -141,6 +148,14 @@ export default class ExtractionIndex extends Component {
             </Link>
             <Button size="sm" variant="primary" onClick={this.softLoadData} disabled={softUpdating}>
               Refresh Data
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => this.toggleShowOnlyProcessed(!showOnlyProcessed)}
+              disabled={softUpdating}
+            >
+              {showOnlyProcessed ? "Show All" : "Show Only Processed"}
             </Button>
           </Col>
         </Row>
