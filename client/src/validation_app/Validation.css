@@ -11,14 +11,6 @@ td {
   vertical-align: top !important;
 }
 
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
-  table-layout: fixed;
-  width: 100%;
-  overflow-wrap: break-word;
-}
-
 td {
   padding: 3px;
 }
@@ -40,6 +32,10 @@ td {
   display: initial;
 }
 
-.equal {
-  /* width: 50%; */
+.equal table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
+  width: 100%;
+  overflow-wrap: break-word;
 }
