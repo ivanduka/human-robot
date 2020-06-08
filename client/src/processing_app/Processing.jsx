@@ -283,7 +283,7 @@ export default class Processing extends Component {
             <div className="displayColumn">
               <p>
                 <strong>{t.level}</strong>, Table ID:{" "}
-                <a href={`/validation/${pdfName}/${t.tableId}`} target="_blank" rel="noreferrer">
+                <a href={`/validation/${pdfName}/${t.tableId}`} target="_blank" rel="noreferrer noopener">
                   <strong>{t.tableId}</strong>
                 </a>
                 , CSV ID: <strong>{t.csvId}</strong>
