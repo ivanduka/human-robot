@@ -6,10 +6,13 @@ const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 const log4js = require("log4js");
+const fg = require("fast-glob");
 
 const jpgPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\jpg_tables";
 const pdfPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\pdf_files";
-[jpgPath, pdfPath].forEach((p) =>
+const manualCsvPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\manual_csv";
+const csvPath = "\\\\luxor\\data\\board\\Dev\\PCMR\\csv_tables";
+[jpgPath, pdfPath, manualCsvPath, csvPath].forEach((p) =>
   fs.access(p, (err) => {
     if (err) throw new Error(`Path ${p} is not accessible`);
   }),
@@ -20,6 +23,7 @@ app.options("*", cors());
 app.use(cors());
 app.use("/pdf", express.static(pdfPath));
 app.use("/jpg", express.static(jpgPath));
+app.use("/csv", express.static(csvPath));
 
 // LOGGING
 log4js.configure({
@@ -518,7 +522,7 @@ const processingHelper = async (req, res, next) => {
         WITH wanted_tables AS (
             SELECT tableId
             FROM tables_tags
-            WHERE tagId = 10
+            WHERE tagId = 6
         ),
              heads_tags AS (
                  SELECT t.headTable, tt.tagId
@@ -561,6 +565,30 @@ const processingHelper = async (req, res, next) => {
   }
 };
 
+// Manual processing helper
+
+const manualHelper = async (req, res, next) => {
+  try {
+    const query = `
+      SELECT t.tableId, correct_csv, pdfName, page
+      FROM tables_tags tt
+              INNER JOIN tables t ON tt.tableId = t.tableId
+      WHERE tagId = 13;
+    `;
+    const p = res.locals.pool;
+    const [dbData] = await p.execute(query);
+
+    const csvs = await fg("**/*.csv", { cwd: manualCsvPath });
+    const existing = new Set(csvs.map((c) => c.split("/").slice(-1)[0].split(".")[0]));
+
+    const data = dbData.map((csv) => ({ ...csv, status: existing.has(csv.correct_csv) ? "done" : "" }));
+
+    res.json({ data });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Server setup
 
 function errorHandler(err, req, res, next) {
@@ -592,6 +620,7 @@ app.post("/getSequence", (req, res, next) => getSequence(req, res, next));
 app.post("/setAccepted", (req, res, next) => setAccepted(req, res, next));
 
 app.post("/processingHelper", (req, res, next) => processingHelper(req, res, next));
+app.post("/manualHelper", (req, res, next) => manualHelper(req, res, next));
 
 app.use("/", express.static(path.join(__dirname, "client", "build")));
 app.get("/*", (req, res) => {
