@@ -120,11 +120,34 @@ def delete_last_column(table):
 def delete_last_row(table):
     return table[0:-1]
 
+
 # Removes notes by deleting last row and (if empty) first column
 def remove_notes(table):
     table = delete_last_row(table)
     if empty_first_column(table):
         table = delete_first_column(table)
+    return table
+
+
+def fix_cutoff_heading(table):
+    fixes = {"egal Land Description": "Legal Land Description", "nvironmental Issues": "Environmental Issues"}
+    for index1, row in enumerate(table):
+        for index2, cell in enumerate(row):
+            if cell in fixes:
+                table[index1][index2] = fixes[cell]
+    return table
+
+
+def headers_two_rows(table):
+    row1 = table[0]
+    row2 = table[1]
+    last_top_header = row1[0]
+    for index in range(len(row1)):
+        if has_content(row1[index]):
+            last_top_header = row1[index]
+        if last_top_header != row2[index]:
+            table[1][index] = last_top_header + " " + row2[index]
+    table = delete_first_row(table)
     return table
 
 
@@ -138,6 +161,9 @@ def processing():
 
     for t in tables:
         accepted_text = t.table
+
+        # Fixing known problems with headers
+        accepted_text = fix_cutoff_heading(accepted_text)
 
         def remove_tags(*removing_tags):
             for tag in removing_tags:
@@ -167,9 +193,29 @@ def processing():
         # tables with notes (removing last row and first column)
         if 6 in t.tags:
             accepted_text = remove_notes(accepted_text)
+        remove_tags(6)
+
+        if 7 in t.tags:
+            accepted_text = delete_first_row(accepted_text)
+        remove_tags(7)
+
+        if 8 in t.tags:
+            accepted_text = delete_last_row(accepted_text)
+        remove_tags(8)
+
+        if 9 in t.tags:
+            accepted_text = delete_first_column(accepted_text)
+        remove_tags(9)
+
+        if 10 in t.tags:
+            accepted_text = delete_last_column(accepted_text)
+        remove_tags(10)
+
+        if 11 in t.tags:
+            accepted_text = headers_two_rows(accepted_text)
             counter += 1
-            db(t, accepted_text) # remove!
-            pass
+            db(t, accepted_text)
+        remove_tags(11)
 
     print(f"Done {counter} tables; {len(tables) - counter} were not processed.")
 
