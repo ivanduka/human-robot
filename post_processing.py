@@ -3,6 +3,7 @@ import pandas as pd
 import json
 from pathlib import Path
 import io
+import re
 
 manual_csvs_folder = Path("//luxor/data/board/Dev/PCMR/manual_csv")
 manual_csvs = [c.stem for c in manual_csvs_folder.glob("*.csv")]
@@ -93,6 +94,40 @@ def test_manuals():
     print(f"Done testing {len(manual_csvs)} manual csvs")
 
 
+def has_content(cell):
+    return bool(re.search(r"\S", cell))
+
+
+def empty_first_column(table):
+    for row in table:
+        if has_content(row[0]):
+            return False
+    return True
+
+
+def delete_first_column(table):
+    return [row[1:] for row in table]
+
+
+def delete_first_row(table):
+    return table[1:]
+
+
+def delete_last_column(table):
+    return [row[:-1] for row in table]
+
+
+def delete_last_row(table):
+    return table[0:-1]
+
+# Removes notes by deleting last row and (if empty) first column
+def remove_notes(table):
+    table = delete_last_row(table)
+    if empty_first_column(table):
+        table = delete_first_column(table)
+    return table
+
+
 def processing():
     tables = get_tables()
     print(f"Got {len(tables)} tables to process")
@@ -101,37 +136,39 @@ def processing():
 
     counter = 0
 
-    for table in tables:
-        all_tags = table.all_tags
-        tags = table.tags
+    for t in tables:
+        accepted_text = t.table
 
         def remove_tags(*removing_tags):
             for tag in removing_tags:
-                if tag in all_tags:
-                    table.all_tags.remove(tag)
-                if tag in tags:
-                    table.tags.remove(tag)
+                if tag in t.all_tags:
+                    t.all_tags.remove(tag)
+                if tag in t.tags:
+                    t.tags.remove(tag)
 
         # removing non-functional headers
-        remove_tags(1, 2, 3)
+        remove_tags(1, 2, 3, 4)
 
         # Dealing with manually processed tables
-        if table.all_manual:
-            continue
-        if 13 in tags:
-            db(table, load(table.csv_id))
+        if t.all_manual:  # remove after we have those
+            continue  # remove after we have those
+        if 13 in t.tags:
+            db(t, load(t.csv_id))
             counter += 1
             continue
         remove_tags(13)
 
         # `pass-through` tables that need no transformation
-        if len(all_tags) == 0:
-            db(table, table.table)
-            counter += 1
+        if len(t.all_tags) == 0:
+            # db(t, accepted_text)
+            # counter += 1
             continue
 
         # tables with notes (removing last row and first column)
-        if 6 in tags:
+        if 6 in t.tags:
+            accepted_text = remove_notes(accepted_text)
+            counter += 1
+            db(t, accepted_text) # remove!
             pass
 
     print(f"Done {counter} tables; {len(tables) - counter} were not processed.")
