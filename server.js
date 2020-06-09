@@ -522,7 +522,7 @@ const processingHelper = async (req, res, next) => {
         WITH wanted_tables AS (
             SELECT tableId
             FROM tables_tags
-            WHERE tagId = 6
+            WHERE tagId = 15
         ),
              heads_tags AS (
                  SELECT t.headTable, tt.tagId

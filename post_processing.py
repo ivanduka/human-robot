@@ -2,7 +2,6 @@ from processing import engine
 import pandas as pd
 import json
 from pathlib import Path
-import io
 import re
 
 manual_csvs_folder = Path("//luxor/data/board/Dev/PCMR/manual_csv")
@@ -66,7 +65,7 @@ def get_tables():
     return tables_
 
 
-def db(table, processed_text):
+def save_to_db(table, processed_text):
     query = "UPDATE csvs SET processed_text = CAST(%s AS json) WHERE csvId = %s;"
     with engine.connect() as conn:
         result = conn.execute(query, (json.dumps(processed_text), table.csv_id))
@@ -95,7 +94,13 @@ def test_manuals():
 
 
 def has_content(cell):
-    return bool(re.search(r"\S", cell))
+    try:
+        result = bool(re.search(r"\S", cell))
+        return result
+    except Exception as e:
+        print(e)
+        print(cell)
+        raise Exception("STOP")
 
 
 def empty_first_column(table):
@@ -132,7 +137,9 @@ def remove_notes(table):
 def fix_cutoff_heading(table):
     fixes = {
         "egal Land Description": "Legal Land Description",
-        "nvironmental Issues": "Environmental Issues"}
+        "nvironmental Issues": "Environmental Issues",
+        "EnvironmentalIssues": "Environmental Issues"
+    }
     for index1, row in enumerate(table):
         for index2, cell in enumerate(row):
             if cell in fixes:
@@ -160,142 +167,145 @@ def add_three_columns(table):
     return table
 
 
-def detect_VECs(table):
-    VECs = []
-    for index1, row in enumerate(table):
-        if index1 > 0:
-            is_vec = True
-            for index2, cell in enumerate(row):
-                if index2 > 0 and has_content(cell):
-                    is_vec = False
+def detect_horizontals(table):
+    horizontals = []
+    for row_index, row in enumerate(table):
+        if row_index > 0:
+            is_horizontal = True
+            for cell_index, cell in enumerate(row):
+                if cell_index > 0 and has_content(cell):
+                    is_horizontal = False
                     break
-            if is_vec:
-                VECs.append((row[0], index1))
-    return VECs
+            if is_horizontal:
+                horizontals.append((row[0], row_index))
+    return horizontals
 
 
-def copy_VECs(table, VECs):
-    for VEC in VECs:
+def copy_horizontals(table, horizontals, column_index):
+    for VEC in horizontals:
         val = VEC[0]
         index = VEC[1]
         for i, row in enumerate(table):
             if i >= index:
-                row[-3] = val
+                row[column_index] = val
     return table
 
 
-def clean_VECs(table, VECs):
-    VECs.reverse()
-    for VEC in VECs:
+def clean_horizontals(table, horizontals):
+    horizontals.reverse()
+    for VEC in horizontals:
         index = VEC[1]
         del table[index]
     return table
 
 
-def apply_VECs(table):
-    VECs = detect_VECs(table)
-    table = copy_VECs(table, VECs)
-    table = clean_VECs(table, VECs)
+def transpose(table, horizontal_type):
+    columns = {"VECs": -3, "GIS": -2, "Topic": -1}
+    horizontals = detect_horizontals(table)
+    table = copy_horizontals(table, horizontals, columns[horizontal_type])
+    table = clean_horizontals(table, horizontals)
+    return table
+
+
+def fix_nones(table):
+    for row_index, row in enumerate(table):
+        for cell_index, cell in enumerate(row):
+            if cell is None:
+                table[row_index][cell_index] = ""
     return table
 
 
 def processing():
     tables = get_tables()
+    counters = dict([(counter, 0) for counter in range(0, 16)])
     print(f"Got {len(tables)} tables to process")
     clear_processed()
     print("Cleaned up the DB")
-
-    counter = 0
 
     for t in tables:
         accepted_text = t.table
 
         # Fixing known problems with headers
+        accepted_text = fix_nones(accepted_text)
         accepted_text = fix_cutoff_heading(accepted_text)
-
-        def remove_tags(*removing_tags):
-            for tag in removing_tags:
-                if tag in t.all_tags:
-                    t.all_tags.remove(tag)
-                if tag in t.tags:
-                    t.tags.remove(tag)
-
-        # removing non-functional headers
-        remove_tags(1, 2, 3, 4)
 
         # Dealing with manually processed tables
         if t.all_manual:  # remove after we have those
             continue  # remove after we have those
         if 13 in t.tags:
-            db(t, load(t.csv_id))
-            counter += 1
-            continue
-        remove_tags(13)
-
-        # `pass-through` tables that need no transformation
-        if len(t.all_tags) == 0:
-            # db(t, accepted_text)
-            # counter += 1
+            save_to_db(t, load(t.csv_id))
+            counters[13] += 1
             continue
 
-        # tables with notes (removing last row and first column)
         if 6 in t.tags:
             accepted_text = remove_notes(accepted_text)
-        remove_tags(6)
+            counters[6] += 1
 
         if 7 in t.tags:
             accepted_text = delete_first_row(accepted_text)
-        remove_tags(7)
+            counters[7] += 1
 
         if 8 in t.tags:
             accepted_text = delete_last_row(accepted_text)
-        remove_tags(8)
+            counters[8] += 1
 
         if 9 in t.tags:
             accepted_text = delete_first_column(accepted_text)
-        remove_tags(9)
+            counters[9] += 1
 
         if 10 in t.tags:
             accepted_text = delete_last_column(accepted_text)
-        remove_tags(10)
+            counters[10] += 1
 
         if 11 in t.tags:
             accepted_text = headers_two_rows(accepted_text)
-            counter += 1
-            db(t, accepted_text)
-        remove_tags(11)
+            counters[11] += 1
 
         if 5 in t.all_tags or 14 in t.all_tags or 15 in t.all_tags:
             accepted_text = add_three_columns(accepted_text)
-
+            counters[0] += 1  # special case for adding 3 columns
         if 5 in t.tags:
-            pass
+            accepted_text = transpose(accepted_text, "VECs")
+            counters[5] += 1
+        if 14 in t.tags:
+            accepted_text = transpose(accepted_text, "GIS")
+            counters[14] += 1
+        if 15 in t.tags:
+            accepted_text = transpose(accepted_text, "Topic")
+            counters[15] += 1
 
-    print(f"Done {counter} tables; {len(tables) - counter} were not processed.")
+        save_to_db(t, accepted_text)
+
+    print(f"Done {len(tables)} tables.")
+    print(counters)
 
 
 if __name__ == "__main__":
-    # test_manuals()
-    # processing()
+    test_manuals()
+    processing()
 
-    def p(t):
-        for row in t:
-            for cell in row:
-                content = cell if cell != None and cell != "" else "[EMPTY]"
-                print(content, end="\t")
-            print("\n")
-
-    i = [
-        ["h1", "h2", "h3"],
-        ["v1", "", ""],
-        ["a1", "b", "c"],
-        ["a2", "b", "c"],
-        ["a3", "b", "c"],
-        ["v3", "", ""],
-        ["a4", "b", "c"], ]
-    r = add_three_columns(i)
-    r = apply_VECs(r)
-
-    print(r)
-    print()
-    p(r)
+    # def p(t):
+    #     for row in t:
+    #         for cell in row:
+    #             content = cell if cell != None and cell != "" else "[EMPTY]"
+    #             print(content, end="\t")
+    #         print("\n")
+    #
+    #
+    # i = [
+    #     ["h1", "h2", "h3"],
+    #     ["v1", "", ""],
+    #     ["a1", "b", "c"],
+    #     ["a1", "b", "c"],
+    #     ["v2", "", ""],
+    #     ["a2", "b", "c"],
+    #     ["a2", "b", "c"],
+    #     ["v3", "", ""],
+    #     ["a3", "b", "c"],
+    # ]
+    # r = add_three_columns(i)
+    # r = transpose(r, "Topic")
+    #
+    # print(r)
+    # print()
+    # p(r)
