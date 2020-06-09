@@ -130,7 +130,9 @@ def remove_notes(table):
 
 
 def fix_cutoff_heading(table):
-    fixes = {"egal Land Description": "Legal Land Description", "nvironmental Issues": "Environmental Issues"}
+    fixes = {
+        "egal Land Description": "Legal Land Description",
+        "nvironmental Issues": "Environmental Issues"}
     for index1, row in enumerate(table):
         for index2, cell in enumerate(row):
             if cell in fixes:
@@ -148,6 +150,52 @@ def headers_two_rows(table):
         if last_top_header != row2[index]:
             table[1][index] = last_top_header + " " + row2[index]
     table = delete_first_row(table)
+    return table
+
+
+def add_three_columns(table):
+    for i in range(len(table)):
+        extension = ("VECs", "GIS", "Topic") if i == 0 else ("", "", "")
+        table[i].extend(extension)
+    return table
+
+
+def detect_VECs(table):
+    VECs = []
+    for index1, row in enumerate(table):
+        if index1 > 0:
+            is_vec = True
+            for index2, cell in enumerate(row):
+                if index2 > 0 and has_content(cell):
+                    is_vec = False
+                    break
+            if is_vec:
+                VECs.append((row[0], index1))
+    return VECs
+
+
+def copy_VECs(table, VECs):
+    for VEC in VECs:
+        val = VEC[0]
+        index = VEC[1]
+        for i, row in enumerate(table):
+            if i >= index:
+                row[-3] = val
+    return table
+
+
+def clean_VECs(table, VECs):
+    VECs.reverse()
+    for VEC in VECs:
+        index = VEC[1]
+        del table[index]
+    return table
+
+
+def apply_VECs(table):
+    VECs = detect_VECs(table)
+    table = copy_VECs(table, VECs)
+    table = clean_VECs(table, VECs)
     return table
 
 
@@ -217,10 +265,37 @@ def processing():
             db(t, accepted_text)
         remove_tags(11)
 
+        if 5 in t.all_tags or 14 in t.all_tags or 15 in t.all_tags:
+            accepted_text = add_three_columns(accepted_text)
+
+        if 5 in t.tags:
+            pass
+
     print(f"Done {counter} tables; {len(tables) - counter} were not processed.")
 
 
 if __name__ == "__main__":
-    test_manuals()
-    processing()
-    pass
+    # test_manuals()
+    # processing()
+
+    def p(t):
+        for row in t:
+            for cell in row:
+                content = cell if cell != None and cell != "" else "[EMPTY]"
+                print(content, end="\t")
+            print("\n")
+
+    i = [
+        ["h1", "h2", "h3"],
+        ["v1", "", ""],
+        ["a1", "b", "c"],
+        ["a2", "b", "c"],
+        ["a3", "b", "c"],
+        ["v3", "", ""],
+        ["a4", "b", "c"], ]
+    r = add_three_columns(i)
+    r = apply_VECs(r)
+
+    print(r)
+    print()
+    p(r)
