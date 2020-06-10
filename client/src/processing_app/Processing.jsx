@@ -221,11 +221,13 @@ export default class Processing extends Component {
     const display = (table) => {
       if (table.mode === image) {
         return (
-          <img
-            src={`/jpg/${table.tableId}.jpg`}
-            className="img-fluid border border-dark"
-            alt="Table screenshot from the PDF file"
-          />
+          <a href={`/jpg/${table.tableId}.jpg`} rel="noopener noreferrer" target="_blank">
+            <img
+              src={`/jpg/${table.tableId}.jpg`}
+              className="img-fluid border border-dark"
+              alt="Table screenshot from the PDF file"
+            />
+          </a>
         );
       }
       if (table.mode === accepted) {

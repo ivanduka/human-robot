@@ -436,13 +436,15 @@ export default class Validation extends Component {
         <Row>
           <Col className="equal">
             {imageLoaded || <Spinner animation="border" />}
-            <img
-              src={`/jpg/${tableId}.jpg`}
-              className="img-fluid border border-dark sticky"
-              style={imageLoaded ? {} : { visibility: "hidden" }}
-              onLoad={this.imageOnLoad}
-              alt="Table screenshot from the PDF file"
-            />
+            <a href={`/jpg/${tableId}.jpg`} rel="noopener noreferrer" target="_blank">
+              <img
+                src={`/jpg/${tableId}.jpg`}
+                className="img-fluid border border-dark sticky"
+                style={imageLoaded ? {} : { visibility: "hidden" }}
+                onLoad={this.imageOnLoad}
+                alt="Table screenshot from the PDF file"
+              />
+            </a>
           </Col>
           <Col className="equal">{csvsArea}</Col>
         </Row>
