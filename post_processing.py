@@ -94,13 +94,7 @@ def test_manuals():
 
 
 def has_content(cell):
-    try:
-        result = bool(re.search(r"\S", cell))
-        return result
-    except Exception as e:
-        print(e)
-        print(cell)
-        raise Exception("STOP")
+    return bool(re.search(r"\S", cell))
 
 
 def empty_first_column(table):
@@ -162,7 +156,7 @@ def headers_two_rows(table):
 
 def add_three_columns(table):
     for i in range(len(table)):
-        extension = ("VECs", "GIS", "Topic") if i == 0 else ("", "", "")
+        extension = ("VEC", "GIS", "Topic") if i == 0 else ("", "", "")
         table[i].extend(extension)
     return table
 
@@ -199,9 +193,16 @@ def clean_horizontals(table, horizontals):
     return table
 
 
-def transpose(table, horizontal_type):
-    columns = {"VECs": -3, "GIS": -2, "Topic": -1}
+def transpose(table, horizontal_type, **first_row):
+    columns = {"VEC": -3, "GIS": -2, "Topic": -1}
     horizontals = detect_horizontals(table)
+    if first_row:
+        horizontals = [(table[0][0], 1)]
+        table = delete_first_row(table)
+        table = delete_last_column(table)
+        table = delete_last_column(table)
+        table = delete_last_column(table)
+        table = add_three_columns(table)
     table = copy_horizontals(table, horizontals, columns[horizontal_type])
     table = clean_horizontals(table, horizontals)
     return table
@@ -244,15 +245,12 @@ def processing():
         if 7 in t.tags:
             accepted_text = delete_first_row(accepted_text)
             counters[7] += 1
-
         if 8 in t.tags:
             accepted_text = delete_last_row(accepted_text)
             counters[8] += 1
-
         if 9 in t.tags:
             accepted_text = delete_first_column(accepted_text)
             counters[9] += 1
-
         if 10 in t.tags:
             accepted_text = delete_last_column(accepted_text)
             counters[10] += 1
@@ -261,11 +259,11 @@ def processing():
             accepted_text = headers_two_rows(accepted_text)
             counters[11] += 1
 
-        if 5 in t.all_tags or 14 in t.all_tags or 15 in t.all_tags:
+        if any(x in t.all_tags for x in [5, 12, 14, 15]):
             accepted_text = add_three_columns(accepted_text)
             counters[0] += 1  # special case for adding 3 columns
         if 5 in t.tags:
-            accepted_text = transpose(accepted_text, "VECs")
+            accepted_text = transpose(accepted_text, "VEC")
             counters[5] += 1
         if 14 in t.tags:
             accepted_text = transpose(accepted_text, "GIS")
@@ -273,6 +271,9 @@ def processing():
         if 15 in t.tags:
             accepted_text = transpose(accepted_text, "Topic")
             counters[15] += 1
+        if 12 in t.tags:
+            accepted_text = transpose(accepted_text, "Topic", first_row=True)
+            counters[12] += 1
 
         save_to_db(t, accepted_text)
 
@@ -283,29 +284,3 @@ def processing():
 if __name__ == "__main__":
     test_manuals()
     processing()
-
-    # def p(t):
-    #     for row in t:
-    #         for cell in row:
-    #             content = cell if cell != None and cell != "" else "[EMPTY]"
-    #             print(content, end="\t")
-    #         print("\n")
-    #
-    #
-    # i = [
-    #     ["h1", "h2", "h3"],
-    #     ["v1", "", ""],
-    #     ["a1", "b", "c"],
-    #     ["a1", "b", "c"],
-    #     ["v2", "", ""],
-    #     ["a2", "b", "c"],
-    #     ["a2", "b", "c"],
-    #     ["v3", "", ""],
-    #     ["a3", "b", "c"],
-    # ]
-    # r = add_three_columns(i)
-    # r = transpose(r, "Topic")
-    #
-    # print(r)
-    # print()
-    # p(r)
