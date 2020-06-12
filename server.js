@@ -575,10 +575,12 @@ const processingHelper = async (req, res, next) => {
 const manualHelper = async (req, res, next) => {
   try {
     const query = `
-      SELECT t.tableId, correct_csv, pdfName, page
-      FROM tables_tags tt
-              INNER JOIN tables t ON tt.tableId = t.tableId
-      WHERE tagId = 13;
+        SELECT t.tableId, correct_csv, pdfName, page
+        FROM tables_tags tt
+                 INNER JOIN tables t ON tt.tableId = t.tableId
+                 INNER JOIN csvs c ON t.correct_csv = c.csvId
+        WHERE tagId = 13
+          AND accepted_text IS NULL;
     `;
     const p = res.locals.pool;
     const [dbData] = await p.execute(query);
