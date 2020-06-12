@@ -528,7 +528,7 @@ export default class Extraction extends Component {
             <div>
               Page <strong>{page}</strong>, Coordinates:{" "}
               <strong>
-                {x1}:{y1}=>{x2}:{y2}
+                {x1}:{y1}#{x2}:{y2}
               </strong>
             </div>
             {parentTable ? (
