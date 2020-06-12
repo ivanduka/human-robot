@@ -518,11 +518,13 @@ const setAccepted = async (req, res, next) => {
 
 const processingHelper = async (req, res, next) => {
   try {
-    const query = `
+    const { tagId } = req.body;
+    const tagsQuery = "SELECT tagId, tagName FROM tags ORDER BY tagId;";
+    const tablesQuery = `
         WITH wanted_tables AS (
             SELECT tableId
             FROM tables_tags
-            WHERE tagId = 15
+            WHERE tagId = ?
         ),
              heads_tags AS (
                  SELECT t.headTable, tt.tagId
@@ -557,9 +559,12 @@ const processingHelper = async (req, res, next) => {
     `;
 
     const p = res.locals.pool;
-    const [data] = await p.execute(query);
 
-    res.json({ data, query });
+    const dataPromise = p.execute(tablesQuery, [tagId]);
+    const tagsPromise = p.execute(tagsQuery);
+    const [[data], [tags]] = await Promise.all([dataPromise, tagsPromise]);
+
+    res.json({ data, tags });
   } catch (error) {
     next(error);
   }

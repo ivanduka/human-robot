@@ -1,10 +1,8 @@
 import React, { Component } from "react";
-import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
+import { Container, Row, Col, Button, Spinner, Form } from "react-bootstrap";
 import { Helmet } from "react-helmet";
 import ky from "ky";
-import SyntaxHighlighter from "react-syntax-highlighter";
 import { Link } from "react-router-dom";
-import { monokai } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 import "./ProcessingHelper.css";
 
@@ -30,8 +28,9 @@ export default class ProcessingHelper extends Component {
     data: [],
     loading: false,
     updating: false,
-    query: "",
     showProcessed: false,
+    tagId: 0,
+    tags: [],
   };
 
   componentDidMount() {
@@ -46,13 +45,19 @@ export default class ProcessingHelper extends Component {
 
   loadData = async (notFirstUpdate) => {
     try {
+      const { tagId } = this.state;
       if (!notFirstUpdate) this.setState({ loading: true });
-      const { data, query } = await ky.post(`/processingHelper`).json();
-      this.setState({ data, query, loading: false });
+      const { data, tags } = await ky.post(`/processingHelper`, { json: { tagId } }).json();
+      this.setState({ data, tags, loading: false });
     } catch (error) {
       console.log(error);
       alert(error);
     }
+  };
+
+  changeTag = async (e) => {
+    const tagId = e.target.value;
+    this.setState({ tagId }, () => this.softUpdate());
   };
 
   toggleProcessed = async (showProcessed) => {
@@ -60,7 +65,7 @@ export default class ProcessingHelper extends Component {
   };
 
   render() {
-    const { data, loading, query, showProcessed, updating } = this.state;
+    const { data, loading, tagId, tags, showProcessed, updating } = this.state;
     if (loading) return <Spinner animation="border" />;
 
     const tables = data.map((t) => (
@@ -105,16 +110,22 @@ export default class ProcessingHelper extends Component {
               >
                 {showProcessed ? "Show Original" : "Show Processed"}
               </Button>
-            </Col>
-          </Row>
-          <Row>
-            <Col>
-              <div>
-                <h4>Query ({data.length} results):</h4>
-              </div>
-              <SyntaxHighlighter language="sql" style={monokai} disabled={updating}>
-                {query.trim()}
-              </SyntaxHighlighter>
+              <Form.Control
+                as="select"
+                value={tagId}
+                size="sm"
+                onChange={(e) => this.changeTag(e)}
+                className="dropdown"
+                disabled={updating}
+              >
+                <option value='0'>select a tag</option>
+                {tags.map((t) => (
+                  <option value={t.tagId} key={t.tagId}>
+                    {t.tagId}: {t.tagName}
+                  </option>
+                ))}
+              </Form.Control>
+              {updating ? ` loading...` : ` (${data.length} results)`}
             </Col>
           </Row>
           <Row className="tableRow2">
