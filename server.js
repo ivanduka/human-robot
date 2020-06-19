@@ -427,7 +427,7 @@ const processingIndex = async (req, res, next) => {
                COUNT(c.accepted_text)      AS accepted,
                COUNT(c.processed_text)     AS processed,
                COUNT(c.csvId)              AS totalTables,
-               IF(m.headTable, 'true', '') AS allManuals,
+               IF(m.headTable IS NULL, '', 'true') AS allManuals,
                CASE
                    WHEN COUNT(c.accepted_text) = COUNT(c.csvId) THEN '3. DONE'
                    WHEN COUNT(c.accepted_text) > 0 THEN '1. IN PROGRESS'
