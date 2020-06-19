@@ -195,7 +195,6 @@ def clean_horizontals(table, horizontals):
 
 def transpose(table, horizontal_type, **first_row):
     columns = {"VEC": -3, "GIS": -2, "Topic": -1}
-    horizontals = detect_horizontals(table)
     if first_row:
         horizontals = [(table[0][0], 1)]
         table = delete_first_row(table)
@@ -203,8 +202,12 @@ def transpose(table, horizontal_type, **first_row):
         table = delete_last_column(table)
         table = delete_last_column(table)
         table = add_three_columns(table)
-    table = copy_horizontals(table, horizontals, columns[horizontal_type])
-    table = clean_horizontals(table, horizontals)
+        table = copy_horizontals(table, horizontals, columns[horizontal_type])
+    else:
+        horizontals = detect_horizontals(table)
+        table = copy_horizontals(table, horizontals, columns[horizontal_type])
+        table = clean_horizontals(table, horizontals)
+
     return table
 
 
@@ -281,6 +284,76 @@ def processing():
     print(counters)
 
 
+def get_all_accepted_heads():
+    query = '''
+        SELECT headTable
+        FROM TABLES t
+                 INNER JOIN csvs c
+                            ON t.correct_csv = c.csvId
+        WHERE relevancy = 1
+          AND acceptedConText IS NULL
+        GROUP BY headTable
+        HAVING count(headTable) = count(accepted_text);
+    '''
+    with engine.connect() as conn:
+        tables = pd.read_sql(query, conn).itertuples()
+        tables = [t.headTable for t in tables]
+    return tables
+
+
+def get_sequence(head_table_id):
+    query = '''
+        SELECT parentTable,
+            t.tableId,
+            if(tt.tagId IS NULL, 0, 1) AS no_headers,
+            accepted_text
+        FROM tables t
+                INNER JOIN csvs c ON t.correct_csv = c.csvId
+                LEFT JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId = 1
+        WHERE headTable = %s
+        ORDER BY level;
+    '''
+    with engine.connect() as conn:
+        sequence = pd.read_sql(query, conn, params=(head_table_id,)).itertuples()
+        sequence = [{'table_id': t.tableId, 'no_headers': t.no_headers == 1, "table": json.loads(t.accepted_text)}
+                    for t in sequence]
+    return sequence
+
+
+def check_equal_columns(heads):
+    for head in heads:
+        sequence = get_sequence(head)
+        cols = len(sequence[0]["table"][0])
+        for t in sequence:
+            table = t["table"]
+            for row in table:
+                if len(row) != cols:
+                    print(f'{len(row)} is not equal {cols} for {t["table_id"]} (head table {head})')
+    print('All tables are checked for the same number of columns')
+
+
+def concatenate_tables():
+    heads = get_all_accepted_heads()
+    check_equal_columns(heads)
+    # TBD
+
+
+def convert_nones():
+    query = 'SELECT csvId, accepted_text FROM csvs WHERE accepted_text IS NOT NULL;'
+    query2 = 'UPDATE csvs SET accepted_text = %s WHERE csvId = %s;'
+    with engine.connect() as conn:
+        tables = pd.read_sql(query, conn).itertuples()
+        tables = [(t.csvId, json.loads(t.accepted_text)) for t in tables]
+        for table in tables:
+            csv_id = table[0]
+            new_text = json.dumps(fix_nones(table[1]))
+            result = conn.execute(query2, (new_text, csv_id))
+            if result.rowcount != 1:
+                raise Exception(f"{csv_id}: {result.rowcount} rows changed!")
+
+
 if __name__ == "__main__":
-    test_manuals()
-    processing()
+    # test_manuals()
+    # processing()
+    # convert_nones()
+    concatenate_tables()
