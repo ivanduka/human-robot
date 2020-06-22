@@ -234,8 +234,6 @@ def processing():
         accepted_text = fix_cutoff_heading(accepted_text)
 
         # Dealing with manually processed tables
-        if t.all_manual:  # remove after we have those
-            continue  # remove after we have those
         if 13 in t.tags:
             save_to_db(t, load(t.csv_id))
             counters[13] += 1
@@ -291,7 +289,7 @@ def get_all_accepted_heads():
                  INNER JOIN csvs c
                             ON t.correct_csv = c.csvId
         WHERE relevancy = 1
-          AND acceptedConText IS NULL
+          AND concatenatedText IS NULL
         GROUP BY headTable
         HAVING count(headTable) = count(accepted_text);
     '''
@@ -353,7 +351,7 @@ def convert_nones():
 
 
 if __name__ == "__main__":
-    # test_manuals()
-    # processing()
-    # convert_nones()
+    test_manuals()
+    processing()
+    convert_nones()
     concatenate_tables()
