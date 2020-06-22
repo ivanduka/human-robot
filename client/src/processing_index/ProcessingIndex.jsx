@@ -8,10 +8,12 @@ import ky from "ky";
 import "./ProcessingIndex.css";
 
 const statuses = {
-  "errors": "danger",
-  "OK": "success",
-  "not_started": "light",
-  "in_progress": "warning",
+  "done": "success",
+  "3. DONE": "success",
+  "single table": "success",
+  "2. NOT STARTED": "secondary",
+  "1. IN PROGRESS": "warning",
+  "pending": "warning",
 };
 
 export default class ExtractionIndex extends Component {
@@ -50,8 +52,12 @@ export default class ExtractionIndex extends Component {
         field: "allManuals",
       },
       {
-        label: "Status",
+        label: "Processing",
         field: "status",
+      },
+      {
+        label: "Concatenation",
+        field: "concatenation",
       },
     ],
     rows: null,
@@ -96,43 +102,60 @@ export default class ExtractionIndex extends Component {
     const rows = showOnlyProcessed ? this.state.rows.filter((r) => r.processed > 0) : this.state.rows;
     if (loading) return <Spinner animation="border" />;
 
-    const rowsWithButtons = rows.map((row, index) => ({
-      ...row,
-      index: index + 1,
-      status: (
-        <Button
-          variant={statuses[row.status]}
-          size="sm"
-          href={`/processing/${row.headTable}`}
-          target="_blank"
-          disabled={this.state.softUpdating}
-        >
-          {row.status}
-        </Button>
-      ),
-      pdfLink: (
-        <Button
-          size="sm"
-          variant="primary"
-          href={`/extraction/${row.pdfName}/${row.page}`}
-          target="_blank"
-          disabled={this.state.softUpdating}
-        >
-          Open&nbsp;PDF
-        </Button>
-      ),
-      tableLink: (
-        <Button
-          size="sm"
-          variant="secondary"
-          href={`/validation/${row.pdfName}/${row.headTable}`}
-          target="_blank"
-          disabled={this.state.softUpdating}
-        >
-          Open&nbsp;Table
-        </Button>
-      ),
-    }));
+    const rowsWithButtons = rows.map((row, index) => {
+      const { appendStatus, status, headTable, pdfName, page } = row;
+      const { softUpdating } = this.state;
+      const concatStatus = appendStatus === "disabled" ? "Not All Accepted" : appendStatus;
+
+      return {
+        ...row,
+        index: index + 1,
+        status: (
+          <Button
+            variant={statuses[status]}
+            size="sm"
+            href={`/processing/${headTable}`}
+            target="_blank"
+            disabled={softUpdating}
+          >
+            {row.status}
+          </Button>
+        ),
+        pdfLink: (
+          <Button
+            size="sm"
+            variant="primary"
+            href={`/extraction/${pdfName}/${page}`}
+            target="_blank"
+            disabled={softUpdating}
+          >
+            Open&nbsp;PDF
+          </Button>
+        ),
+        tableLink: (
+          <Button
+            size="sm"
+            variant="secondary"
+            href={`/validation/${pdfName}/${headTable}`}
+            target="_blank"
+            disabled={softUpdating}
+          >
+            Open&nbsp;Table
+          </Button>
+        ),
+        concatenation: (
+          <Button
+            size="sm"
+            variant={statuses[appendStatus]}
+            href={`/concatenation/${headTable}`}
+            target="_blank"
+            disabled={softUpdating || appendStatus === "disabled" || appendStatus === "single table"}
+          >
+            {concatStatus}
+          </Button>
+        ),
+      };
+    });
 
     return (
       <Container fluid>

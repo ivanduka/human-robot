@@ -16,6 +16,7 @@ import ProcessingIndex from "./processing_index/ProcessingIndex";
 import Processing from "./processing_app/Processing";
 import ProcessingHelper from "./processing_helper/ProcessingHelper";
 import ManualHelper from "./manual_helper/ManualHelper";
+import Concat from "./concat_app/Concat"
 
 const App = () => (
   <BrowserRouter>
@@ -28,6 +29,7 @@ const App = () => (
       <Route path="/extraction/:pdfName/:pageNumber" component={Extraction} />
       <Redirect from="/extraction/:pdfName" to="/extraction/:pdfName/1" />
       <Route path="/validation/:pdfName/:tableId?" component={Validation} />
+      <Route path="/concatenation/:headTable" component={Concat} />
       <Route exact path="/" component={Home} />
       <Route path="*" component={NoMatch} />
     </Switch>

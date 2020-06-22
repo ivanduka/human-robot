@@ -1,0 +1,21 @@
+.concatTableRow {
+  margin: 40px 0;
+}
+
+.concatTableRow table {
+  table-layout: fixed;
+  width: 100%;
+  overflow-wrap: break-word;
+}
+
+.green {
+  background-color: lightseagreen;
+}
+
+.red {
+  background-color: lightcoral;
+}
+
+.yellow {
+  background-color: yellow;
+}

@@ -414,25 +414,32 @@ const tagUntagTable = async (req, res, next) => {
 const processingIndex = async (req, res, next) => {
   try {
     const query = `
-        WITH manuals AS (SELECT t.headTable
-                         FROM tables t
-                                  LEFT JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId = 13
-                         WHERE relevancy = 1
-                         GROUP BY t.headTable
-                         HAVING count(tt.tagId) > 0
-                            AND count(t.tableId) = count(tt.tagId))
+        WITH manuals AS (
+            SELECT t.headTable
+            FROM tables t
+                     LEFT JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId = 13
+            WHERE relevancy = 1
+            GROUP BY t.headTable
+            HAVING count(tt.tagId) > 0
+               AND count(t.tableId) = count(tt.tagId))
         SELECT t.pdfName,
                t.headTable,
-               MIN(t.page)                 AS page,
-               COUNT(c.accepted_text)      AS accepted,
-               COUNT(c.processed_text)     AS processed,
-               COUNT(c.csvId)              AS totalTables,
+               MIN(t.page)                         AS page,
+               COUNT(c.accepted_text)              AS accepted,
+               COUNT(c.processed_text)             AS processed,
+               COUNT(c.csvId)                      AS totalTables,
                IF(m.headTable IS NULL, '', 'true') AS allManuals,
                CASE
                    WHEN COUNT(c.accepted_text) = COUNT(c.csvId) THEN '3. DONE'
                    WHEN COUNT(c.accepted_text) > 0 THEN '1. IN PROGRESS'
                    ELSE '2. NOT STARTED'
-                   END                     AS status
+                   END                             AS status,
+               CASE
+                   WHEN COUNT(c.accepted_text) != COUNT(c.csvId) THEN 'disabled'
+                   WHEN COUNT(c.accepted_text) = 1 THEN 'single table'
+                   WHEN COUNT(IF(c.appendStatus = 0, NULL, 1)) + 1 = COUNT(c.accepted_text) THEN 'done'
+                   ELSE 'pending'
+                   END                             AS appendStatus
         FROM tables t
                  INNER JOIN csvs c
                             ON t.correct_csv = c.csvId
@@ -509,6 +516,59 @@ const setAccepted = async (req, res, next) => {
     await p.execute(tagsQuery, [newAcceptedJSON, csvId]);
 
     res.json({ result: "Set accepted_text OK", ...req.body });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Concatenation
+
+const getConcatSequence = async (req, res, next) => {
+  try {
+    const { headTable } = req.body;
+    const headQuery = `
+        SELECT tableTitle, pdfName, page
+        FROM tables
+        WHERE tableId = ?;
+    `;
+    const tablesQuery = `
+        SELECT level,
+            t.tableId,
+            csvId,
+            accepted_text,
+            if(tt.tagId IS NULL, 0, 1) AS noHeaders,
+            appendStatus
+        FROM tables t
+              INNER JOIN csvs c ON t.correct_csv = c.csvId
+              LEFT JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId = 1
+        WHERE headTable = ?
+        ORDER BY level;
+    `;
+
+    const p = res.locals.pool;
+    const headPromise = p.execute(headQuery, [headTable]);
+    const tablesPromise = p.execute(tablesQuery, [headTable]);
+
+    const [[head], [tables]] = await Promise.all([headPromise, tablesPromise]);
+    res.json({ head, tables });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const setAppendStatus = async (req, res, next) => {
+  try {
+    const { csvId, appendStatus } = req.body;
+    const tagsQuery = `
+        UPDATE csvs
+        SET appendStatus = ?
+        WHERE csvId = ?;
+    `;
+
+    const p = res.locals.pool;
+    await p.execute(tagsQuery, [appendStatus, csvId]);
+
+    res.json({ result: "Set appendStatus OK", ...req.body });
   } catch (error) {
     next(error);
   }
@@ -625,6 +685,9 @@ app.post("/tagUntagTable", (req, res, next) => tagUntagTable(req, res, next));
 app.post("/processingIndex", (req, res, next) => processingIndex(req, res, next));
 app.post("/getSequence", (req, res, next) => getSequence(req, res, next));
 app.post("/setAccepted", (req, res, next) => setAccepted(req, res, next));
+
+app.post("/getConcatSequence", (req, res, next) => getConcatSequence(req, res, next));
+app.post("/setAppendStatus", (req, res, next) => setAppendStatus(req, res, next));
 
 app.post("/processingHelper", (req, res, next) => processingHelper(req, res, next));
 app.post("/manualHelper", (req, res, next) => manualHelper(req, res, next));
