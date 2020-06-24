@@ -308,3 +308,29 @@ FROM wanted_tables wt
          LEFT JOIN tables_tags tt ON t.tableId = tt.tableId
          LEFT JOIN heads_tags_json htj ON htj.headTable = t.headTable
 GROUP BY t.tableId;
+
+-- Flat file with all heads + concatenated & combined content + tags
+SELECT pr.application_title_short        AS application_title_short,
+       pr.application_title              AS application_title,
+       pd.pdfId                          AS pdfId,
+       pd.filingId                       AS filingId,
+       pd.date                           AS date,
+       pd.application_id                 AS application_id,
+       pd.submitter                      AS submitter,
+       pd.company                        AS company,
+       t.tableId                         AS tableId,
+       t.pdfName                         AS pdfName,
+       t.page                            AS page,
+       t.tableTitle                      AS tableTitle,
+       t.combinedConText                 AS table_content,
+       if(tt1.tagId IS NULL, '', 'true') AS eil_one,
+       if(tt2.tagId IS NULL, '', 'true') AS eil_several,
+       if(tt3.tagId IS NULL, '', 'true') AS rating_coding
+FROM tables t
+         JOIN csvs c ON t.correct_csv = c.csvId
+         JOIN pdfs pd ON t.pdfName = pd.pdfName
+         JOIN projects pr ON pd.application_id = pr.application_id
+         LEFT JOIN tables_tags tt1 ON t.tableId = tt1.tableId AND tt1.tagId = 2
+         LEFT JOIN tables_tags tt2 ON t.tableId = tt2.tableId AND tt2.tagId = 3
+         LEFT JOIN tables_tags tt3 ON t.tableId = tt3.tableId AND tt3.tagId = 4
+WHERE combinedConText IS NOT NULL;
