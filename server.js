@@ -527,20 +527,20 @@ const getConcatSequence = async (req, res, next) => {
   try {
     const { headTable } = req.body;
     const headQuery = `
-        SELECT tableTitle, pdfName, page
+        SELECT tableTitle, pdfName, page, coalesce(concatenatedText, cast('[]' AS json)) AS concatenatedText
         FROM tables
         WHERE tableId = ?;
     `;
     const tablesQuery = `
         SELECT level,
-            t.tableId,
-            csvId,
-            accepted_text,
-            if(tt.tagId IS NULL, 0, 1) AS noHeaders,
-            appendStatus
+               t.tableId,
+               csvId,
+               accepted_text,
+               if(tt.tagId IS NULL, 0, 1) AS noHeaders,
+               appendStatus
         FROM tables t
-              INNER JOIN csvs c ON t.correct_csv = c.csvId
-              LEFT JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId = 1
+                 INNER JOIN csvs c ON t.correct_csv = c.csvId
+                 LEFT JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId = 1
         WHERE headTable = ?
         ORDER BY level;
     `;

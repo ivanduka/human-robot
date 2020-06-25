@@ -13,6 +13,8 @@ export default class Concat extends Component {
     headTable: "",
     tables: [],
     softUpdating: false,
+    concatenatedText: [],
+    showConcatenated: false,
   };
 
   componentDidMount() {
@@ -39,8 +41,8 @@ export default class Concat extends Component {
         return;
       }
 
-      const { tableTitle, pdfName, page } = head[0];
-      this.setState({ tableTitle, pdfName, page, tables });
+      const { tableTitle, pdfName, page, concatenatedText } = head[0];
+      this.setState({ tableTitle, pdfName, page, tables, concatenatedText });
     } catch (error) {
       console.log(error);
       alert(error);
@@ -60,8 +62,12 @@ export default class Concat extends Component {
     }
   };
 
+  toggleConcatenatedView = async (showConcatenated) => {
+    this.setState({ showConcatenated });
+  };
+
   render() {
-    const { pdfName, tableTitle, page, headTable, tables, softUpdating } = this.state;
+    let { pdfName, tableTitle, page, headTable, tables, softUpdating, concatenatedText, showConcatenated } = this.state;
     const numTables = tables.length;
     if (pdfName === "") return <Spinner animation="border" />;
 
@@ -92,6 +98,14 @@ export default class Concat extends Component {
         </Button>
         <Button size="sm" variant="primary" disabled={softUpdating} onClick={this.reloadData}>
           Refresh Data
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={softUpdating || (!showConcatenated && concatenatedText.length === 0)}
+          onClick={() => this.toggleConcatenatedView(!showConcatenated)}
+        >
+          {showConcatenated ? "Show Original" : "Show Concatenated"}
         </Button>
       </Col>
     );
@@ -189,6 +203,19 @@ export default class Concat extends Component {
       </React.Fragment>
     );
 
+    const tablesBlock =
+      showConcatenated && concatenatedText.length > 0 ? (
+        <Row key={headTable} className="concatTableRow">
+          {tableRow({ level: 1, csvId: "", accepted_text: concatenatedText, tableId: headTable }, true, 1)}
+        </Row>
+      ) : (
+        tables.map((t, idx) => (
+          <Row key={t.tableId} className="concatTableRow">
+            {tableRow(t, idx === 0, idx < tables.length - 1 ? tables[idx + 1].appendStatus : 0)}
+          </Row>
+        ))
+      );
+
     return (
       <React.Fragment>
         <Helmet>
@@ -197,11 +224,7 @@ export default class Concat extends Component {
         <Container fluid>
           <Row>{topButtons}</Row>
           <Row>{tableInfo}</Row>
-          {tables.map((t, idx) => (
-            <Row key={t.tableId} className="concatTableRow">
-              {tableRow(t, idx === 0, idx < tables.length - 1 ? tables[idx + 1].appendStatus : 0)}
-            </Row>
-          ))}
+          {tablesBlock}
         </Container>
       </React.Fragment>
     );

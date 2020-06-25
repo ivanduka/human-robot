@@ -302,9 +302,11 @@ def get_all_accepted_heads():
 def get_sequence(head_table_id):
     query = '''
         SELECT parentTable,
+            c.csvId,
             t.tableId,
             if(tt.tagId IS NULL, 0, 1) AS no_headers,
-            accepted_text
+            accepted_text,
+            appendStatus
         FROM tables t
                 INNER JOIN csvs c ON t.correct_csv = c.csvId
                 LEFT JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId = 1
@@ -313,12 +315,13 @@ def get_sequence(head_table_id):
     '''
     with engine.connect() as conn:
         sequence = pd.read_sql(query, conn, params=(head_table_id,)).itertuples()
-        sequence = [{'table_id': t.tableId, 'no_headers': t.no_headers == 1, "table": json.loads(t.accepted_text)}
-                    for t in sequence]
+        sequence = [{'table_id': t.tableId, 'no_headers': t.no_headers == 1, "table": json.loads(t.accepted_text),
+                     'csv_id': t.csvId, 'append_status': t.appendStatus} for t in sequence]
     return sequence
 
 
-def check_equal_columns(heads):
+def check_equal_columns():
+    heads = get_all_accepted_heads()
     for head in heads:
         sequence = get_sequence(head)
         cols = len(sequence[0]["table"][0])
@@ -326,14 +329,96 @@ def check_equal_columns(heads):
             table = t["table"]
             for row in table:
                 if len(row) != cols:
-                    print(f'{len(row)} is not equal {cols} for {t["table_id"]} (head table {head})')
-    print('All tables are checked for the same number of columns')
+                    csv = f"{t['csv_id']}.csv"
+                    print(f'{len(row)} is not equal {cols} for tableId {t["table_id"]} (headTable {head}, {csv})')
+                    print('All tables are checked for the same number of columns')
+
+
+def get_all_accepted_and_marked():
+    query = '''
+        SELECT headTable
+        FROM TABLES t
+                 INNER JOIN csvs c
+                            ON t.correct_csv = c.csvId
+        GROUP BY headTable
+        HAVING count(headTable) = count(accepted_text)
+           AND sum(IF(appendStatus = 0, 0, 1)) + 1 = count(headTable)
+        ORDER BY sum(IF(appendStatus = 0, 0, 1)) DESC;
+    '''
+    with engine.connect() as conn:
+        tables = pd.read_sql(query, conn).itertuples()
+        tables = [t.headTable for t in tables]
+    return tables
 
 
 def concatenate_tables():
-    heads = get_all_accepted_heads()
-    check_equal_columns(heads)
-    # TBD
+    heads = get_all_accepted_and_marked()
+    query = 'UPDATE tables SET concatenatedText = %s WHERE tableId = %s'
+    with engine.connect() as conn:
+        for head_id in heads[:]:
+            sequence = get_sequence(head_id)
+            result = sequence[0]['table']
+            for t in sequence[1:]:
+                table = t['table']
+                if not t['no_headers']:
+                    table = delete_first_row(table)
+                if t['append_status'] == 2:
+                    for index, cell in enumerate(table[0]):
+                        if cell != '':
+                            result[-1][index] = result[-1][index].strip() + ' ' + cell.strip()
+                    table = delete_first_row(table)
+                result.extend(table)
+            result = conn.execute(query, (json.dumps(result), head_id))
+            if result.rowcount != 1:
+                raise Exception(f"Could not set for {head_id}")
+    print(f'Done concatenating {len(heads)} table sequences.')
+
+
+def _combine_concatenated_singles():
+    get_query = '''
+        SELECT tableId, concatenatedText
+        FROM tables
+        WHERE concatenatedText IS NOT NULL AND interPdfHeadTable IS NULL;
+    '''
+    set_query = 'UPDATE tables SET combinedConText = %s WHERE tableId = %s;'
+    with engine.connect() as conn:
+        singles = list(pd.read_sql(get_query, conn).itertuples())
+        for single in singles:
+            conn.execute(set_query, (single.concatenatedText, single.tableId))
+    print(f'Done combining {len(singles)} single tables (pass through)')
+
+
+def _combine_concatenated_doubles():
+    get_heads_query = '''
+        SELECT interPdfHeadTable
+        FROM tables
+        WHERE concatenatedText IS NOT NULL
+          AND interPdfHeadTable IS NOT NULL
+        GROUP BY interPdfHeadTable;
+    '''
+    get_sequence_query = '''
+        SELECT concatenatedText
+        FROM tables
+        WHERE interPdfHeadTable = %s
+        ORDER BY interPdfLevel;
+    '''
+    set_query = 'UPDATE tables SET combinedConText = %s WHERE tableId = %s;'
+    with engine.connect() as conn:
+        inter_pdf_heads = [head.interPdfHeadTable for head in pd.read_sql(get_heads_query, conn).itertuples()]
+        for head_id in inter_pdf_heads:
+            tables = [json.loads(table.concatenatedText) for table in
+                      pd.read_sql(get_sequence_query, conn, params=(head_id,)).itertuples()]
+            result = tables[0]
+            for table in tables[1:]:
+                t = delete_first_row(table)
+                result.extend(t)
+            conn.execute(set_query, (json.dumps(result), head_id))
+    print(f'Done combining {len(inter_pdf_heads)} inter-PDF tables')
+
+
+def combine_concatenated_tables():
+    _combine_concatenated_singles()
+    _combine_concatenated_doubles()
 
 
 def convert_nones():
@@ -350,8 +435,52 @@ def convert_nones():
                 raise Exception(f"{csv_id}: {result.rowcount} rows changed!")
 
 
+def print_stats():
+    query_ = '''
+        SELECT tableId, combinedConText
+        FROM tables
+        WHERE combinedConText IS NOT NULL;
+    '''
+    with engine.connect() as connection:
+        tables_ = list(pd.read_sql(query_, connection).itertuples())
+    maximum = 0
+    minimum = 2 ** 31 - 1
+    total = 0
+    for table_ in tables_:
+        length = len(json.loads(table_.combinedConText))
+        total += length
+        maximum = max(maximum, length)
+        minimum = min(minimum, length)
+    print(f"The longest table has {maximum} rows", )
+    print(f"The smallest table has {minimum} rows")
+    print(f"On average tables have {round(total / len(tables_))} rows")
+    print(f"Total number of tables is {len(tables_)}")
+    print(f"Total number of rows is {total}")
+
+
+def copy_text_in_horizontals():
+    get_query = '''
+        SELECT t.tableId, t.combinedConText
+        FROM tables t
+                 INNER JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId IN (5, 12, 14, 15)
+        WHERE combinedConText IS NOT NULL;
+    '''
+    set_query = 'UPDATE tables SET combinedConText = %s WHERE tableId = %s'
+    with engine.connect() as conn:
+        tables = list(pd.read_sql(get_query, conn).itertuples())
+        for t in tables:
+            text = json.loads(t.combinedConText)
+            text = text
+            conn.execute(set_query, (json.dumps(text), t.tableId))
+    print(f"Done copying VEC, GIS, Topic for {len(tables)} tables.")
+
+
 if __name__ == "__main__":
     test_manuals()
     processing()
     convert_nones()
+    check_equal_columns()
     concatenate_tables()
+    combine_concatenated_tables()
+    print_stats()
+    copy_text_in_horizontals()
