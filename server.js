@@ -527,7 +527,11 @@ const getConcatSequence = async (req, res, next) => {
   try {
     const { headTable } = req.body;
     const headQuery = `
-        SELECT tableTitle, pdfName, page, coalesce(concatenatedText, cast('[]' AS json)) AS concatenatedText
+        SELECT tableTitle,
+               pdfName,
+               page,
+               coalesce(concatenatedText, cast('[]' AS json)) AS concatenatedText,
+               coalesce(combinedConText, cast('[]' AS json))  AS combinedConText
         FROM tables
         WHERE tableId = ?;
     `;

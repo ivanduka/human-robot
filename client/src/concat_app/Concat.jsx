@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import ky from "ky";
 import { Link } from "react-router-dom";
-import { Button, Spinner, Container, Row, Col } from "react-bootstrap";
+import { Button, Spinner, Container, Row, Col, Form } from "react-bootstrap";
 import { Helmet } from "react-helmet";
 import "./Concat.css";
 
@@ -15,6 +15,8 @@ export default class Concat extends Component {
     softUpdating: false,
     concatenatedText: [],
     showConcatenated: false,
+    combinedConText: [],
+    showCombinedConText: false,
   };
 
   componentDidMount() {
@@ -41,8 +43,8 @@ export default class Concat extends Component {
         return;
       }
 
-      const { tableTitle, pdfName, page, concatenatedText } = head[0];
-      this.setState({ tableTitle, pdfName, page, tables, concatenatedText });
+      const { tableTitle, pdfName, page, concatenatedText, combinedConText } = head[0];
+      this.setState({ tableTitle, pdfName, page, tables, concatenatedText, combinedConText });
     } catch (error) {
       console.log(error);
       alert(error);
@@ -66,8 +68,23 @@ export default class Concat extends Component {
     this.setState({ showConcatenated });
   };
 
+  toggleCheckboxChange = async (event) => {
+    this.setState({ showCombinedConText: event.target.checked });
+  };
+
   render() {
-    let { pdfName, tableTitle, page, headTable, tables, softUpdating, concatenatedText, showConcatenated } = this.state;
+    let {
+      pdfName,
+      tableTitle,
+      page,
+      headTable,
+      tables,
+      softUpdating,
+      concatenatedText,
+      showConcatenated,
+      combinedConText,
+      showCombinedConText,
+    } = this.state;
     const numTables = tables.length;
     if (pdfName === "") return <Spinner animation="border" />;
 
@@ -107,6 +124,16 @@ export default class Concat extends Component {
         >
           {showConcatenated ? "Show Original" : "Show Concatenated"}
         </Button>
+        {showConcatenated ? (
+          <Form.Check
+            inline
+            type="checkbox"
+            value="combinedConText"
+            label="Show Combined Concatenated Text"
+            checked={showCombinedConText}
+            onChange={this.toggleCheckboxChange}
+          />
+        ) : null}
       </Col>
     );
 
@@ -206,7 +233,16 @@ export default class Concat extends Component {
     const tablesBlock =
       showConcatenated && concatenatedText.length > 0 ? (
         <Row key={headTable} className="concatTableRow">
-          {tableRow({ level: 1, csvId: "", accepted_text: concatenatedText, tableId: headTable }, true, 1)}
+          {tableRow(
+            {
+              level: 1,
+              csvId: "",
+              accepted_text: showCombinedConText ? combinedConText : concatenatedText,
+              tableId: headTable,
+            },
+            true,
+            1,
+          )}
         </Row>
       ) : (
         tables.map((t, idx) => (

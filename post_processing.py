@@ -468,10 +468,28 @@ def copy_text_in_horizontals():
     set_query = 'UPDATE tables SET combinedConText = %s WHERE tableId = %s'
     with engine.connect() as conn:
         tables = list(pd.read_sql(get_query, conn).itertuples())
-        for t in tables:
-            text = json.loads(t.combinedConText)
-            text = text
-            conn.execute(set_query, (json.dumps(text), t.tableId))
+        for table in tables:
+            t = json.loads(table.combinedConText)
+            print(f'Working on {table.tableId} (length {len(t)})')
+            last_vec = t[1][-3]
+            last_gis = t[1][-2]
+            last_topic = t[1][-1]
+            for i, row in enumerate(t):
+                vec = row[-3]
+                gis = row[-2]
+                topic = row[-1]
+                if i >= 2:
+                    if vec == "":
+                        t[i][-3] = last_vec
+                    if gis == "":
+                        t[i][-2] = last_gis
+                    if topic == "":
+                        t[i][-1] = last_topic
+                    last_vec = t[i][-3]
+                    last_gis = t[i][-2]
+                    last_topic = t[i][-1]
+
+            conn.execute(set_query, (json.dumps(t), table.tableId))
     print(f"Done copying VEC, GIS, Topic for {len(tables)} tables.")
 
 
