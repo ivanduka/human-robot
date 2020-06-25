@@ -216,6 +216,8 @@ def fix_nones(table):
         for cell_index, cell in enumerate(row):
             if cell is None:
                 table[row_index][cell_index] = ""
+            else:
+                table[row_index][cell_index] = table[row_index][cell_index].strip()
     return table
 
 
@@ -470,7 +472,6 @@ def copy_text_in_horizontals():
         tables = list(pd.read_sql(get_query, conn).itertuples())
         for table in tables:
             t = json.loads(table.combinedConText)
-            print(f'Working on {table.tableId} (length {len(t)})')
             last_vec = t[1][-3]
             last_gis = t[1][-2]
             last_topic = t[1][-1]
