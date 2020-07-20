@@ -1,0 +1,11 @@
+﻿Vegetation Type,Mean Cover of Plant Growth Forms (%) Forbs,Mean Cover of Plant Growth Forms (%) Graminoids,Mean Cover of Plant Growth Forms (%) Lichens,Mean Cover of Plant Growth Forms (%) Mosses,Mean Cover of Plant Growth Forms (%) Shrubs,Mean Cover of Plant Growth Forms (%) Trees,Total Vegetation Cover (%),VEC,GIS,Topic
+Herbicided Clear-cut,11.7,11.7,6.7,7.7,50.3,17.2,105,,,Reference Sites
+Immature Coniferous Forest,42.7,0.3,0,9.3,31.8,17,101,,,Reference Sites
+Mature Coniferous Forest,4.5,0,0,64,0.5,5.5,74.2,,,Reference Sites
+Barrens,21.3,0.2,0,5,95.3,1.7,123,,,Reference Sites
+Tall Shrub Thicket,39.3,7.7,0,15,46.5,0,108,,,Reference Sites
+Former Herbicided Clear-cut,9.5,12,0,0.3,0.5,0,22.3,,,Disturbed Sites
+Former Immature Coniferous Forest,7,16,0,2.5,2.8,0,28.3,,,Disturbed Sites
+Former Mature Coniferous Forest,0.7,3,0,0.8,0.2,0,4.7,,,Disturbed Sites
+Former Barrens,0.2,3.7,0,0.3,0.8,0,5,,,Disturbed Sites
+Former Tall Shrub Thicket,45.3,30.8,0,0.3,0,0,76.5,,,Disturbed Sites
