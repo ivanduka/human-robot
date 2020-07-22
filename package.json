@@ -6,7 +6,7 @@
   "scripts": {
     "start": "\"concurrently \"nodemon --inspect server\" \"cd client && npm start\" -n \"server,client\"",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prod": "git pull & pm2 stop server & pm2 delete server & del node_modules /s /q & npm install && cd client && del node_modules /s /q && npm install && npm run build && cd .. && pm2 start server.js && pm2 save"
+    "prod": "git pull & pm2 stop server & pm2 delete server & del node_modules /s /q & npm install && cd client && del node_modules /s /q & npm install && npm run build && cd .. && pm2 start server.js && pm2 save"
   },
   "repository": {
     "type": "git",
