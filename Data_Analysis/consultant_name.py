@@ -63,7 +63,7 @@ def process_handler():
         df1 = pd.read_sql(query1, conn)
     files = [file for file in df1['pdfName']]
     start_time = time.time()
-    
+
 # Sequential Process
 # for file in files:
 #     img_to_text(file)
@@ -74,7 +74,7 @@ def process_handler():
         print(result)
 
     duration = round(time.time() - start_time)
-    print(f'Whole Process completed in {duration} second(s)')
+    print(f'Step 1 completed in {round(duration/60, 2)} minutes')
 
 if __name__ == "__main__":
     process_handler()
