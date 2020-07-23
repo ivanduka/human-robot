@@ -106,7 +106,7 @@ export default class ExtractionIndex extends Component {
         <Button
           variant={row.status ? "warning" : "primary"}
           size="sm"
-          href={`/extraction/${row.pdfName}`}
+          href={`/extraction/${encodeURIComponent(row.pdfName)}`}
           target="_blank"
           disabled={this.state.softUpdating}
         >
@@ -117,7 +117,7 @@ export default class ExtractionIndex extends Component {
         <Button
           size="sm"
           variant={row["tablesNotValidated"] > 0 ? "primary" : "warning"}
-          href={`/validation/${row.pdfName}`}
+          href={`/validation/${encodeURIComponent(row.pdfName)}`}
           target="_blank"
           disabled={this.state.softUpdating}
         >

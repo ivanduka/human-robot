@@ -125,7 +125,7 @@ export default class ExtractionIndex extends Component {
           <Button
             size="sm"
             variant="primary"
-            href={`/extraction/${pdfName}/${page}`}
+            href={`/extraction/${encodeURIComponent(pdfName)}/${page}`}
             target="_blank"
             disabled={softUpdating}
           >
@@ -136,7 +136,7 @@ export default class ExtractionIndex extends Component {
           <Button
             size="sm"
             variant="secondary"
-            href={`/validation/${pdfName}/${headTable}`}
+            href={`/validation/${encodeURIComponent(pdfName)}/${headTable}`}
             target="_blank"
             disabled={softUpdating}
           >

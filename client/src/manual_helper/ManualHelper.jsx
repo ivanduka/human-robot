@@ -79,12 +79,6 @@ export default class ManualHelper extends Component {
     this.softUpdate();
   };
 
-  downloadCSV = async (csvId) => {
-    const l = `/csv/${csvId}.csv`;
-    const file = await ky.get(l).text;
-    console.log(file);
-  };
-
   render() {
     const { data, columns, loading, updating, showAll } = this.state;
     if (loading) return <Spinner animation="border" />;
@@ -111,7 +105,7 @@ export default class ManualHelper extends Component {
           <Button
             size="sm"
             variant="secondary"
-            href={`${process.env.PUBLIC_URL}/validation/${row.pdfName}/${row.tableId}`}
+            href={`${process.env.PUBLIC_URL}/validation/${encodeURIComponent(row.pdfName)}/${row.tableId}`}
             rel="noreferrer noopener"
             target="_blank"
             disabled={this.state.softUpdating}
@@ -153,9 +147,6 @@ export default class ManualHelper extends Component {
                 {showAll ? "Hide Done" : "Show All"}
               </Button>
             </Col>
-          </Row>
-          <Row>
-            <Col></Col>
           </Row>
           <Row>
             <Col>
