@@ -69,8 +69,8 @@ def insert_pdf(args):
 
         # noinspection SqlResolve
         def get_pdf_metadata():
-            stmt = text("SELECT ParentID, DataID, CreateDate FROM Regulatory_Untrusted._RegDocs.DTreeCore"
-                        " WHERE Name LIKE :file_name;")
+            stmt = text("SELECT ParentID, DataID, CreateDate FROM Regulatory_Untrusted._RegDocs.DTreeCore "
+                        "WHERE Name LIKE :file_name;")
             with engine2_.connect() as conn_:
                 df = pd.read_sql(stmt, conn_, params={"file_name": pdf_path.stem + "%"})
             return df.to_dict("records")[0]
@@ -85,9 +85,16 @@ def insert_pdf(args):
             metadata["total_pages"] = get_number_of_pages()
             metadata["xmlContent"] = parser.from_file(str(pdf_path), xmlContent=True)["content"]
 
+            csv_data = get_additional_data(metadata["DataId"])
+            metadata["company"] = csv_data["company"]
+            metadata["pdf_submitter"] = csv_data["pdf_submitter"]
+            metadata["application_id"] = csv_data["application_id"]
+
             with engine_.connect() as conn:
-                statement = text("INSERT INTO pdfs (pdfId, pdfName, pdfSize, filingId, date, totalPages, xmlContent) " +
-                                 "VALUE (:DataID,:pdf_name,:pdf_size,:ParentID,:CreateDate,:total_pages, :xmlContent);")
+                statement = text("INSERT INTO pdfs (pdfId, pdfName, pdfSize, filingId, date, totalPages, xmlContent,"
+                                 "company, submitter, application_id, status) " +
+                                 "VALUE (:DataID,:pdf_name,:pdf_size,:ParentID,:CreateDate,:total_pages, :xmlContent, "
+                                 ":company, :submitter, :application_id, '');")
                 result = conn.execute(statement, metadata)
             print(f"{pdf_path.stem}: successfully inserted {result.rowcount} rows")
         except Exception as e:
@@ -419,7 +426,7 @@ def apply_default_validation(table_id):
 
 
 def apply_default_validations():
-    stmt = "SELECT tableId FROM tables WHERE csvsExtracted = 'done' AND correct_csv IS NULL and relevancy = 1;"
+    stmt = "SELECT tableId FROM tables WHERE csvsExtracted = 'done' AND correct_csv IS NULL AND relevancy = 1;"
     with engine.connect() as conn:
         df = pd.read_sql(stmt, conn)
     table_ids = df["tableId"].tolist()
@@ -466,7 +473,8 @@ def delete_unreferenced_csvs_and_jpgs():
 
 def populate_projects():
     df = pd.read_csv(pdfs_and_projects_file, encoding="cp1252", header=0)
-    stmt = "INSERT INTO projects (application_title, application_title_short, application_id) VALUES (%s,%s,%s)"
+    check_query = "SELECT * FROM projects WHERE application_id = %s;"
+    stmt = "INSERT INTO projects (application_title, application_title_short, application_id) VALUES (%s,%s,%s);"
 
     items = set()
     with engine.connect() as conn:
@@ -475,25 +483,25 @@ def populate_projects():
             if application_id in items:
                 continue
             items.add(application_id)
+            results = conn.execute(check_query, (application_id,))
+            if results.rowcount != 0:
+                continue
             conn.execute(stmt, (row.ApplicationTitle, row.ApplicationTitleShort, application_id))
+    print("Added all projects")
 
 
-def populate_submitter():
+def get_additional_data(pdf_id):
     df = pd.read_csv(pdfs_and_projects_file, encoding="cp1252", header=0)
-    stmt = "UPDATE pdfs SET submitter=%s, application_id=%s WHERE pdfId = %s"
-
-    with engine.connect() as conn:
-        for row in df.itertuples():
-            if row.pdfId == 601829:
-                print(row)
+    for row in df.itertuples():
+        if row.pdfId == pdf_id:
             application_id = int(re.search(r"\d+$", row.ApplicationLink).group())
-            conn.execute(stmt, (row.pdfSubmitter, application_id, row.pdfId))
+            return {"pdf_submitter": row.pdfSubmitter, "application_id": application_id, "company": row.pdfCompany}
+    raise Exception(f"{pdf_id} is not found in the {pdfs_and_projects_file}")
 
 
 if __name__ == "__main__":
-    # populate_projects()
-    # insert_pdfs()
-    # populate_submitter()
+    populate_projects()
+    insert_pdfs()
 
     # delete_csvs_and_images()
     # populate_coordinates()
@@ -501,7 +509,6 @@ if __name__ == "__main__":
     # extract_images()
     # add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",
     #                  r"B-14R Appendix MPLA-SAPL IR 43 b) - TERA Post Construction (A1A3A2)_page.97.csv")
-    # apply_default_validations()
 
     # delete_unreferenced_csvs_and_jpgs()
     pass
