@@ -76,92 +76,89 @@ def process_handler():
     duration = round(time.time() - start_time)
     print(f'Step 1 completed in {round(duration/60, 2)} minutes')
 
-if __name__ == "__main__":
-    process_handler()
-
-
-
-
-
-# df1['consultant_name'] = main_consultant_name
-# df2 = df1.copy()
-# mapping_dict = df2.groupby('filingId')['consultant_name'].apply(lambda x: x.values.tolist()).to_dict()
+df1['consultant_name'] = main_consultant_name
+df2 = df1.copy()
+mapping_dict = df2.groupby('filingId')['consultant_name'].apply(lambda x: x.values.tolist()).to_dict()
 
 
 # # %%
-# def flatten(lst_of_lsts):
-#     output = []
-#     for element in lst_of_lsts:
-#         if type(element) == list:
-#             output.extend(element)
-#     return list(set(output))
+def flatten(lst_of_lsts):
+    output = []
+    for element in lst_of_lsts:
+        if type(element) == list:
+            output.extend(element)
+    return list(set(output))
 
 
 # # %%
-# newdict = {key: flatten(value) for key, value in mapping_dict.items()}
-# newdict.update(dict.fromkeys([786189,877284,786042,2672072,590454,961080,2671945,2897123,3096796], ['TERA Environmental Consultants']))
-# newdict.update(dict.fromkeys([775971,2412030,2671966], ['Golder Associates']))
-# newdict.update(dict.fromkeys([2661335,3179528,3737775], ['AMEC Environment & Infrastructure']))
-# newdict.update(dict.fromkeys([2661447,3754527], ['Triton Environmental Consultants']))
-# newdict.update(dict.fromkeys([541474,601828], ['AMEC Earth & Environmental']))
-# newdict.update(dict.fromkeys([2909564,2908414,3179688,3462570], ['Paragon Soil and Environmental Consulting']))
-# newdict.update(dict.fromkeys([781909], ['SLR Consulting']))
-# newdict.update(dict.fromkeys([2909462], ['CCI']))
-# newdict.update(dict.fromkeys([3464752,3747552], ['Paragon Soil and Environmental Consulting', 'Golder Associates']))
+newdict = {key: flatten(value) for key, value in mapping_dict.items()}
+newdict.update(dict.fromkeys([786189,877284,786042,2672072,590454,961080,2671945,2897123,3096796], ['TERA Environmental Consultants']))
+newdict.update(dict.fromkeys([775971,2412030,2671966], ['Golder Associates']))
+newdict.update(dict.fromkeys([2661335,3179528,3737775], ['AMEC Environment & Infrastructure']))
+newdict.update(dict.fromkeys([2661447,3754527], ['Triton Environmental Consultants']))
+newdict.update(dict.fromkeys([541474,601828, 678027], ['AMEC Earth & Environmental']))
+newdict.update(dict.fromkeys([2909564,2908414,3179688,3462570], ['Paragon Soil and Environmental Consulting']))
+newdict.update(dict.fromkeys([781909], ['SLR Consulting']))
+newdict.update(dict.fromkeys([2909462], ['CCI']))
+newdict.update(dict.fromkeys([915736], ['Stantec Consulting']))
+newdict.update(dict.fromkeys([3464752,3747552], ['Paragon Soil and Environmental Consulting', 'Golder Associates']))
 
-# df2['consultant_name'] = df2['filingId'].map(newdict)
+df2['consultant_name'] = df2['filingId'].map(newdict)
 
 # # %% [markdown]
 # # #### Consultant Name Extraction Step 2: Reading Consultant Name from Second and Third Page (in case Second page is blank)
 
 # # %%
-# def clean(my_str):
-#     my_new_str = re.sub(r"[^a-zA-Z0-9-&]+",' ', my_str)
-#     return my_new_str
+def clean(my_str):
+    my_new_str = re.sub(r"[^a-zA-Z0-9-&]+",' ', my_str)
+    return my_new_str
 
 
 # # %%
-# start = time.time()
-# for line, row in enumerate(df2.itertuples(),1):  ## use head method with dataframe in order to slice the data when using itertuples() example df1.head(2).itertuples()
-#     if len(row.consultant_name) ==0:
-#         try:
-#             pdf_file = open('G:/Dev/PCMR/pdf_files/' + row.pdfName + '.pdf', 'rb').read()
-#             pdf_doc = fitz.open('pdf', pdf_file)
-#         except:
-#             print('File: {} failed to open'.format(row.pdfName))
-#         page_content = ""
-#         for page_number in range(pdf_doc.pageCount):
-#             page_content += pdf_doc.loadPage(page_number).getText("text").lower()
-#         page_content = clean(page_content)
-#         if "table of contents" not in page_content or len(pdf_doc.loadPage(1).getText("text")) == 0:
-#             lookup_content = pdf_doc.loadPage(2).getText("text").lower()
-#             lookup_content = clean(lookup_content)
-#         else:
-#             lookup_content = pdf_doc.loadPage(1).getText("text").lower()
-#             lookup_content = clean(lookup_content)
-#         consultant_name_step2 = []
-#         for name in consultant_name_lst:
-#             if name.lower() in lookup_content:
-#                 consultant_name_step2.append(name)
-#         df2.set_value(row.Index, 'consultant_name', consultant_name_step2) # reference: https://stackoverflow.com/questions/43222878/iterate-over-pandas-dataframe-and-update-the-value-attributeerror-cant-set-a
-# end = time.time()
-# print(f'Runtime is {end - start}')
+start = time.time()
+for line, row in enumerate(df2.itertuples(),1):  ## use head method with dataframe in order to slice the data when using itertuples() example df1.head(2).itertuples()
+    if len(row.consultant_name) ==0:
+        try:
+            pdf_file = open('G:/Dev/PCMR/pdf_files/' + row.pdfName + '.pdf', 'rb').read()
+            pdf_doc = fitz.open('pdf', pdf_file)
+        except:
+            print('File: {} failed to open'.format(row.pdfName))
+        page_content = ""
+        for page_number in range(pdf_doc.pageCount):
+            page_content += pdf_doc.loadPage(page_number).getText("text").lower()
+        page_content = clean(page_content)
+        if "table of contents" not in page_content or len(pdf_doc.loadPage(1).getText("text")) == 0:
+            lookup_content = pdf_doc.loadPage(2).getText("text").lower()
+            lookup_content = clean(lookup_content)
+        else:
+            lookup_content = pdf_doc.loadPage(1).getText("text").lower()
+            lookup_content = clean(lookup_content)
+        consultant_name_step2 = []
+        for name in consultant_name_lst:
+            if name.lower() in lookup_content:
+                consultant_name_step2.append(name)
+        df2.set_value(row.Index, 'consultant_name', consultant_name_step2) # reference: https://stackoverflow.com/questions/43222878/iterate-over-pandas-dataframe-and-update-the-value-attributeerror-cant-set-a
+end = time.time()
+print(f'Runtime is {end - start}')
 
 # # %% [markdown]
 # # #### Consultant Name Extraction Step 3: Manual step
 
 # # %%
-# exception_list = ['A97613-3', 'A97613-4', 'A97613-5']
-# for line, row in enumerate(df2.itertuples(),1):  ## use head method with dataframe in order to slice the data when using itertuples() example df1.head(2).itertuples()
-#     consultant_name_step3 = []
-#     if len(row.consultant_name) == 0 and not any(substring in row.pdfName[:8] for substring in exception_list): 
-#         consultant_name_step3.append('In-house Consulting: ' + row.company)
-#         df2.set_value(row.Index, 'consultant_name', consultant_name_step3)
-# df2.loc[df2.pdfName.str[:8] == 'A97613-3', 'consultant_name'] = pd.Series([['CCI']]*df2.shape[0])
-# df2.loc[df2.pdfName.str[:8] == 'A97613-4', 'consultant_name'] = pd.Series([['CCI']]*df2.shape[0])
-# df2.loc[df2.pdfName.str[:8] == 'A97613-5', 'consultant_name'] = pd.Series([['Paragon Soil and Environmental Consulting']]*df2.shape[0])
-# columns  = ['pdfId', 'pdfName', 'filingId', 'totalPages', 'application_id', 'submitter', 'company', 'consultant_name']
-# df2.to_csv('consultant_name.csv', encoding = 'utf-8-sig', columns = columns)
+exception_list = ['A97613-3', 'A97613-4', 'A97613-5']
+for line, row in enumerate(df2.itertuples(),1):  ## use head method with dataframe in order to slice the data when using itertuples() example df1.head(2).itertuples()
+    consultant_name_step3 = []
+    if len(row.consultant_name) == 0 and not any(substring in row.pdfName[:8] for substring in exception_list): 
+        consultant_name_step3.append('In-house Consulting: ' + row.company)
+        df2.set_value(row.Index, 'consultant_name', consultant_name_step3)
+df2.loc[df2.pdfName.str[:8] == 'A97613-3', 'consultant_name'] = pd.Series([['CCI']]*df2.shape[0])
+df2.loc[df2.pdfName.str[:8] == 'A97613-4', 'consultant_name'] = pd.Series([['CCI']]*df2.shape[0])
+df2.loc[df2.pdfName.str[:8] == 'A97613-5', 'consultant_name'] = pd.Series([['Paragon Soil and Environmental Consulting']]*df2.shape[0])
+columns  = ['pdfId', 'pdfName', 'filingId', 'totalPages', 'application_id', 'submitter', 'company', 'consultant_name']
+df2.to_csv('consultant_name1.csv', encoding = 'utf-8-sig', columns = columns)
+
+if __name__ == "__main__":
+    process_handler()
 
 
 # # %%
