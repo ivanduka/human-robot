@@ -74,8 +74,14 @@ config.rst
 
 package-lock.json
 geckodriver.log
-*.xlsx
+
 
 # ms IDE stuff
 *.code-workspace
 .history
+
+#Ignore all xlsx files
+*.xlsx
+
+#Ignore all pdf file
+*.pdf
