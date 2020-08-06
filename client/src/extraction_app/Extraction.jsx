@@ -371,6 +371,7 @@ export default class Extraction extends Component {
         if (error || req.status !== 200) return alert(JSON.stringify(data));
 
         this.clearRectangle();
+        this.setState({ tableTitle: null, parentTable: null });
         this.softLoadData().then();
       } catch (e) {
         alert(e);
