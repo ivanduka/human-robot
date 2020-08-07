@@ -458,8 +458,8 @@ def get_additional_data(pdf_name):
 
 
 if __name__ == "__main__":
-    populate_projects()
-    insert_pdfs()
+    # populate_projects()
+    # insert_pdfs()
 
     # delete_csvs_and_images()
     # add_csv_manually("c6a472e2-8b94-4f9c-ab4f-2f61ec743a11", "cd9113d6-4870-414e-a86d-c7ee40611c1e",

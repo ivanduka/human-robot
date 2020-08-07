@@ -27,19 +27,24 @@ conn_string = f"mysql+mysqldb://{user}:{password}@{db_hostname}/{db_name}?charse
 engine = create_engine(conn_string)
 
 #########################################################
-#  Make list of consultant names from the excel file
-#########################################################
-
-consultant_name_df = pd.read_excel('G:/Post Construction/metadata csvs/consultants.xlsx', encoding = 'utf-8-sig')
-consultant_name_lst = consultant_name_df["consultant_name"].tolist()
-with engine.connect() as conn: ## with context manager with, we don't have to close the connection everytime we run queries
-    query1 = "SELECT * FROM pdfs;"
-    df1 = pd.read_sql(query1, conn)
-    
-
-#########################################################
 #  Consultant Name Extraction Step 1: Reading Consultant Name from First Page followed by manually adding Consultant Names to mapping dictionary
 #########################################################
+def get_pdf_metadata():
+    with engine.connect() as conn:
+        query1 = "SELECT * FROM pdfs;"
+        df = pd.read_sql(query1, conn)
+        return df
+        
+def get_pdf_names():
+    data = get_pdf_metadata()
+    files = [file for file in data['pdfName']]
+    return files
+    
+def read_consultant_names():
+    consultant_name_df = pd.read_excel('G:/Post Construction/metadata csvs/consultants.xlsx', encoding = 'utf-8-sig')
+    consultant_name_lst = consultant_name_df["consultant_name"].tolist()
+    return consultant_name_lst
+
 
 def img_to_text(file):
     main_consultant_name = []
@@ -50,7 +55,8 @@ def img_to_text(file):
         page.save("C:/Users/t1nipun/Desktop/PCMR/human-robot/Data_Analysis/pdf_firstpage_img/" + filename, 'JPEG')
         text = str(((pytesseract.image_to_string(Image.open("C:/Users/t1nipun/Desktop/PCMR/human-robot/Data_Analysis/pdf_firstpage_img/" + filename))))).lower().replace('\n\n',' ')
         consultant_name = []
-        for name in consultant_name_lst:
+        names = read_consultant_names()
+        for name in names:
             if name.lower() in text:
                 consultant_name.append(name)
         main_consultant_name.append(consultant_name)
@@ -58,37 +64,39 @@ def img_to_text(file):
     
 
 def process_handler():
-    with engine.connect() as conn: ## with context manager with, we don't have to close the connection everytime we run queries
-        query1 = "SELECT * FROM pdfs;"
-        df1 = pd.read_sql(query1, conn)
-    files = [file for file in df1['pdfName']]
     start_time = time.time()
-
-# Sequential Process
-# for file in files:
-#     img_to_text(file)
-
+    # Sequential Process
+    # for file in files:
+    #     img_to_text(file)
+    pdf_files = get_pdf_names()
     with Pool() as pool:
-        results = pool.map(img_to_text, files)
+        results = pool.map(img_to_text, pdf_files, chunksize=1)
+    main_consultant_names = []
     for result in results:
+        for single_result in result:
+            main_consultant_names.append(single_result)
         print(result)
-
+    
     duration = round(time.time() - start_time)
     print(f'Step 1 completed in {round(duration/60, 2)} minutes')
+    return main_consultant_names
+
 
 if __name__ == "__main__":
-    process_handler()
+    names = process_handler()
+    data = get_pdf_metadata()
+    data['consultant_name'] = names
+    columns  = ['pdfId', 'pdfName', 'filingId', 'totalPages', 'application_id', 'submitter', 'company', 'consultant_name']
+    data.to_csv('quick_check.csv', encoding = 'utf-8-sig', columns = columns)
+    
 
 
 
 
-
-# df1['consultant_name'] = main_consultant_name
-# df2 = df1.copy()
-# mapping_dict = df2.groupby('filingId')['consultant_name'].apply(lambda x: x.values.tolist()).to_dict()
+# mapping_dict = df1.groupby('filingId')['consultant_name'].apply(lambda x: x.values.tolist()).to_dict()
 
 
-# # %%
+# # # %%
 # def flatten(lst_of_lsts):
 #     output = []
 #     for element in lst_of_lsts:
@@ -97,30 +105,31 @@ if __name__ == "__main__":
 #     return list(set(output))
 
 
-# # %%
+# # # %%
 # newdict = {key: flatten(value) for key, value in mapping_dict.items()}
 # newdict.update(dict.fromkeys([786189,877284,786042,2672072,590454,961080,2671945,2897123,3096796], ['TERA Environmental Consultants']))
 # newdict.update(dict.fromkeys([775971,2412030,2671966], ['Golder Associates']))
 # newdict.update(dict.fromkeys([2661335,3179528,3737775], ['AMEC Environment & Infrastructure']))
 # newdict.update(dict.fromkeys([2661447,3754527], ['Triton Environmental Consultants']))
-# newdict.update(dict.fromkeys([541474,601828], ['AMEC Earth & Environmental']))
+# newdict.update(dict.fromkeys([541474,601828, 678027], ['AMEC Earth & Environmental']))
 # newdict.update(dict.fromkeys([2909564,2908414,3179688,3462570], ['Paragon Soil and Environmental Consulting']))
 # newdict.update(dict.fromkeys([781909], ['SLR Consulting']))
 # newdict.update(dict.fromkeys([2909462], ['CCI']))
+# newdict.update(dict.fromkeys([915736], ['Stantec Consulting']))
 # newdict.update(dict.fromkeys([3464752,3747552], ['Paragon Soil and Environmental Consulting', 'Golder Associates']))
 
 # df2['consultant_name'] = df2['filingId'].map(newdict)
 
-# # %% [markdown]
-# # #### Consultant Name Extraction Step 2: Reading Consultant Name from Second and Third Page (in case Second page is blank)
+# # # %% [markdown]
+# # # #### Consultant Name Extraction Step 2: Reading Consultant Name from Second and Third Page (in case Second page is blank)
 
-# # %%
+# # # %%
 # def clean(my_str):
 #     my_new_str = re.sub(r"[^a-zA-Z0-9-&]+",' ', my_str)
 #     return my_new_str
 
 
-# # %%
+# # # %%
 # start = time.time()
 # for line, row in enumerate(df2.itertuples(),1):  ## use head method with dataframe in order to slice the data when using itertuples() example df1.head(2).itertuples()
 #     if len(row.consultant_name) ==0:
@@ -147,10 +156,10 @@ if __name__ == "__main__":
 # end = time.time()
 # print(f'Runtime is {end - start}')
 
-# # %% [markdown]
-# # #### Consultant Name Extraction Step 3: Manual step
+# # # %% [markdown]
+# # # #### Consultant Name Extraction Step 3: Manual step
 
-# # %%
+# # # %%
 # exception_list = ['A97613-3', 'A97613-4', 'A97613-5']
 # for line, row in enumerate(df2.itertuples(),1):  ## use head method with dataframe in order to slice the data when using itertuples() example df1.head(2).itertuples()
 #     consultant_name_step3 = []
@@ -161,7 +170,9 @@ if __name__ == "__main__":
 # df2.loc[df2.pdfName.str[:8] == 'A97613-4', 'consultant_name'] = pd.Series([['CCI']]*df2.shape[0])
 # df2.loc[df2.pdfName.str[:8] == 'A97613-5', 'consultant_name'] = pd.Series([['Paragon Soil and Environmental Consulting']]*df2.shape[0])
 # columns  = ['pdfId', 'pdfName', 'filingId', 'totalPages', 'application_id', 'submitter', 'company', 'consultant_name']
-# df2.to_csv('consultant_name.csv', encoding = 'utf-8-sig', columns = columns)
+# df2.to_csv('consultant_name1.csv', encoding = 'utf-8-sig', columns = columns)
+
+
 
 
 # # %%
