@@ -42,14 +42,38 @@ def check_changes_in_headers():
                 (level, headers) = item
                 for idx, _ in enumerate(headers):
                     if normalize(headers[idx]) != normalize(first_headers[idx]):
-                        # print(item)
                         print(f'"{first_headers[idx]}" vs')
                         print(f'"{headers[idx]}" for "{head_id}" on level "{level}"')
                         print()
                         discrepancies = True
             if discrepancies:
-                print("\n=======================================================\n")
+                print("=======================================================\n")
+
+
+def populate_headers_table():
+    get_jsons = "SELECT tableId, combinedConText FROM tables WHERE combinedConText IS NOT NULL;"
+    get_query = "SELECT tableId, header_idx, header_title FROM headers WHERE tableId = %s AND header_idx = %s;"
+    insert_query = "INSERT INTO headers (tableId, header_idx, header_title) VALUES (%s, %s, %s);"
+    update_query = "UPDATE headers SET header_title = %s WHERE tableId = %s AND header_idx = %s;"
+
+    with engine.connect() as conn:
+        jsons = conn.execute(get_jsons)
+        for j in jsons:
+            table_id = j[0]
+            table = json.loads(j[1])
+            headers = table[0]
+            for header_idx, header_title in enumerate(headers):
+                existing = list(conn.execute(get_query, (table_id, header_idx)))
+                if len(existing) > 0:
+                    if existing[0][2] == header_title:
+                        continue
+                    conn.execute(update_query, (header_title, table_id, header_idx))
+                    print(f"updated '{existing[0][2]}' to '{header_title}' at index {header_idx} in {table_id}")
+                    continue
+                conn.execute(insert_query, (table_id, header_idx, header_title))
+    print("all done")
 
 
 if __name__ == "__main__":
-    check_changes_in_headers()
+    # check_changes_in_headers()
+    populate_headers_table()
