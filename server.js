@@ -681,7 +681,7 @@ const getHeaderTagging = async (req, res, next) => {
   try {
     const { tableId } = req.body;
     const tableQuery = `
-        SELECT combinedConText
+        SELECT combinedConText, page, pdfName, tableTitle
         FROM tables
         WHERE tableId = ?;
     `;
