@@ -803,6 +803,12 @@ app.get("/*", (req, res) => {
 
 app.use((err, req, res, next) => errorHandler(err, req, res, next));
 
+// Last resort error catching in libraries that I do not control
+process.on("uncaughtException", (err, origin) => {
+  // eslint-disable-next-line no-console
+  console.log(`${Date.now()} - Uncaught Exception: ${err} at ${origin}`);
+});
+
 const port = process.env.PORT;
 // eslint-disable-next-line no-console
 app.listen(port, () => console.log(`Listening on port ${port}...`));
