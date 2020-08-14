@@ -681,12 +681,12 @@ const getHeaderTagging = async (req, res, next) => {
   try {
     const { tableId } = req.body;
     const tableQuery = `
-        SELECT combinedConText, page, pdfName, tableTitle
+        SELECT combinedConText, page, pdfName, tableTitle, headers_tagged
         FROM tables
         WHERE tableId = ?;
     `;
     const tableTagsQuery = `
-        SELECT header_idx, htag
+        SELECT header_idx as headerIndex, htag
         FROM headers_htags
         WHERE tableId = ?;
     `;
