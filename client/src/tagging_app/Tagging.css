@@ -1,8 +1,13 @@
 .equal {
-  table-layout: fixed;
-  width: 100%;
-  margin: 15px;
+    table-layout: fixed;
+    width: 100%;
+    margin: 15px;
 }
 
-.flexible {
+.green {
+    background-color: lawngreen;
+}
+
+.grey {
+    background-color: grey;
 }

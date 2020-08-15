@@ -79,12 +79,23 @@ export default class Tagging extends Component {
       this.setState({ softUpdating: true });
       await ky.post("/setHeaderTag", { json: { tableId, headerIndex, hTag } }).json();
       const tableTags = this.state.tableTags.slice();
-      tableTags.push({ headerIndex, hTag });
+      tableTags.push({ headerIndex, htag: hTag });
       this.setState({ tableTags, softUpdating: false });
     } catch (error) {
       console.log(error);
     }
+  };
 
+  unTagColumn = async (headerIndex, hTag) => {
+    try {
+      const { tableId } = this.state;
+      this.setState({ softUpdating: true });
+      await ky.post("/removeHeaderTag", { json: { tableId, headerIndex, hTag } }).json();
+      const tableTags = this.state.tableTags.filter(tt => tt.htag !== hTag);
+      this.setState({ tableTags, softUpdating: false });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
 
@@ -105,34 +116,54 @@ export default class Tagging extends Component {
 
     if (loading) return <Spinner animation="border"/>;
 
+    const isEnabled = (headerIndex, htag) => {
+      const selected = tableTags.find(tt => tt.htag === htag);
+      return !selected || selected.headerIndex === headerIndex;
+    };
+    const isTagged = (headerIndex, htag) => tableTags.find(tt => tt.headerIndex === headerIndex && tt.htag === htag);
+    const isAnyTagged = htag => tableTags.find(tt => tt.htag === htag);
+
     const tableBody = (
       <table className="equal">
         <thead>
         <tr className="flexible">
           {headers.map((_, headerIndex) => (
             <th key={headerIndex}>
-              {allTags.map((tag, tagIndex) => (
-                <div key={tagIndex}>
-                  <Button disabled={softUpdating} size="sm" onClick={() => this.tagColumn(headerIndex, tag.htag)}>
-                    {tag.htag} ({tag.optional})
-                  </Button>
-                </div>
-              ))}
+              {allTags.map(({ htag, optional }, tagIndex) => {
+                  const setFunc = () => this.tagColumn(headerIndex, htag);
+                  const delFunc = () => this.unTagColumn(headerIndex, htag);
+                  const enabled = isEnabled(headerIndex, htag);
+                  const tagged = isTagged(headerIndex, htag);
+                  const anyIsTagged = isAnyTagged(htag);
+
+                  return (<div key={tagIndex}>
+                    <Button
+                      disabled={softUpdating || !enabled}
+                      size="sm"
+                      variant={tagged ? "success" : anyIsTagged ? "light" : optional === 1 ? "light" : "primary"}
+                      onClick={tagged ? delFunc : setFunc}>
+                      {htag} ({optional})
+                    </Button>
+                  </div>);
+                },
+              )}
             </th>
           ))}
         </tr>
         <tr>
-          {headers.map((header, headerIndex) => (
-            <th key={headerIndex}>{header}</th>
-          ))}
+          {headers.map((header, headerIndex) => {
+            const used = tableTags.find(tt => tt.headerIndex === headerIndex);
+            return <th key={headerIndex} className={used ? "green" : "grey"}>{header}</th>;
+          })}
         </tr>
         </thead>
         <tbody>
         {rows.map((row, rowIndex) => (
           <tr key={rowIndex}>
-            {row.map((cell, cellIndex) => (
-              <td key={cellIndex}>{cell}</td>
-            ))}
+            {row.map((cell, cellIndex) => {
+              const used = tableTags.find(tt => tt.headerIndex === cellIndex);
+              return <td key={cellIndex} className={used ? "green" : "grey"}>{cell}</td>;
+            })}
           </tr>
         ))}
         </tbody>
@@ -149,7 +180,7 @@ export default class Tagging extends Component {
         <Button
           size="sm"
           variant="dark"
-          href={`/extraction/${pdfName}/${page}`}
+          href={` / extraction /${pdfName}/${page}`}
           target="blank_"
           disabled={softUpdating}
         >
