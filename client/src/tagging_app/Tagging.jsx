@@ -18,6 +18,8 @@ export default class Tagging extends Component {
     tableTags: [],
     allTags: [],
     doneStatus: true,
+    showAllRows: false,
+    showTopRows: 10,
   };
 
   componentDidMount() {
@@ -64,7 +66,13 @@ export default class Tagging extends Component {
 
   setDoneStatus = async (newStatus) => {
     try {
-      const { tableId } = this.state;
+      const { tableId, tableTags, allTags } = this.state;
+      const mandatoryTags = allTags.filter(t => t.optional === 0).map(t => t.htag);
+      for (const tag of mandatoryTags) {
+        if (!tableTags.find(t => t.htag === tag)) {
+          return alert(`Not all mandatory tags are tagged (for example, '${tag}')!`);
+        }
+      }
       this.setState({ softUpdating: true });
       await ky.post("/setHeaderTaggingStatus", { json: { tableId, newStatus } }).json();
       this.setState({ doneStatus: newStatus, softUpdating: false });
@@ -98,6 +106,10 @@ export default class Tagging extends Component {
     }
   };
 
+  toggleShowAllRows = (showAllRows) => {
+    this.setState({ showAllRows });
+  };
+
 
   render() {
     let {
@@ -112,7 +124,13 @@ export default class Tagging extends Component {
       tableTags,
       allTags,
       doneStatus,
+      showAllRows,
+      showTopRows,
     } = this.state;
+
+    if (!showAllRows && rows.length > showTopRows) {
+      rows = rows.slice(0, showTopRows);
+    }
 
     if (loading) return <Spinner animation="border"/>;
 
@@ -138,11 +156,11 @@ export default class Tagging extends Component {
 
                   return (<div key={tagIndex}>
                     <Button
-                      disabled={softUpdating || !enabled}
+                      disabled={softUpdating || !enabled || doneStatus}
                       size="sm"
                       variant={tagged ? "success" : anyIsTagged ? "light" : optional === 1 ? "light" : "primary"}
                       onClick={tagged ? delFunc : setFunc}>
-                      {htag} ({optional})
+                      {htag}
                     </Button>
                   </div>);
                 },
@@ -189,6 +207,9 @@ export default class Tagging extends Component {
         <Button size="sm" variant="primary" disabled={softUpdating} onClick={this.softLoadData}>
           Refresh Data
         </Button>
+        <Button size="sm" variant="secondary" disabled={softUpdating} onClick={() => this.toggleShowAllRows(!showAllRows)}>
+          {showAllRows ? `Show top ${showTopRows} rows` : `Show all ${this.state.rows.length} rows`}
+        </Button>
         <Button size="sm" variant={doneStatus ? "secondary" : "warning"} disabled={softUpdating} onClick={() => {
           this.setDoneStatus(!doneStatus).then();
         }}>
@@ -219,7 +240,9 @@ export default class Tagging extends Component {
         <Container fluid>
           <Row>{topButtons}</Row>
           <Row>{tableInfo}</Row>
-          <Row>{tableBody}</Row>
+          <Row>
+            {tableBody}
+          </Row>
         </Container>
       </React.Fragment>
     );
