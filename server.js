@@ -660,6 +660,103 @@ const manualHelper = async (req, res, next) => {
   }
 };
 
+// Headers tagging
+
+const headerTaggingIndex = async (req, res, next) => {
+  try {
+    const query = `
+        SELECT t.tableId, IF(headers_tagged = 1, 'done', 'pending') AS status, pdfName, page
+        FROM tables t
+                 LEFT JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId = 4
+        WHERE combinedConText IS NOT NULL
+          AND tt.tagId IS NULL
+        GROUP BY t.tableId, headers_tagged
+        ORDER BY headers_tagged, tableId;
+    `;
+    const [tables] = await res.locals.pool.execute(query);
+    res.json({ tables });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getHeaderTagging = async (req, res, next) => {
+  try {
+    const { tableId } = req.body;
+    const tableQuery = `
+        SELECT combinedConText, page, pdfName, tableTitle, headers_tagged
+        FROM tables
+        WHERE tableId = ?;
+    `;
+    const tableTagsQuery = `
+        SELECT header_idx AS headerIndex, htag
+        FROM headers_htags
+        WHERE tableId = ?;
+    `;
+    const allTagsQuery = `
+        SELECT htag, optional
+        FROM htags
+        ORDER BY htag;
+    `;
+
+    const p = res.locals.pool;
+    const tablePromise = p.execute(tableQuery, [tableId]);
+    const tableTagsPromise = p.execute(tableTagsQuery, [tableId]);
+    const allTagsPromise = p.execute(allTagsQuery);
+
+    const [[table], [tableTags], [allTags]] = await Promise.all([tablePromise, tableTagsPromise, allTagsPromise]);
+    res.json({ table, tableTags, allTags });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const setHeaderTaggingStatus = async (req, res, next) => {
+  try {
+    const { tableId, newStatus } = req.body;
+    const query = `
+        UPDATE tables
+        SET headers_tagged = ?
+        WHERE tableId = ?;
+    `;
+    const [result] = await res.locals.pool.execute(query, [newStatus, tableId]);
+    res.json({ result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const setHeaderTag = async (req, res, next) => {
+  try {
+    const { tableId, headerIndex, hTag } = req.body;
+    const query = `
+        INSERT INTO headers_htags (tableId, header_idx, htag)
+        VALUES (?, ?, ?);
+    `;
+    const [result] = await res.locals.pool.execute(query, [tableId, headerIndex, hTag]);
+    res.json({ result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const removeHeaderTag = async (req, res, next) => {
+  try {
+    const { tableId, headerIndex, hTag } = req.body;
+    const query = `
+        DELETE
+        FROM headers_htags
+        WHERE tableId = ?
+          AND header_idx = ?
+          AND htag = ?;
+    `;
+    const [result] = await res.locals.pool.execute(query, [tableId, headerIndex, hTag]);
+    res.json({ result });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Server setup
 
 function errorHandler(err, req, res, next) {
@@ -696,12 +793,24 @@ app.post("/setAppendStatus", (req, res, next) => setAppendStatus(req, res, next)
 app.post("/processingHelper", (req, res, next) => processingHelper(req, res, next));
 app.post("/manualHelper", (req, res, next) => manualHelper(req, res, next));
 
+app.post("/headerTaggingIndex", (req, res, next) => headerTaggingIndex(req, res, next));
+app.post("/getHeaderTagging", (req, res, next) => getHeaderTagging(req, res, next));
+app.post("/setHeaderTaggingStatus", (req, res, next) => setHeaderTaggingStatus(req, res, next));
+app.post("/setHeaderTag", (req, res, next) => setHeaderTag(req, res, next));
+app.post("/removeHeaderTag", (req, res, next) => removeHeaderTag(req, res, next));
+
 app.use("/", express.static(path.join(__dirname, "client", "build")));
 app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "client", "build", "index.html"));
 });
 
 app.use((err, req, res, next) => errorHandler(err, req, res, next));
+
+// Last resort error catching in libraries that I do not control
+process.on("uncaughtException", (err, origin) => {
+  // eslint-disable-next-line no-console
+  console.log(`${Date.now()} - Uncaught Exception: ${err} at ${origin}`);
+});
 
 const port = process.env.PORT;
 // eslint-disable-next-line no-console

@@ -16,22 +16,26 @@ import ProcessingIndex from "./processing_index/ProcessingIndex";
 import Processing from "./processing_app/Processing";
 import ProcessingHelper from "./processing_helper/ProcessingHelper";
 import ManualHelper from "./manual_helper/ManualHelper";
-import Concat from "./concat_app/Concat"
+import Concat from "./concat_app/Concat";
+import ContentIndex from "./content_index/ContentIndex";
+import Tagging from "./tagging_app/Tagging";
 
 const App = () => (
   <BrowserRouter>
     <Switch>
-      <Route exact path="/processing_helper" component={ProcessingHelper} />
-      <Route exact path="/manual_helper" component={ManualHelper} />
-      <Route exact path="/tables_index" component={TablesIndex} />
-      <Route exact path="/processing_index" component={ProcessingIndex} />
-      <Route path="/processing/:headTable" component={Processing} />
-      <Route path="/extraction/:pdfName/:pageNumber" component={Extraction} />
-      <Redirect from="/extraction/:pdfName" to="/extraction/:pdfName/1" />
-      <Route path="/validation/:pdfName/:tableId?" component={Validation} />
-      <Route path="/concatenation/:headTable" component={Concat} />
-      <Route exact path="/" component={Home} />
-      <Route path="*" component={NoMatch} />
+      <Route exact path="/processing_helper" component={ProcessingHelper}/>
+      <Route exact path="/manual_helper" component={ManualHelper}/>
+      <Route exact path="/tables_index" component={TablesIndex}/>
+      <Route exact path="/processing_index" component={ProcessingIndex}/>
+      <Route path="/processing/:headTable" component={Processing}/>
+      <Route path="/extraction/:pdfName/:pageNumber" component={Extraction}/>
+      <Redirect from="/extraction/:pdfName" to="/extraction/:pdfName/1"/>
+      <Route path="/validation/:pdfName/:tableId?" component={Validation}/>
+      <Route path="/concatenation/:headTable" component={Concat}/>
+      <Route path="/tagging/:tableId" component={Tagging}/>
+      <Route exact path="/content_index" component={ContentIndex}/>
+      <Route exact path="/" component={Home}/>
+      <Route path="*" component={NoMatch}/>
     </Switch>
   </BrowserRouter>
 );
@@ -47,7 +51,7 @@ const Home = () => {
           <h3>Available Options:</h3>
           <div>
             <Link to="/tables_index">
-              <Button variant="primary">Tables Index</Button>
+              <Button variant="primary">PDFs Index</Button>
             </Link>
           </div>
           <div>
@@ -63,6 +67,11 @@ const Home = () => {
           <div>
             <Link to="/manual_helper">
               <Button variant="primary">Manual Processing Helper</Button>
+            </Link>
+          </div>
+          <div>
+            <Link to="/content_index">
+              <Button variant="primary">Content Index</Button>
             </Link>
           </div>
         </Col>
