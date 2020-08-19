@@ -33,7 +33,7 @@ def get_pdf_metadata():
     with engine.connect() as conn:
         query1 = "SELECT * FROM pdfs;"
         df = pd.read_sql(query1, conn)
-        return df
+    return df
         
 def get_pdf_names():
     data = get_pdf_metadata()
