@@ -1,0 +1,11 @@
+﻿Vegetation Type,Mean Proportion of Species Richness Composed of Exotic Species (%),Mean Total Cover of Exotic Species (%),VEC,GIS,Topic
+Herbicided Clear-cut,0,0,,,Reference Sites
+Immature Coniferous Forest,0,0,,,Reference Sites
+Mature Coniferous Forest,0,0,,,Reference Sites
+Barrens,0,0,,,Reference Sites
+Tall Shrub Thicket,10.3,0.8,,,Reference Sites
+Former Herbicided Clear-cut,26.7,47.1,,,Disturbed Area
+Former Immature Coniferous Forest,5,3.5,,,Disturbed Area
+Former Mature Coniferous Forest,25,14.3,,,Disturbed Area
+Former Barrens,0,0,,,Disturbed Area
+Former Tall Shrub Thicket,17.6,38.8,,,Disturbed Area
