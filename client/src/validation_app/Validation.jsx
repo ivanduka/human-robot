@@ -19,7 +19,8 @@ export default class Validation extends Component {
   };
 
   componentDidMount() {
-    const { pdfName, tableId } = this.props.match.params;
+    let { pdfName, tableId } = this.props.match.params;
+    pdfName = decodeURIComponent(pdfName);
     this.setState({ pdfName, pathTableId: tableId });
     this.loadData({ pdfName, pathTableId: tableId }).then();
     document.addEventListener("keydown", this.handleKeys);
@@ -215,7 +216,7 @@ export default class Validation extends Component {
     const { pdfName, csvs, tables, loading, tableId, imageLoaded, tags, softUpdating, imagesLoading } = this.state;
 
     if (loading) {
-      return <Spinner animation="border" />;
+      return <Spinner animation="border"/>;
     }
 
     if (!tableId || !tables) {
@@ -241,13 +242,13 @@ export default class Validation extends Component {
     const constructTable = (table) => (
       <table>
         <tbody>
-          {table.map((row, idx) => (
-            <tr key={idx}>
-              {row.map((col, index) => (
-                <td key={index}>{col}</td>
-              ))}
-            </tr>
-          ))}
+        {table.map((row, idx) => (
+          <tr key={idx}>
+            {row.map((col, index) => (
+              <td key={index}>{col}</td>
+            ))}
+          </tr>
+        ))}
         </tbody>
       </table>
     );
@@ -435,7 +436,7 @@ export default class Validation extends Component {
         </Row>
         <Row>
           <Col className="equal">
-            {imageLoaded || <Spinner animation="border" />}
+            {imageLoaded || <Spinner animation="border"/>}
             <a href={`/jpg/${tableId}.jpg`} rel="noopener noreferrer" target="_blank">
               <img
                 src={`/jpg/${tableId}.jpg`}
