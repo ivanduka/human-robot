@@ -665,11 +665,13 @@ const manualHelper = async (req, res, next) => {
 const headerTaggingIndex = async (req, res, next) => {
   try {
     const query = `
-        SELECT t.tableId, IF(headers_tagged = 1, 'done', 'pending') AS status, pdfName, page
+        SELECT t.tableId, IF(headers_tagged = 1, 'done', 'pending') AS status, t.pdfName, page
         FROM tables t
                  LEFT JOIN tables_tags tt ON t.tableId = tt.tableId AND tt.tagId = 4
+                 LEFT JOIN pdfs p ON t.pdfName = p.pdfName
         WHERE combinedConText IS NOT NULL
           AND tt.tagId IS NULL
+          AND p.latest = 1
         GROUP BY t.tableId, headers_tagged
         ORDER BY headers_tagged, tableId;
     `;

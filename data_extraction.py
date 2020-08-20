@@ -51,7 +51,17 @@ def check_changes_in_headers():
 
 
 def populate_headers_table():
-    get_jsons = "SELECT tableId, combinedConText FROM tables WHERE combinedConText IS NOT NULL;"
+    get_jsons = '''
+        SELECT t.tableId, t.combinedConText
+        FROM tables t
+                 LEFT JOIN tables_tags tt
+                           ON tt.tableId = t.tableId AND tt.tagId = 4
+                 LEFT JOIN pdfs p ON t.pdfName = p.pdfName
+        WHERE combinedConText IS NOT NULL
+          AND tt.tableId IS NULL
+          AND p.latest = 1
+        GROUP BY t.tableId;
+    '''
     get_query = "SELECT tableId, header_idx, header_title FROM headers WHERE tableId = %s AND header_idx = %s;"
     insert_query = "INSERT INTO headers (tableId, header_idx, header_title) VALUES (%s, %s, %s);"
     update_query = "UPDATE headers SET header_title = %s WHERE tableId = %s AND header_idx = %s;"
@@ -74,6 +84,49 @@ def populate_headers_table():
     print("all done")
 
 
+def populate_issues_table():
+    get_jsons = '''
+        SELECT t.tableId, t.combinedConText
+        FROM tables t
+                 LEFT JOIN tables_tags tt
+                           ON tt.tableId = t.tableId AND tt.tagId = 4
+                 LEFT JOIN pdfs p ON t.pdfName = p.pdfName
+        WHERE combinedConText IS NOT NULL
+          AND tt.tableId IS NULL
+          AND p.latest = 1
+        GROUP BY t.tableId;
+    '''
+    get_query = "SELECT tableId, rowIndex FROM issues WHERE tableId = %s AND rowIndex = %s;"
+    insert_query = "INSERT INTO issues (tableId, rowIndex) VALUES (%s, %s);"
+
+    with engine.connect() as conn:
+        jsons = conn.execute(get_jsons)
+        for j in jsons:
+            table_id = j[0]
+            table = json.loads(j[1])
+            for row_index in range(1, len(table)):
+                existing = list(conn.execute(get_query, (table_id, row_index)))
+                if len(existing) > 0:
+                    continue
+                conn.execute(insert_query, (table_id, row_index))
+    print("all done")
+
+
+def populate_latest_column():
+    projects_query = 'SELECT application_id FROM projects;'
+    highest_year_query = "SELECT monitoring_year FROM pdfs WHERE application_id = %s ORDER BY monitoring_year DESC LIMIT 1;"
+    update_latest_query = 'UPDATE pdfs SET latest = 1 WHERE application_id = %s AND monitoring_year = %s;'
+    with engine.connect() as conn:
+        projects = [project[0] for project in conn.execute(projects_query)]
+        for project in projects:
+            highest_year = list(conn.execute(highest_year_query, (project,)))[0][0]
+            conn.execute(update_latest_query, (project, highest_year))
+    print("All done")
+
+
 if __name__ == "__main__":
     # check_changes_in_headers()
-    populate_headers_table()
+    # populate_latest_column()
+    # populate_headers_table()
+    populate_issues_table()
+    pass

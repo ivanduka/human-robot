@@ -299,3 +299,22 @@ FROM tables t
          LEFT JOIN tables_tags tt2 ON t.tableId = tt2.tableId AND tt2.tagId = 3
          LEFT JOIN tables_tags tt3 ON t.tableId = tt3.tableId AND tt3.tagId = 4
 WHERE combinedConText IS NOT NULL;
+
+# Calculate issues stats
+WITH counts AS (
+    SELECT tableId, count(1) AS issues
+    FROM issues
+    GROUP BY tableId
+    ORDER BY count(1)
+)
+SELECT round(avg(issues))        AS avg,
+       sum(issues)               AS sum,
+       min(issues)               AS min,
+       max(issues)               AS max,
+       count(1)                  AS count,
+       (SELECT max(issues)
+        FROM (SELECT issues
+              FROM counts
+              LIMIT 53) AS med) AS median # change LIMIT to half of count
+FROM counts;
+
