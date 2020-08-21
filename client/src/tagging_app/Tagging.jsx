@@ -198,7 +198,7 @@ export default class Tagging extends Component {
         <Button
           size="sm"
           variant="dark"
-          href={` / extraction /${pdfName}/${page}`}
+          href={`/extraction/${pdfName}/${page}`}
           target="blank_"
           disabled={softUpdating}
         >
