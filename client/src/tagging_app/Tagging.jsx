@@ -99,7 +99,7 @@ export default class Tagging extends Component {
       const { tableId } = this.state;
       this.setState({ softUpdating: true });
       await ky.post("/removeHeaderTag", { json: { tableId, headerIndex, hTag } }).json();
-      const tableTags = this.state.tableTags.filter(tt => tt.htag !== hTag);
+      const tableTags = this.state.tableTags.filter(tt => !(tt.htag === hTag && tt.headerIndex === headerIndex));
       this.setState({ tableTags, softUpdating: false });
     } catch (error) {
       console.log(error);
@@ -134,12 +134,12 @@ export default class Tagging extends Component {
 
     if (loading) return <Spinner animation="border"/>;
 
-    const isEnabled = (headerIndex, htag) => {
-      const selected = tableTags.find(tt => tt.htag === htag);
-      return !selected || selected.headerIndex === headerIndex;
+    const isEnabled = (headerIndex, htag, maxTags) => {
+      const selected = tableTags.filter(tt => tt.htag === htag);
+      const tagged = isTagged(headerIndex, htag);
+      return tagged || selected.length < maxTags;
     };
     const isTagged = (headerIndex, htag) => tableTags.find(tt => tt.headerIndex === headerIndex && tt.htag === htag);
-    const isAnyTagged = htag => tableTags.find(tt => tt.htag === htag);
 
     const tableBody = (
       <table className="equal">
@@ -147,18 +147,17 @@ export default class Tagging extends Component {
         <tr className="flexible">
           {headers.map((_, headerIndex) => (
             <th key={headerIndex}>
-              {allTags.map(({ htag, optional }, tagIndex) => {
+              {allTags.map(({ htag, maxTags }, tagIndex) => {
                   const setFunc = () => this.tagColumn(headerIndex, htag);
                   const delFunc = () => this.unTagColumn(headerIndex, htag);
-                  const enabled = isEnabled(headerIndex, htag);
+                  const enabled = isEnabled(headerIndex, htag, maxTags);
                   const tagged = isTagged(headerIndex, htag);
-                  const anyIsTagged = isAnyTagged(htag);
 
                   return (<div key={tagIndex}>
                     <Button
                       disabled={softUpdating || !enabled || doneStatus}
                       size="sm"
-                      variant={tagged ? "success" : anyIsTagged ? "light" : optional === 1 ? "light" : "primary"}
+                      variant={tagged ? "success" : "light"}
                       onClick={tagged ? delFunc : setFunc}>
                       {htag}
                     </Button>
@@ -171,7 +170,7 @@ export default class Tagging extends Component {
         <tr>
           {headers.map((header, headerIndex) => {
             const used = tableTags.find(tt => tt.headerIndex === headerIndex);
-            return <th key={headerIndex} className={used ? "green" : "grey"}>{header}</th>;
+            return <th key={headerIndex} className={used ? "green bold" : "grey bold"}>{header}</th>;
           })}
         </tr>
         </thead>
@@ -207,12 +206,19 @@ export default class Tagging extends Component {
         <Button size="sm" variant="primary" disabled={softUpdating} onClick={this.softLoadData}>
           Refresh Data
         </Button>
-        <Button size="sm" variant="secondary" disabled={softUpdating} onClick={() => this.toggleShowAllRows(!showAllRows)}>
-          {showAllRows ? `Show top ${showTopRows} rows` : `Show all ${this.state.rows.length} rows`}
+        <Button size="sm" variant="secondary" disabled={softUpdating || this.state.rows.length <= showTopRows}
+                onClick={() => this.toggleShowAllRows(!showAllRows)}>
+          {this.state.rows.length <= showTopRows
+            ? `Showing all ${this.state.rows.length} rows`
+            : showAllRows
+              ? `Show top ${showTopRows} rows`
+              : `Show all ${this.state.rows.length} rows`}
         </Button>
-        <Button size="sm" variant={doneStatus ? "secondary" : "warning"} disabled={softUpdating} onClick={() => {
-          this.setDoneStatus(!doneStatus).then();
-        }}>
+        <Button
+          size="sm"
+          variant={doneStatus ? "secondary" : "warning"}
+          disabled={softUpdating}
+          onClick={() => this.setDoneStatus(!doneStatus).then()}>
           {doneStatus ? "Unlock Table" : "Lock Table"}
         </Button>
       </Col>

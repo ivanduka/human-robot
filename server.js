@@ -696,7 +696,7 @@ const getHeaderTagging = async (req, res, next) => {
         WHERE tableId = ?;
     `;
     const allTagsQuery = `
-        SELECT htag, optional
+        SELECT htag, maxTags
         FROM htags
         ORDER BY htag;
     `;
