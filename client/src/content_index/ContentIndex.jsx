@@ -89,7 +89,6 @@ export default class ContentIndex extends Component {
             size="sm"
             variant={status === "done" ? "primary" : "warning"}
             href={`/tagging/${tableId}`}
-            target="_blank"
             disabled={softUpdating}
           >
             {status}
