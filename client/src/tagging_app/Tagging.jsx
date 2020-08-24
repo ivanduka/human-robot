@@ -233,7 +233,7 @@ export default class Tagging extends Component {
           {this.state.rows.length <= showTopRows
             ? `Showing all ${this.state.rows.length} rows`
             : showAllRows
-              ? `Show top ${showTopRows} rows`
+              ? `Show top ${showTopRows} out of ${this.state.rows.length} rows`
               : `Show all ${this.state.rows.length} rows`}
         </Button>
         <Button
