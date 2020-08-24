@@ -184,7 +184,7 @@ export default class Tagging extends Component {
         <tr>
           {empties.map((emptyCount, colIndex) => (
             <th key={colIndex} className={emptyCount > 0 ? "red" : null}>
-              {emptyCount}
+              {emptyCount === this.state.rows.length ? "all " : null}{emptyCount} empty
             </th>
           ))}
         </tr>
