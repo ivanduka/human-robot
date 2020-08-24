@@ -66,13 +66,7 @@ export default class Tagging extends Component {
 
   setDoneStatus = async (newStatus) => {
     try {
-      const { tableId, tableTags, allTags } = this.state;
-      const mandatoryTags = allTags.filter(t => t.optional === 0).map(t => t.htag);
-      for (const tag of mandatoryTags) {
-        if (!tableTags.find(t => t.htag === tag)) {
-          return alert(`Not all mandatory tags are tagged (for example, '${tag}')!`);
-        }
-      }
+      const { tableId } = this.state;
       this.setState({ softUpdating: true });
       await ky.post("/setHeaderTaggingStatus", { json: { tableId, newStatus } }).json();
       this.setState({ doneStatus: newStatus, softUpdating: false });
