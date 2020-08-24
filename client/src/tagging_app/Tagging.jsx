@@ -18,8 +18,10 @@ export default class Tagging extends Component {
     tableTags: [],
     allTags: [],
     doneStatus: true,
-    showAllRows: false,
+    showAllRows: true,
     showTopRows: 10,
+    empties: [],
+    regexp: RegExp(`[a-zA-Z0-9]`),
   };
 
   componentDidMount() {
@@ -48,16 +50,32 @@ export default class Tagging extends Component {
       }
 
       const { combinedConText, page, pdfName, tableTitle, headers_tagged } = table[0];
+      const rows = combinedConText.slice(1);
+      const headers = combinedConText[0];
+
+
+      const empties = Array(headers.length).fill(0);
+
+      for (let row = 0; row < rows.length; row += 1) {
+        for (let col = 0; col < empties.length; col += 1) {
+          if (!this.state.regexp.test(rows[row][col])) {
+            console.log(row, col, rows[row][col]);
+            empties[col] += 1;
+          }
+        }
+      }
+
       this.setState({
-        rows: combinedConText.slice(1),
+        rows,
         page,
         pdfName,
         tableTags,
         allTags,
         tableTitle,
         doneStatus: headers_tagged === 1,
-        headers: combinedConText[0],
+        headers,
         loading: false,
+        empties,
       });
     } catch (error) {
       console.log(error);
@@ -120,6 +138,8 @@ export default class Tagging extends Component {
       doneStatus,
       showAllRows,
       showTopRows,
+      empties,
+      regexp,
     } = this.state;
 
     if (!showAllRows && rows.length > showTopRows) {
@@ -138,7 +158,7 @@ export default class Tagging extends Component {
     const tableBody = (
       <table className="equal">
         <thead>
-        <tr className="flexible">
+        <tr>
           {headers.map((_, headerIndex) => (
             <th key={headerIndex}>
               {allTags.map(({ htag, maxTags }, tagIndex) => {
@@ -162,6 +182,13 @@ export default class Tagging extends Component {
           ))}
         </tr>
         <tr>
+          {empties.map((emptyCount, colIndex) => (
+            <th key={colIndex} className={emptyCount > 0 ? "red" : null}>
+              {emptyCount}
+            </th>
+          ))}
+        </tr>
+        <tr>
           {headers.map((header, headerIndex) => {
             const used = tableTags.find(tt => tt.headerIndex === headerIndex);
             return <th key={headerIndex} className={used ? "green bold" : "grey bold"}>{header}</th>;
@@ -173,7 +200,8 @@ export default class Tagging extends Component {
           <tr key={rowIndex}>
             {row.map((cell, cellIndex) => {
               const used = tableTags.find(tt => tt.headerIndex === cellIndex);
-              return <td key={cellIndex} className={used ? "green" : "grey"}>{cell}</td>;
+              const empty = !regexp.test(cell);
+              return <td key={cellIndex} className={empty ? "red" : used ? "green" : "grey"}>{cell}</td>;
             })}
           </tr>
         ))}
