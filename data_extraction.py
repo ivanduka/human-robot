@@ -128,10 +128,78 @@ def populate_latest_column():
 #     with engine.connect()as conn:
 #         conn.execute("DELETE FROM ISSUES WHERE true;")
 
+def get_tag_permutations():
+    get_tables = 'SELECT tableId, combinedConText FROM tables WHERE headers_tagged = 1;'
+    get_index_tags = "SELECT header_idx, htag FROM headers_htags WHERE tableId = %s ORDER BY header_idx;"
+
+    permutations_index_tag = {}
+    permutations_index_tag_cols = {}
+    permutations_tags = {}
+    with engine.connect() as conn:
+        tables = conn.execute(get_tables)
+        for table in tables:
+            table_id = table[0]
+            col_count = len(json.loads(table[1])[0])
+            index_tags = list(conn.execute(get_index_tags, (table_id,)))
+
+            # index_tag_col permutations
+            key_index_tag_col = f'({col_count} columns) + '
+            for it in index_tags:
+                idx = it[0]
+                tag_name = it[1]
+                key_index_tag_col += f'{idx} {tag_name} + '
+            if key_index_tag_col in permutations_index_tag_cols:
+                permutations_index_tag_cols[key_index_tag_col] += 1
+            else:
+                permutations_index_tag_cols[key_index_tag_col] = 1
+
+            # index_tag permutations
+            key_index_tag = ''
+            for it in index_tags:
+                idx = it[0]
+                tag_name = it[1]
+                key_index_tag += f'{idx} {tag_name} + '
+            if key_index_tag in permutations_index_tag:
+                permutations_index_tag[key_index_tag] += 1
+            else:
+                permutations_index_tag[key_index_tag] = 1
+
+            # tags permutations
+            key_tag = ''
+            for t in index_tags:
+                tag_name = t[1]
+                key_tag += f'{tag_name} + '
+            if key_tag in permutations_tags:
+                permutations_tags[key_tag] += 1
+            else:
+                permutations_tags[key_tag] = 1
+
+        permutations_tags = sorted(permutations_tags.items(), key=lambda x: x[1], reverse=True)
+        print(f"{len(permutations_tags)} tag permutations:")
+        for tag, count in permutations_tags:
+            tag = "" if tag == '' else tag[:-3]
+            print(f"{count}:\t{tag}")
+        print()
+
+        permutations_index_tag = sorted(permutations_index_tag.items(), key=lambda x: x[1], reverse=True)
+        print(f"{len(permutations_index_tag)} index+tag permutations:")
+        for tag, count in permutations_index_tag:
+            tag = "" if tag == '' else tag[:-3]
+            print(f"{count}:\t{tag}")
+        print()
+
+        permutations_index_tag_cols = sorted(permutations_index_tag_cols.items(), key=lambda x: x[1], reverse=True)
+        print(f"{len(permutations_index_tag_cols)} index+tag+col permutations:")
+        for tag, count in permutations_index_tag_cols:
+            tag = "" if tag == '' else tag[:-3]
+            print(f"{count}:\t{tag}")
+        print()
+
 
 if __name__ == "__main__":
     # check_changes_in_headers()
     # populate_latest_column()
     # populate_headers_table()
     # populate_issues_table()
+    get_tag_permutations()
     pass
