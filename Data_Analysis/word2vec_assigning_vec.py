@@ -5,16 +5,19 @@ from pathlib import Path
 import nltk
 import re
 import string, unicodedata
-import nltk
 import contractions
 import inflect
+import codecs
 from nltk import word_tokenize, sent_tokenize
 from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
 import spacy
 import en_core_web_sm
+import time
+import gensim
+from gensim.models import Word2Vec
+import multiprocessing
 nlp = en_core_web_sm.load()
-nlp.max_length = 6000000 
+nlp.max_length = 600000000
 # Importing environmental variables library that reads from the .env file
 from dotenv import load_dotenv
 
@@ -26,50 +29,33 @@ user = os.getenv("DB_USER")
 password = os.getenv("DB_PASS")
 db_hostname = os.getenv("DB_HOST")
 
+sample = """construct the pulse because constructing helps to reduce the chance of cardiac arrest and constructed indivduals tend to live longer """
 
 def get_esa_text():
+    """Extract ESA text from MySQL Database"""
     db_name = os.getenv("DB_DATABASE_ESA")
     conn_string = f"mysql+mysqldb://{user}:{password}@{db_hostname}/{db_name}?charset=utf8mb4"
     engine = create_engine(conn_string)
-
     with engine.connect() as conn:
         query = "SELECT * FROM pages_normal_txt;"
         data = pd.read_sql(query, conn)
     return ' '.join(data.clean_content)
 
 def get_pcmr_text():
-    
-    return ' '.join(data.clean_content)
-    
-        
-final_text = get_esa_text()
-print(len(final_text))
+    """Extract PCMR Text from text files"""
+    pcmr_text = []
+    files = os.listdir("G:/Post Construction/PDF_text")
+    for file in files:
+        with codecs.open("G:/Post Construction/PDF_text/" + file,'r', encoding='utf-8-sig') as corpus:
+            input_str = corpus.read()
+            pcmr_text.append(input_str)
+    return ' '.join(pcmr_text)
 
-
-
-sample = """
-1.0 INTRODUCTION AND PROJECT DESCRIPTION 
-
-In December 2010, NOVA Gas Transmission Ltd. (NGTL), a wholly owned subsidiary 
-of TransCanada PipeLines Limited (TransCanada), received National Energy Board 
-(NEB) Order XG-N081-11-2010, pursuant to Section 58 of the NEB Act granting 
-approval for the construction and operation of the Watino Crossover and Calais 
-Extension Pipeline Project (the Project). 
-
-TransCanada committed to the Post-Construction Monitoring Program (PCMP) for the 
-Project during the first and second growing seasons following pipeline construction.  The 
-first year report was submitted on February 1, 2013 detailing the findings of the 2012 
-assessment.  The assessment and reporting was completed by Tera Environmental 
-Consultants (TERA) of Calgary, Alberta (TERA, 2013).  The recommendations from this 
-report were accepted and TransCanada implemented the Post construction Reclamation 
-Monitoring (PCRM) program.  The PCRM program addressed all issues identified in the 
-2013 PCMP report and completed full ROW assessments in May 2013. 
-
-The Project Team is comprised of company representatives who had a role performing 
-work on the Project and may be contacted should PCMP issues or concerns arise.  
-
-Contact information of Project Team members is provided below: 
-"""
+def combine_text():
+    """combine text string from ESA and PCMR text"""
+    esa_text = get_esa_text()
+    pcmr_text = get_pcmr_text()
+    return ' '.join([esa_text, pcmr_text])
 
 def replace_contractions(text):
     """Replace contractions in string of text"""
@@ -86,8 +72,12 @@ def to_lowercase(text):
     return text
 
 def lemmatize_text(text):        
+    start_time = time.time()
     text = nlp(text)
+    print(time.time() - start_time)
+    start_time = time.time()
     text = ' '.join([word.lemma_ if word.lemma_ != '-PRON-' else word.text for word in text])
+    print(time.time() - start_time)
     return text
     
 def normalize_before_tokenization(text):
@@ -96,10 +86,15 @@ def normalize_before_tokenization(text):
     text = to_lowercase(text)
     text = lemmatize_text(text)
     return text
+    
+    # # TODO: text => 12 work_items
 
-sample = normalize_before_tokenization(sample)
+    # work_items = ["","","","","","","","","","","",""]
+    # with multiprocessing.Pool() as pool:
+    #     results = pool.map(lemmatize_text, work_items, chunksize=1)
+    # text = "".join(results)
 
-words = nltk.word_tokenize(sample)
+    # return text
 
 def remove_punctuation(words):
     """Remove punctuation from list of tokenized words"""
@@ -136,5 +131,80 @@ def normalize_after_tokenization(words):
     words = remove_stopwords(words)
     return words
 
-words = normalize_after_tokenization(words)
-print(words)
+
+text_corpus = combine_text()
+text_before_tokenization = normalize_before_tokenization(sample)
+corpus_words = nltk.word_tokenize(text_before_tokenization)
+normalized_words = normalize_after_tokenization(corpus_words)
+
+
+
+#################################################
+# word2vec implementation
+#################################################
+
+
+def make_bigrams(normalized_tokens):
+    """ create bigrams froms text corpus"""
+    bigram = gensim.models.Phrases(normalized_tokens, min_count = 20, threshold = 16)
+    bigram_mod = gensim.models.phrases.Phraser(bigram)
+    return [bigram_mod[doc] for doc in normalized_tokens]
+
+#min_count: ignore all words and bigrams with total collected count lower than this
+#threshold represents a score threshold for forming the phrases (higher means fewer phrases). A phrase of words a followed by b is accepted if the score of the phrase is greater than threshold
+
+#normalized_words_bigrams = make_bigrams(normalized_words)
+
+###############################################
+# Set values for various parameters
+###############################################
+
+feature_size = 100    # word vector 
+window_context = 15   # context window size i.e. maximum distance between current and predicted word within a sentence
+min_word_count = 10   # Words that appear only once or twice in a billion-word corpus are probably uninteresting typos and garbage. In addition, there’s not enough data to make any meaningful training on those words, so it’s best to ignore them
+sample = 1e-3         # The threshold for configuring which higher-frequency words are randomly downsampled, useful range is (0, 1e-5).
+epochs = 5            # Number of iterations over the corpus
+learning_rate = 0.01  # the initial learning rate
+
+###############################################
+# Create and train the model
+###############################################
+
+w2v_model = Word2Vec(min_count = min_word_count,
+                     window = window_context,
+                     size = feature_size,
+                     sample = sample,
+                     negative = 5,
+                     alpha = learning_rate,
+                     iter = epochs,
+                     workers = 2)
+w2v_model.build_vocab(normalized_words)
+w2v_model.train(normalized_words, total_examples=w2v_model.corpus_count, epochs=w2v_model.iter)
+
+###############################################
+# define root words
+###############################################
+vec_lst = ['physical','physical_environment', 'soil', 'soil_productivity', 'vegetation', 'water', 'water_quantity', 'water_quality', 'fish', 'fish_habitat', 'wetlands', 'wildlife', 'wildlife_habitat', 'species', 'species_risk']
+sub_cat_vec_lst = ['erosion', 'coarse_fragments', 'subsidence', 'topsoil_admixing', 'compaction', 'topsoil_loss', 'watercourse', 'vegetation_re-establishment', 'invasive', 'plants', 'rare', 'stream', 'stream_channel', 'stream_channel_profile', 'stream_bank', 'stream_bank_stability', 'riparian', 'riparian_vegetation','riparian_vegetation_reestablishment', 'access', 'access_control']
+vec_sub_cat = []
+vec_lst.extend(sub_cat_vec_lst)
+vec_sub_cat.extend(vec_lst)
+
+###############################################
+# Convert dictionary with root word as key and context words as values
+###############################################
+
+root_word_dict = {}
+for root_word in vec_sub_cat:
+    try:
+        context_words = w2v_model.wv.most_similar(positive = [root_word],topn = 15)
+        root_word_dict[root_word] = context_words
+    except:
+        root_word_dict[root_word] = 'The word is not in vocabulary'
+
+###############################################
+# Convert dictionary into a dataframe and then to csv
+###############################################
+
+word2vec_df = pd.Series(root_word_dict).to_frame()
+word2vec_df.to_csv('word2vec.csv', encoding = 'utf-8-sig')
