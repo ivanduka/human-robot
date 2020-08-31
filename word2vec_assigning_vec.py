@@ -28,12 +28,12 @@ load_dotenv()
 user = os.getenv("DB_USER")
 password = os.getenv("DB_PASS")
 db_hostname = os.getenv("DB_HOST")
+db_name = os.getenv("DB_DATABASE_ESA")
 
 sample = """construct the pulse because constructing helps to reduce the chance of cardiac arrest and constructed indivduals tend to live longer """
 
 def get_esa_text():
     """Extract ESA text from MySQL Database"""
-    db_name = os.getenv("DB_DATABASE_ESA")
     conn_string = f"mysql+mysqldb://{user}:{password}@{db_hostname}/{db_name}?charset=utf8mb4"
     engine = create_engine(conn_string)
     with engine.connect() as conn:
@@ -53,9 +53,9 @@ def get_pcmr_text():
 
 def combine_text():
     """combine text string from ESA and PCMR text"""
-    esa_text = get_esa_text()
-    pcmr_text = get_pcmr_text()
-    return ' '.join([esa_text, pcmr_text])
+    esa_corpus = get_esa_text()
+    pcmr_corpus = get_pcmr_text()
+    return ' '.join([esa_corpus, pcmr_corpus])
 
 def replace_contractions(text):
     """Replace contractions in string of text"""
@@ -72,12 +72,12 @@ def to_lowercase(text):
     return text
 
 def lemmatize_text(text):        
-    start_time = time.time()
+    # start_time = time.time()
     text = nlp(text)
-    print(time.time() - start_time)
-    start_time = time.time()
+    # print(time.time() - start_time)
+    # start_time = time.time()
     text = ' '.join([word.lemma_ if word.lemma_ != '-PRON-' else word.text for word in text])
-    print(time.time() - start_time)
+    # print(time.time() - start_time)
     return text
     
 def normalize_before_tokenization(text):
@@ -131,9 +131,15 @@ def normalize_after_tokenization(words):
     words = remove_stopwords(words)
     return words
 
+esa = get_esa_text()
+print(len(esa))
+
+pcmr = get_pcmr_text()
+print(len(pcmr))
 
 text_corpus = combine_text()
-text_before_tokenization = normalize_before_tokenization(sample)
+text_corpus
+text_before_tokenization = normalize_before_tokenization(text_corpus)
 corpus_words = nltk.word_tokenize(text_before_tokenization)
 normalized_words = normalize_after_tokenization(corpus_words)
 
@@ -163,7 +169,6 @@ feature_size = 100    # word vector
 window_context = 15   # context window size i.e. maximum distance between current and predicted word within a sentence
 min_word_count = 10   # Words that appear only once or twice in a billion-word corpus are probably uninteresting typos and garbage. In addition, there’s not enough data to make any meaningful training on those words, so it’s best to ignore them
 sample = 1e-3         # The threshold for configuring which higher-frequency words are randomly downsampled, useful range is (0, 1e-5).
-epochs = 5            # Number of iterations over the corpus
 learning_rate = 0.01  # the initial learning rate
 
 ###############################################
@@ -174,17 +179,17 @@ w2v_model = Word2Vec(min_count = min_word_count,
                      window = window_context,
                      size = feature_size,
                      sample = sample,
+                     sg = 1,
                      negative = 5,
                      alpha = learning_rate,
-                     iter = epochs,
                      workers = 2)
 w2v_model.build_vocab(normalized_words)
-w2v_model.train(normalized_words, total_examples=w2v_model.corpus_count, epochs=w2v_model.iter)
+w2v_model.train(normalized_words, total_examples=w2v_model.corpus_count, epochs = w2v_model.iter)
 
 ###############################################
 # define root words
 ###############################################
-vec_lst = ['physical','physical_environment', 'soil', 'soil_productivity', 'vegetation', 'water', 'water_quantity', 'water_quality', 'fish', 'fish_habitat', 'wetlands', 'wildlife', 'wildlife_habitat', 'species', 'species_risk']
+vec_lst = ['physical','physical_environment', 'soil', 'soil_productivity', 'vegetation', 'water', 'water_quantity', 'water_quality', 'fish', 'fish_habitat', 'wetlands', 'wildlife', 'wildlife_habitat', 'species', 'species_risk', 'air', 'air_quality', 'acoustic_environment', 'acoustic', 'heritage', 'heritage_resources', 'access', 'navigation']
 sub_cat_vec_lst = ['erosion', 'coarse_fragments', 'subsidence', 'topsoil_admixing', 'compaction', 'topsoil_loss', 'watercourse', 'vegetation_re-establishment', 'invasive', 'plants', 'rare', 'stream', 'stream_channel', 'stream_channel_profile', 'stream_bank', 'stream_bank_stability', 'riparian', 'riparian_vegetation','riparian_vegetation_reestablishment', 'access', 'access_control']
 vec_sub_cat = []
 vec_lst.extend(sub_cat_vec_lst)
@@ -206,5 +211,5 @@ for root_word in vec_sub_cat:
 # Convert dictionary into a dataframe and then to csv
 ###############################################
 
-word2vec_df = pd.Series(root_word_dict).to_frame()
+word2vec_df = pd.DataFrame.from_dict(root_word_dict)
 word2vec_df.to_csv('word2vec.csv', encoding = 'utf-8-sig')
