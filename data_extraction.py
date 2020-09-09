@@ -185,10 +185,29 @@ def get_tag_permutations():
         print_results(permutations_index_tag_cols, "tag+index+num_cols")
 
 
+def populate_meridians_from_headers():
+    meridian_regex = re.compile(r'w\dm?')
+    get_tables = 'SELECT tableId, rowIndex, content FROM issues WHERE loc_mer IS NULL;'
+    update_query = 'UPDATE issues SET loc_mer = %s WHERE tableId = %s AND rowIndex = %s'
+    with engine.connect() as conn:
+        tables = conn.execute(get_tables)
+        for table in tables:
+            table_id = table[0]
+            row_index = table[1]
+            content = json.loads(table[2])
+            headers = content[0]
+            for header in headers:
+                found = meridian_regex.findall(header.lower())
+                if found:
+                    meridian = found[0].upper()
+                    conn.execute(update_query, (meridian, table_id, row_index))
+
+
 if __name__ == "__main__":
     # check_changes_in_headers()
     # populate_latest_column()
     # populate_headers_table()
     # populate_issues_table()
-    get_tag_permutations()
+    # get_tag_permutations()
+    populate_meridians_from_headers()
     pass
