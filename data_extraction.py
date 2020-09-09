@@ -142,58 +142,47 @@ def get_tag_permutations():
             col_count = len(json.loads(table[1])[0])
             index_tags = list(conn.execute(get_index_tags, (table_id,)))
 
-            # index_tag_col permutations
-            key_index_tag_col = f'({col_count} columns) + '
-            for it in index_tags:
-                idx = it[0]
-                tag_name = it[1]
-                key_index_tag_col += f'{idx} {tag_name} + '
-            if key_index_tag_col in permutations_index_tag_cols:
-                permutations_index_tag_cols[key_index_tag_col] += 1
-            else:
-                permutations_index_tag_cols[key_index_tag_col] = 1
+            key_tag = ""
+            key_index_tag = ""
+            key_index_tag_col = f'({col_count} columns)'
 
-            # index_tag permutations
-            key_index_tag = ''
-            for it in index_tags:
-                idx = it[0]
-                tag_name = it[1]
-                key_index_tag += f'{idx} {tag_name} + '
-            if key_index_tag in permutations_index_tag:
-                permutations_index_tag[key_index_tag] += 1
-            else:
-                permutations_index_tag[key_index_tag] = 1
-
-            # tags permutations
-            key_tag = ''
-            for t in index_tags:
-                tag_name = t[1]
-                key_tag += f'{tag_name} + '
+            for i, _ in enumerate(index_tags):
+                if i == 0:
+                    key_index_tag_col += " "
+                if i > 0:
+                    key_tag += " + "
+                    key_index_tag += " + "
+                    key_index_tag_col += " + "
+                idx = index_tags[i][0]
+                tag_name = index_tags[i][1]
+                key_tag += f'{tag_name}'
+                key_index_tag += f'{idx} {tag_name}'
+                key_index_tag_col += f'{idx} {tag_name}'
             if key_tag in permutations_tags:
-                permutations_tags[key_tag] += 1
+                permutations_tags[key_tag][0] += 1
             else:
-                permutations_tags[key_tag] = 1
+                permutations_tags[key_tag] = [1, table_id]
+            if key_index_tag_col in permutations_index_tag_cols:
+                permutations_index_tag_cols[key_index_tag_col][0] += 1
+            else:
+                permutations_index_tag_cols[key_index_tag_col] = [1, table_id]
+            if key_index_tag in permutations_index_tag:
+                permutations_index_tag[key_index_tag][0] += 1
+            else:
+                permutations_index_tag[key_index_tag] = [1, table_id]
 
-        permutations_tags = sorted(permutations_tags.items(), key=lambda x: x[1], reverse=True)
-        print(f"{len(permutations_tags)} tag permutations:")
-        for tag, count in permutations_tags:
-            tag = "" if tag == '' else tag[:-3]
-            print(f"{count}:\t{tag}")
-        print()
+        def print_results(dictionary, variant):
+            dictionary = sorted(dictionary.items(), key=lambda x: x[1][0], reverse=True)
+            print(f"{len(dictionary)} {variant} permutations:\n")
+            for tag, data in dictionary:
+                count = data[0]
+                example = data[1]
+                print(f"{count}:\t{tag} (example tableId {example})")
+            print()
 
-        permutations_index_tag = sorted(permutations_index_tag.items(), key=lambda x: x[1], reverse=True)
-        print(f"{len(permutations_index_tag)} index+tag permutations:")
-        for tag, count in permutations_index_tag:
-            tag = "" if tag == '' else tag[:-3]
-            print(f"{count}:\t{tag}")
-        print()
-
-        permutations_index_tag_cols = sorted(permutations_index_tag_cols.items(), key=lambda x: x[1], reverse=True)
-        print(f"{len(permutations_index_tag_cols)} index+tag+col permutations:")
-        for tag, count in permutations_index_tag_cols:
-            tag = "" if tag == '' else tag[:-3]
-            print(f"{count}:\t{tag}")
-        print()
+        print_results(permutations_tags, "tag")
+        print_results(permutations_index_tag, "tag+index")
+        print_results(permutations_index_tag_cols, "tag+index+num_cols")
 
 
 if __name__ == "__main__":
