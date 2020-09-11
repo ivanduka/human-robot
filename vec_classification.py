@@ -2,22 +2,6 @@ from processing import engine
 import re
 import qprompt
 
-# VECs and associated keywords
-keywords = {
-    "physical": ["physical"],
-    "soil": ["soil erosion subsidence compaction"],
-    "vegetation": ["vegetation thistle chamomile spurge ragweed weeds plant re-seeding"],
-    "water": ["water drainage watercourse creek river"],
-    "fish": ["fish"],
-    "wetlands": ["wetland"],
-    "wildlife": ["wildlife"],
-    "species": ["species rare"],
-    "air": ["air"],
-    "acoustic": ["acoustic"],
-    "heritage": ["heritage"],
-    "navigation": ["navigation"],
-}
-
 generic_vec_name = 'generic'
 
 
