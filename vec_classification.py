@@ -1,5 +1,4 @@
 from processing import engine
-import json
 import re
 import qprompt
 
@@ -19,30 +18,31 @@ keywords = {
     "navigation": ["navigation"],
 }
 
-skip = [
-    '03bfc26a-c6d0-4761-b8f5-47acf2290d02-20',
-    '093f120b-9df7-480b-8ae3-2854a3b33c84-1'
-]
+generic_vec_name = 'generic'
 
 
-def make_regexps(keywords_list):
-    result = {}
-    for vec, words_strings in keywords_list.items():
-        flat_list = []
-        for words_string in words_strings:
-            words = words_string.split(" ")
-            for word in words:
-                flat_list.append(word.lower())
+def regexify(key_phrase):
+    return re.compile(rf"\b{key_phrase.lower()}\b")
 
-        reg = rf"\b({'|'.join(flat_list)})\b"
-        result[vec] = re.compile(reg)
-    return result
+
+def get_vecs_and_keywords():
+    vecs_query = 'SELECT vec, short_name FROM vecs ORDER BY test_order;'
+    keywords_query = "SELECT key_phrase FROM keywords WHERE vec = %s;"
+    with engine.connect() as conn:
+        result = conn.execute(vecs_query)
+        vecs = [{"vec": row[0], "short_name": row[1]} for row in result]
+        for vec in vecs:
+            results = conn.execute(keywords_query, (vec["vec"]))
+            regexps = [regexify(r[0]) for r in results]
+            vec["keywords"] = regexps
+        return vecs
 
 
 def get_issues():
-    query = '''
-    SELECT tableId, rowIndex, issue_pri, issue_sec
-    FROM issues WHERE issue_pri IS NOT NULL OR issue_sec IS NOT NULL;
+    query = f'''
+        SELECT tableId, rowIndex, issue_pri, issue_sec, vec
+        FROM issues
+        ORDER BY tableId, rowIndex;
     '''
     reg = re.compile(r"[^a-z0-9-']+")
     with engine.connect() as conn:
@@ -53,47 +53,65 @@ def get_issues():
             row_index = row[1]
             issue_pri = row[2]
             issue_sec = row[3]
-            # r = re.compile(r"\(cid:\d+\)")
-            # return [[re.sub(r, " ", cell) for cell in row] for row in rows_]
-
+            vec = row[4]
             text = re.sub(reg, " ", f"{issue_pri} {issue_sec}".lower()).strip()
-            results.append((table_id, row_index, text))
+            results.append({"table_id": table_id, "row_index": row_index, "text": text, "prev_vec": vec})
         return results
 
 
-def classify_issue(regexp_list, issue_obj, i, n):
-    table_id = issue_obj[0]
-    row_index = issue_obj[1]
-    text = issue_obj[2]
-    if f"{table_id}-{row_index}" in skip:
-        return ""
-    for vec, regexp in regexp_list.items():
-        if regexp.search(text):
-            return vec
-    print(f"Processed {i} items out of {n}. NOT FOUND FOR:")
-    print(f"'{table_id}-{row_index}'")
-    print(text)
-    exit(1)
+def classify_issue(vecs, issue):
+    for vec in vecs:
+        for regexp in vec["keywords"]:
+            if regexp.search(issue['text']):
+                return vec['vec']
+    return ""
+
+
+def get_choice(vecs):
+    menu = qprompt.Menu()
+    for vec in vecs:
+        menu.add(vec["short_name"], vec['vec'])
+    choice = menu.show(returns="desc")
+    key_phrase = ''
+    if choice != generic_vec_name:
+        while key_phrase == '':
+            key_phrase = qprompt.ask_str("enter key phrase: ")
+    return choice, key_phrase.lower()
 
 
 def run_classification():
+    update_vec_query = 'UPDATE issues SET vec = %s WHERE tableId = %s AND rowIndex = %s;'
+    add_new_keyword_query = 'INSERT INTO keywords (vec, key_phrase) VALUES (%s, %s);'
     issues = get_issues()
-    regexps = make_regexps(keywords)
+    vecs = get_vecs_and_keywords()
     total = len(issues)
-    for index, issue in enumerate(issues):
-        classify_issue(regexps, issue, index, total)
-    print("ALL FOUND!")
+    with engine.connect() as conn:
+        for index, issue in enumerate(issues):
+            if issue['prev_vec'] == generic_vec_name:
+                continue
+            while True:
+                result = classify_issue(vecs, issue)
+                if result != "":
+                    conn.execute(update_vec_query, result, issue['table_id'], issue['row_index'])
+                    break
+                print(f"====================================")
+                print(f"# Processed {index}/{total} issues")
+                print(f"------------------------------------")
+                print(f"Not found a match for {issue['table_id']} at {issue['row_index']} with text:")
+                print(f"------------------------------------")
+                print(issue['text'])
+                print(f"====================================")
+                vec, key_phrase = get_choice(vecs)
+                if vec == generic_vec_name:
+                    conn.execute(update_vec_query, generic_vec_name, issue['table_id'], issue['row_index'])
+                    break
+                conn.execute(add_new_keyword_query, (vec, key_phrase))
+                for v in vecs:
+                    if v['vec'] == vec:
+                        v['keywords'].append(regexify(key_phrase))
+
+    print("SUCCESS! ALL FOUND! :)")
 
 
 if __name__ == "__main__":
     run_classification()
-    # while True:
-    #     menu = qprompt.Menu()
-    #     menu.add("p", "Previous")
-    #     menu.add("n", "Next")
-    #     menu.add("q", "Quit")
-    #     choice = menu.show(returns="desc")
-    #     text = ''
-    #     while text == '':
-    #         text = qprompt.ask_str("what? ")
-    #     print(choice, text)
