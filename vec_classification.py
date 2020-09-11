@@ -1,8 +1,11 @@
 from processing import engine
 import re
 import qprompt
+from pathlib import Path
+import json
 
 generic_vec_name = 'generic'
+initial_keywords = Path("initial_keywords.json")
 
 
 def regexify(key_phrase):
@@ -97,5 +100,20 @@ def run_classification():
     print("SUCCESS! ALL FOUND! :)")
 
 
+def load_keywords():
+    insert_query = f"INSERT INTO keywords (vec, key_phrase) VALUES (%s, %s);"
+    with initial_keywords.open() as f:
+        vecs = json.load(f)
+    with engine.connect() as conn:
+        for vec, keywords in vecs.items():
+            for keyword in keywords:
+                try:
+                    conn.execute(insert_query, (vec, keyword))
+                except:
+                    pass
+    print("Done")
+
+
 if __name__ == "__main__":
-    run_classification()
+    load_keywords()
+    # run_classification()
