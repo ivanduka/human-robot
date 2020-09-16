@@ -5,7 +5,7 @@ from pathlib import Path
 import json
 
 generic_vec_name = 'generic'
-initial_keywords = Path("initial_keywords.json")
+keywords_backup = Path("vec_classification_backup.json")
 
 
 def regexify(key_phrase):
@@ -27,7 +27,7 @@ def get_vecs_and_keywords():
 
 def get_issues():
     query = f'''
-        SELECT tableId, rowIndex, issue_pri, issue_sec, vec
+        SELECT tableId, rowIndex, vec_pri, vec_sec, vec
         FROM issues
         ORDER BY tableId, rowIndex;
     '''
@@ -38,10 +38,10 @@ def get_issues():
         for row in rows:
             table_id = row[0]
             row_index = row[1]
-            issue_pri = row[2]
-            issue_sec = row[3]
+            vec_pri = row[2]
+            vec_sec = row[3]
             vec = row[4]
-            text = re.sub(reg, " ", f"{issue_pri} {issue_sec}".lower()).strip()
+            text = re.sub(reg, " ", f"{vec_pri} {vec_sec}".lower()).strip()
             results.append({"table_id": table_id, "row_index": row_index, "text": text, "prev_vec": vec})
         return results
 
@@ -100,20 +100,37 @@ def run_classification():
     print("SUCCESS! ALL FOUND! :)")
 
 
-def load_keywords():
+def save_keywords_to_json():
+    vecs_query = "SELECT vec FROM vecs ORDER BY test_order;"
+    keywords_query = "SELECT key_phrase FROM keywords WHERE vec = %s;"
+    with engine.connect() as conn:
+        vecs_raw = conn.execute(vecs_query)
+        vecs = {v[0]: [] for v in vecs_raw}
+        for v in vecs:
+            keywords = conn.execute(keywords_query, (v,))
+            vecs[v] = [k[0] for k in keywords]
+    with keywords_backup.open("w") as f:
+        json.dump(vecs, f, indent="\t")
+    print("Saved.")
+
+
+def restore_keywords_from_json():
     insert_query = f"INSERT INTO keywords (vec, key_phrase) VALUES (%s, %s);"
-    with initial_keywords.open() as f:
+    with keywords_backup.open() as f:
         vecs = json.load(f)
     with engine.connect() as conn:
         for vec, keywords in vecs.items():
             for keyword in keywords:
                 try:
                     conn.execute(insert_query, (vec, keyword))
+                    print(f"Added {keyword} for {vec}")
                 except:
-                    pass
+                    print(f"Already in DB: {keyword} for {vec}")
     print("Done")
 
 
 if __name__ == "__main__":
-    load_keywords()
-    # run_classification()
+    run_classification()
+    # save_keywords_to_json() # CAREFUL!
+    # restore_keywords_from_json() # CAREFUL!
+    pass
