@@ -15,10 +15,15 @@
 		"pugging"
 	],
 	"air": [
-		"air"
+		"air",
+		"mist"
 	],
 	"heritage": [
-		"heritage"
+		"archaeological",
+		"cultural",
+		"culture",
+		"heritage",
+		"paleontological"
 	],
 	"navigation": [
 		"access control",
@@ -105,7 +110,7 @@
 		"pond",
 		"ponding",
 		"ppm",
-		"river crossing",
+		"river",
 		"stream",
 		"w atercourse",
 		"water",

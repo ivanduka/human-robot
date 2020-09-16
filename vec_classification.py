@@ -14,7 +14,7 @@ def regexify(key_phrase):
 
 def get_vecs_and_keywords():
     vecs_query = 'SELECT vec, short_name FROM vecs ORDER BY test_order;'
-    keywords_query = "SELECT key_phrase FROM keywords WHERE vec = %s;"
+    keywords_query = "SELECT key_phrase FROM keywords_simple WHERE vec = %s;"
     with engine.connect() as conn:
         result = conn.execute(vecs_query)
         vecs = [{"vec": row[0], "short_name": row[1]} for row in result]
@@ -27,7 +27,7 @@ def get_vecs_and_keywords():
 
 def get_issues():
     query = f'''
-        SELECT tableId, rowIndex, vec_pri, vec_sec, vec
+        SELECT tableId, rowIndex, vec_pri, vec_sec, vec_simple
         FROM issues
         ORDER BY tableId, rowIndex;
     '''
@@ -67,8 +67,8 @@ def get_choice(vecs):
 
 
 def run_classification():
-    update_vec_query = 'UPDATE issues SET vec = %s WHERE tableId = %s AND rowIndex = %s;'
-    add_new_keyword_query = 'INSERT INTO keywords (vec, key_phrase) VALUES (%s, %s);'
+    update_vec_query = 'UPDATE issues SET vec_simple = %s WHERE tableId = %s AND rowIndex = %s;'
+    add_new_keyword_query = 'INSERT INTO keywords_simple (vec, key_phrase) VALUES (%s, %s);'
     issues = get_issues()
     vecs = get_vecs_and_keywords()
     total = len(issues)
@@ -102,7 +102,7 @@ def run_classification():
 
 def save_keywords_to_json():
     vecs_query = "SELECT vec FROM vecs ORDER BY test_order;"
-    keywords_query = "SELECT key_phrase FROM keywords WHERE vec = %s;"
+    keywords_query = "SELECT key_phrase FROM keywords_simple WHERE vec = %s;"
     with engine.connect() as conn:
         vecs_raw = conn.execute(vecs_query)
         vecs = {v[0]: [] for v in vecs_raw}
@@ -115,7 +115,7 @@ def save_keywords_to_json():
 
 
 def restore_keywords_from_json():
-    insert_query = f"INSERT INTO keywords (vec, key_phrase) VALUES (%s, %s);"
+    insert_query = f"INSERT INTO keywords_simple (vec, key_phrase) VALUES (%s, %s);"
     with keywords_backup.open() as f:
         vecs = json.load(f)
     with engine.connect() as conn:
@@ -130,7 +130,7 @@ def restore_keywords_from_json():
 
 
 if __name__ == "__main__":
-    run_classification()
-    # save_keywords_to_json() # CAREFUL!
-    # restore_keywords_from_json() # CAREFUL!
+    # run_classification()
+    # save_keywords_to_json()  # CAREFUL!
+    # restore_keywords_from_json()  # CAREFUL!
     pass
