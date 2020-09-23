@@ -68,7 +68,7 @@ def classify_issue(vecs, issue):
                     return v['vec'], regexp.pattern[2:-2]  # stripping '\b' from the beginning and end
         return "", ""
 
-    for column in ["vec_pri", "vec_sec", "issue_pri", "issue_sec", "content"]:
+    for column in ["vec_pri", "vec_sec", "issue_pri", "issue_sec"]:
         vec, keyword = classify(issue[column])
         if vec != "":
             break
@@ -110,7 +110,8 @@ def run_classification():
                 print(f"------------------------------------")
                 print(f"Not found a match for {issue['table_id']} at row {issue['row_index']} with text:")
                 print(f"------------------------------------")
-                print(issue['text'])
+                for item in ['vec_pri', 'vec_sec', 'issue_pri', 'issue_sec']:
+                    print(f'{item}\t\t{issue[item]}')
                 print(f"====================================")
                 vec, key_phrase = get_choice(vecs)
                 if vec == generic_vec_name:
