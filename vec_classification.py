@@ -29,11 +29,15 @@ def get_vecs_and_keywords():
 
 def get_issues():
     query = f'''
-        SELECT tableId, rowIndex, vec_pri, vec_sec, vec_simple
+        SELECT tableId, rowIndex, vec_pri, vec_sec, vec_simple, issue_pri, issue_sec, content
         FROM issues
         ORDER BY tableId, rowIndex;
     '''
     reg = re.compile(r"[^a-z0-9-']+")
+
+    def clean(text):
+        return re.sub(reg, " ", str(text).lower()).strip()
+
     with engine.connect() as conn:
         rows = conn.execute(query)
         results = []
@@ -43,17 +47,32 @@ def get_issues():
             vec_pri = row[2]
             vec_sec = row[3]
             vec = row[4]
-            text = re.sub(reg, " ", f"{vec_pri} {vec_sec}".lower()).strip()
-            results.append({"table_id": table_id, "row_index": row_index, "text": text, "prev_vec": vec})
+            issue_pri = row[5]
+            issue_sec = row[6]
+            content = row[7]
+            vec_pri = clean(vec_pri)
+            vec_sec = clean(vec_sec)
+            issue_pri = clean(issue_pri)
+            issue_sec = clean(issue_sec)
+            content = clean(content)
+            results.append({"table_id": table_id, "row_index": row_index, "vec_pri": vec_pri, "vec_sec": vec_sec,
+                            'issue_pri': issue_pri, 'issue_sec': issue_sec, "prev_vec": vec, "content": content})
         return results
 
 
 def classify_issue(vecs, issue):
-    for vec in vecs:
-        for regexp in vec["keywords"]:
-            if regexp.search(issue['text']):
-                return vec['vec'], regexp.pattern[2:-2]  # stripping '\b' from the beginning and end
-    return "", ""
+    def classify(text):
+        for v in vecs:
+            for regexp in v["keywords"]:
+                if regexp.search(text):
+                    return v['vec'], regexp.pattern[2:-2]  # stripping '\b' from the beginning and end
+        return "", ""
+
+    for column in ["vec_pri", "vec_sec", "issue_pri", "issue_sec", "content"]:
+        vec, keyword = classify(issue[column])
+        if vec != "":
+            break
+    return vec, keyword
 
 
 def get_choice(vecs):
