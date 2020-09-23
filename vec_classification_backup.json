@@ -49,7 +49,6 @@
 	"soil": [
 		"admixing",
 		"agricultural capability",
-		"compaction",
 		"cropland",
 		"land capability",
 		"soil",
@@ -92,7 +91,7 @@
 		"veg plots",
 		"vegetated",
 		"vegetation",
-		"vegetativ e",
+		"vegetative",
 		"vegetative cover",
 		"weed",
 		"weeds"
@@ -112,13 +111,13 @@
 		"ppm",
 		"river",
 		"stream",
-		"w atercourse",
 		"water",
 		"watercourse"
 	],
 	"physical": [
 		"backfill",
 		"coarse",
+		"compaction",
 		"contouring",
 		"crowning",
 		"debris",
@@ -144,7 +143,7 @@
 		"silt",
 		"sinkhole",
 		"spoil piles",
-		"Subsidence",
+		"subsidence",
 		"sunken trenches",
 		"surface drainage"
 	],

@@ -3,6 +3,8 @@ import re
 import qprompt
 from pathlib import Path
 import json
+import time
+from datetime import datetime
 
 generic_vec_name = 'generic'
 keywords_backup = Path("vec_classification_backup.json")
@@ -67,6 +69,9 @@ def get_choice(vecs):
 
 
 def run_classification():
+    start_time = time.time()
+    print(f'{datetime.now()}\tClassifying...')
+
     update_vec_query = 'UPDATE issues SET vec_simple = %s WHERE tableId = %s AND rowIndex = %s;'
     add_new_keyword_query = 'INSERT INTO keywords_simple (vec, key_phrase) VALUES (%s, %s);'
     issues = get_issues()
@@ -79,7 +84,7 @@ def run_classification():
             while True:
                 result = classify_issue(vecs, issue)
                 if result != "":
-                    conn.execute(update_vec_query, result, issue['table_id'], issue['row_index'])
+                    conn.execute(update_vec_query, (result, issue['table_id'], issue['row_index']))
                     break
                 print(f"====================================")
                 print(f"# Processed {index}/{total} issues")
@@ -97,7 +102,7 @@ def run_classification():
                     if v['vec'] == vec:
                         v['keywords'].append(regexify(key_phrase))
 
-    print("SUCCESS! ALL FOUND! :)")
+    print(f"{datetime.now()}\tDone {total} in {int(time.time() - start_time)} seconds")
 
 
 def save_keywords_to_json():
@@ -130,7 +135,7 @@ def restore_keywords_from_json():
 
 
 if __name__ == "__main__":
-    # run_classification()
+    run_classification()
     # save_keywords_to_json()  # CAREFUL!
     # restore_keywords_from_json()  # CAREFUL!
     pass
