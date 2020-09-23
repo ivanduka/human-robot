@@ -52,8 +52,8 @@ def classify_issue(vecs, issue):
     for vec in vecs:
         for regexp in vec["keywords"]:
             if regexp.search(issue['text']):
-                return vec['vec']
-    return ""
+                return vec['vec'], regexp.pattern[2:-2]  # stripping '\b' from the beginning and end
+    return "", ""
 
 
 def get_choice(vecs):
@@ -72,7 +72,7 @@ def run_classification():
     start_time = time.time()
     print(f'{datetime.now()}\tClassifying...')
 
-    update_vec_query = 'UPDATE issues SET vec_simple = %s WHERE tableId = %s AND rowIndex = %s;'
+    update_vec_query = 'UPDATE issues SET vec_simple = %s, subvec_simple = %s WHERE tableId = %s AND rowIndex = %s;'
     add_new_keyword_query = 'INSERT INTO keywords_simple (vec, key_phrase) VALUES (%s, %s);'
     issues = get_issues()
     vecs = get_vecs_and_keywords()
@@ -82,20 +82,20 @@ def run_classification():
             if issue['prev_vec'] == generic_vec_name:
                 continue
             while True:
-                result = classify_issue(vecs, issue)
+                result, keyword = classify_issue(vecs, issue)
                 if result != "":
-                    conn.execute(update_vec_query, (result, issue['table_id'], issue['row_index']))
+                    conn.execute(update_vec_query, (result, keyword, issue['table_id'], issue['row_index']))
                     break
                 print(f"====================================")
                 print(f"# Processed {index}/{total} issues")
                 print(f"------------------------------------")
-                print(f"Not found a match for {issue['table_id']} at {issue['row_index']} with text:")
+                print(f"Not found a match for {issue['table_id']} at row {issue['row_index']} with text:")
                 print(f"------------------------------------")
                 print(issue['text'])
                 print(f"====================================")
                 vec, key_phrase = get_choice(vecs)
                 if vec == generic_vec_name:
-                    conn.execute(update_vec_query, generic_vec_name, issue['table_id'], issue['row_index'])
+                    conn.execute(update_vec_query, (generic_vec_name, "", issue['table_id'], issue['row_index']))
                     break
                 conn.execute(add_new_keyword_query, (vec, key_phrase))
                 for v in vecs:
