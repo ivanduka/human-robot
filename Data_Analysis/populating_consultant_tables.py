@@ -41,6 +41,17 @@ def populate_consultant_table():
             conn.execute(insert_query, (consultant))            
     print("Done")
 
+def populate_pdfsconsultants_table():
+    insert_pdfname_consultant_query = 'INSERT INTO pdfsconsultants (pdfName, consultantName) VALUES (%s, %s);'
+    data = read_data()
+    consultant_dict = dict(zip(data.pdfName, data.consultant_name))
+    with engine.connect() as conn:
+        for pdfname, consultants in consultant_dict.items():
+            for consultant in consultants:
+                conn.execute(insert_pdfname_consultant_query, (pdfname, consultant))
+                print(f"Added {consultant} for {pdfname}")
+    print("Done")
+
 if __name__ == "__main__":
     populate_consultant_table()
-    
+    populate_pdfsconsultants_table()
