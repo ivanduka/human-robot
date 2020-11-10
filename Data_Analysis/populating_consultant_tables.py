@@ -52,6 +52,12 @@ def populate_pdfsconsultants_table():
                 print(f"Added {consultant} for {pdfname}")
     print("Done")
 
+def populate_location_table():
+    df = pd.read_csv("locations.csv", encoding='utf8')
+    df.to_sql('locations', con = engine,index=False,if_exists='append')
+    print("Done")
+
 if __name__ == "__main__":
-    populate_consultant_table()
-    populate_pdfsconsultants_table()
+    #populate_consultant_table()
+    #populate_pdfsconsultants_table()
+    populate_location_table()
