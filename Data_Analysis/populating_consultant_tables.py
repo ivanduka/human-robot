@@ -57,7 +57,22 @@ def populate_location_table():
     df.to_sql('locations', con = engine,index=False,if_exists='append')
     print("Done")
 
+def read_pipelinedata():
+    df = pd.read_csv('pipelineName.csv')
+    return df
+    
+def insert_pipelineName():
+    set_query = 'UPDATE issues SET pipelineName = %s WHERE tableId = %s;'
+    data = read_pipelinedata()
+    pipelineName_dict = dict(zip(data.tableId, data.pipelineName))
+    with engine.connect() as conn:
+        for tableId, pipelineName in pipelineName_dict.items():
+            conn.execute(set_query, (pipelineName, tableId))
+            print(f"Added {pipelineName} for {tableId}")
+    print("Done")
+
 if __name__ == "__main__":
     #populate_consultant_table()
     #populate_pdfsconsultants_table()
-    populate_location_table()
+    #populate_location_table()
+    insert_pipelineName()
