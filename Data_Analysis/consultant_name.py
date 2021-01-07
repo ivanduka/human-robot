@@ -83,12 +83,13 @@ def process_handler():
 
 
 if __name__ == "__main__":
+    pcmr_consultant_list = read_consultant_names()
     names = process_handler()
     data = get_pdf_metadata()
     data['consultant_name'] = names
-    df2 = df1.copy()
+    df2 = data.copy()
 
-    mapping_dict = df1.groupby('filingId')['consultant_name'].apply(lambda x: x.values.tolist()).to_dict()
+    mapping_dict = df2.groupby('filingId')['consultant_name'].apply(lambda x: x.values.tolist()).to_dict()
 
 
     # # %%
@@ -144,17 +145,15 @@ if __name__ == "__main__":
                 lookup_content = pdf_doc.loadPage(1).getText("text").lower()
                 lookup_content = clean(lookup_content)
             consultant_name_step2 = []
-            for name in consultant_name_lst:
+            for name in pcmr_consultant_list:
                 if name.lower() in lookup_content:
                     consultant_name_step2.append(name)
             df2.set_value(row.Index, 'consultant_name', consultant_name_step2) # reference: https://stackoverflow.com/questions/43222878/iterate-over-pandas-dataframe-and-update-the-value-attributeerror-cant-set-a
     end = time.time()
     print(f'Runtime is {end - start}')
 
-    # # %% [markdown]
     # # #### Consultant Name Extraction Step 3: Manual step
 
-    # # %%
     exception_list = ['A97613-3', 'A97613-4', 'A97613-5']
     for line, row in enumerate(df2.itertuples(),1):  ## use head method with dataframe in order to slice the data when using itertuples() example df1.head(2).itertuples()
         consultant_name_step3 = []
@@ -166,29 +165,3 @@ if __name__ == "__main__":
     df2.loc[df2.pdfName.str[:8] == 'A97613-5', 'consultant_name'] = pd.Series([['Paragon Soil and Environmental Consulting']]*df2.shape[0])
     columns  = ['pdfId', 'pdfName', 'filingId', 'totalPages', 'application_id', 'submitter', 'company', 'consultant_name']
     df2.to_csv('consultant_name1.csv', encoding = 'utf-8-sig', columns = columns)
-
-
-
-
-    # %%
-    '''pdf_name = []
-    main_consultant_name_step2 = []
-    for line, row in enumerate(df2.itertuples(),1):  ## use head method with dataframe in order to slice the data when using itertuples() example df1.head(2).itertuples()
-        if len(row.consultant_name) == 0:
-            pdf_file = open('G:/Dev/PCMR/pdf_files/' + row.pdfName + '.pdf', 'rb')
-            read_pdf = PyPDF2.PdfFileReader(pdf_file)
-            if 'table of contents' not in row.xmlContent.lower():
-                page_content = read_pdf.getPage(2).extractText().lower()
-                Research = re.search(string,page_content)
-                print(row.pdfName,Research)     
-            pd
-            text = row.xmlContent.lower().strip().split("table of contents")
-            text_tuple = '_'.join(text[:1]), '_'.join(text[1:])
-            text_before_TOC = text_tuple[0]
-            consultant_name_step2 = []
-            for name in consultant_name_lst:
-                if name.lower() in text_before_TOC:
-                    consultant_name_step2.append(name)
-            main_consultant_name_step2.append(consultant_name_step2)
-                    #df1.set_value(row.Index, 'consultant_name', name) # reference: https://stackoverflow.com/questions/43222878/iterate-over-pandas-dataframe-and-update-the-value-attributeerror-cant-set-a'''
-
