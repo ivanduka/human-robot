@@ -2,6 +2,7 @@ from sqlalchemy import create_engine
 from ast import literal_eval
 import pandas as pd
 import os
+import re
 
 # Importing environmental variables library that reads from the .env file
 from dotenv import load_dotenv
@@ -71,8 +72,40 @@ def insert_pipelineName():
             print(f"Added {pipelineName} for {tableId}")
     print("Done")
 
+def populate_landuse_table():
+    df = pd.read_csv("landUse.csv", encoding='utf8')
+    df.to_sql('landuse', con = engine,index=False,if_exists='append')
+    print("Done")
+
+def read_complete_issues():
+    query = "SELECT distinct i.tableId, i.rowIndex, i.vec_pri, i.vec_sec, i.status_bin, i.status, i.status_txt, i.issue_pri, i.issue_sec, p.company, pc.consultantName, pr.application_title_short FROM issues i LEFT JOIN locations l ON i.tableId = l.tableId and i.rowIndex = l.rowIndex LEFT JOIN tables t ON i.tableId = t.headTable LEFT JOIN pdfs p ON t.pdfName = p.pdfName LEFT JOIN projects pr ON p.application_id = pr.application_id LEFT JOIN pdfsconsultants pc ON p.pdfName = pc.pdfName LEFT JOIN tables_tags tt ON t.tableId = tt.tableId WHERE locFormat = 'DLS' AND i.issue_pri NOT IN ('-', '?', 'ESC') AND CONCAT(i.issue_pri,i.issue_sec) <> '----' AND CONCAT(i.issue_pri,i.issue_sec) <> '' AND status_bin NOT IN ('--', '-', '') AND status_bin IS NOT NULL;"
+    with engine.connect() as conn:
+        df = pd.read_sql(query, conn)
+    return df
+
+def update_status_column():
+    data = read_complete_issues().to_dict('records')
+    resolved_words = ['resolved', 'r', 'no issue', 'no issues']
+    unresolved_words = ['unresolved', 'u']
+    for item in data:
+        for resolved_word in resolved_words:
+            if re.search(r'\b' + resolved_word + r'\b', item['status_bin'].lower()):
+                item['status'] = 'Resolved'
+            else:
+                for unresolved_word in unresolved_words:
+                    if re.search(r'\b' + unresolved_word + r'\b', item['status_bin'].lower()):
+                        item['status'] = 'Unresolved'
+    update_status_query = 'UPDATE issues SET status = %s WHERE tableId = %s and rowIndex = %s;'
+    with engine.connect() as conn:
+        for item in data:
+            conn.execute(update_status_query, (item['status'], item['tableId'], item['rowIndex']))
+    print("Done")
+
 if __name__ == "__main__":
     #populate_consultant_table()
     #populate_pdfsconsultants_table()
     #populate_location_table()
-    insert_pipelineName()
+    #insert_pipelineName()
+    #populate_landuse_table()
+    #read_complete_issues()
+    #update_status_column()
