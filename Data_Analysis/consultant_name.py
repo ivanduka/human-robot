@@ -65,9 +65,15 @@ def img_to_text(file):
 
 def process_handler():
     start_time = time.time()
+
+    ########################################################
     # Sequential Process
+    ########################################################
+    
     # for file in files:
     #     img_to_text(file)
+    
+    #######################################################
     pdf_files = get_pdf_names()
     with Pool() as pool:
         results = pool.map(img_to_text, pdf_files, chunksize=1)
@@ -92,7 +98,9 @@ if __name__ == "__main__":
     mapping_dict = df2.groupby('filingId')['consultant_name'].apply(lambda x: x.values.tolist()).to_dict()
 
 
-    # # %%
+    #########################################################
+    #  Flatten the list
+    #########################################################
     def flatten(lst_of_lsts):
         output = []
         for element in lst_of_lsts:
@@ -101,7 +109,9 @@ if __name__ == "__main__":
         return list(set(output))
 
 
-    # # %%
+    #########################################################
+    #  Manual Changes
+    #########################################################
     newdict = {key: flatten(value) for key, value in mapping_dict.items()}
     newdict.update(dict.fromkeys([786189,877284,786042,2672072,590454,961080,2671945,2897123,3096796], ['TERA Environmental Consultants']))
     newdict.update(dict.fromkeys([775971,2412030,2671966], ['Golder Associates']))
@@ -116,16 +126,14 @@ if __name__ == "__main__":
 
     df2['consultant_name'] = df2['filingId'].map(newdict)
 
-    # # %% [markdown]
-    # # #### Consultant Name Extraction Step 2: Reading Consultant Name from Second and Third Page (in case Second page is blank)
-
-    # # %%
+    #########################################################
+    #  Consultant Name Extraction Step 2: Reading Consultant Name from Second and Third Page (in case Second page is blank)
+    #########################################################
+    
     def clean(my_str):
         my_new_str = re.sub(r"[^a-zA-Z0-9-&]+",' ', my_str)
         return my_new_str
 
-
-    # # %%
     start = time.time()
     for line, row in enumerate(df2.itertuples(),1):  ## use head method with dataframe in order to slice the data when using itertuples() example df1.head(2).itertuples()
         if len(row.consultant_name) ==0:
@@ -152,7 +160,10 @@ if __name__ == "__main__":
     end = time.time()
     print(f'Runtime is {end - start}')
 
-    # # #### Consultant Name Extraction Step 3: Manual step
+    #########################################################
+    #  Consultant Name Extraction Step 3: Manual step
+    #########################################################
+    
 
     exception_list = ['A97613-3', 'A97613-4', 'A97613-5']
     for line, row in enumerate(df2.itertuples(),1):  ## use head method with dataframe in order to slice the data when using itertuples() example df1.head(2).itertuples()
