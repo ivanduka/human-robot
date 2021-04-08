@@ -101,6 +101,20 @@ def update_status_column():
             conn.execute(update_status_query, (item['status'], item['tableId'], item['rowIndex']))
     print("Done")
 
+def read_landUseCompany():
+    df = pd.read_csv('land_use_company.csv', encoding='cp1252')
+    return df
+    
+def insert_standardizedLandUse():
+    set_query = 'UPDATE issues SET land_use_standardized = %s WHERE land_use = %s;'
+    data = read_landUseCompany()
+    landUseCompany_dict = dict(zip(data.land_use, data.standardized_land_use))
+    with engine.connect() as conn:
+        for land_use, standardized_land_use in landUseCompany_dict.items():
+            conn.execute(set_query, (standardized_land_use, land_use))
+            print(f"Added {standardized_land_use} for {land_use}")
+    print('Done')
+
 if __name__ == "__main__":
     #populate_consultant_table()
     #populate_pdfsconsultants_table()
@@ -109,3 +123,4 @@ if __name__ == "__main__":
     #populate_landuse_table()
     #read_complete_issues()
     #update_status_column()
+    #insert_standardizedLandUse()

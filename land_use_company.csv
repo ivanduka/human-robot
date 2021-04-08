@@ -1,0 +1,400 @@
+land_use,standardized_land_use
+Disturbed,urban
+Forested,forest
+Cultivated,cropland
+Cultivated/ Disturbed,cropland
+Wetland,wetland
+Disturbed/ Cultivated,cropland
+Cultivated/Wetland,cropland
+Forested /Wetland,forest
+Cultivated/ Forested/ Wetland,cropland
+Forested/ Cultivated,cropland
+Cultivated/ Forested,cropland
+Mineral Wetland / Forested,forest
+Mineral Wetland / Treed Wetland / Forested,wetland
+Watercourse,water
+Facility site,urban
+Facility site/ cultivated,cropland
+Watercourse - Goldbar Creek,water
+Watercourse -  unnamed drainage,water
+Tame pasture,cropland
+Watercourse – Fulton Creek/ wetland,water
+Hay,cropland
+Cultivated/ tree nursery,forest
+Tame pasture/ hay,cropland
+Treed pasture/ Cultivated,cropland
+Treed pasture,grassland
+Tame pasture/ hay Wetland,cropland
+Treed hay,cropland
+Watercourse - Irvine Creek,water
+Treed pasture/ hay/ Wetland,cropland
+Treed pasture/hay,cropland
+Cultivated/TP,cropland
+Tame pasture/Wetland,grassland
+Field margin,cropland
+Cultivated/hay,cropland
+Cultivated/Tame Pasture,cropland
+Tame pasture/ wetland,grassland
+Hay/tame pasture,cropland
+Fallow/ valve site,cropland
+Tame pasture/hay,cropland
+ Native prairie,grassland
+Tame pasture/roadside,grassland
+Residential/tame pasture,urban
+Watercourse - Battle River,water
+Watercourse - Battle River (North Bank),water
+Treed pasture/facility site,grassland
+Treed,forest
+Treed Fen,wetland
+Shrubby Fen,wetland
+Shallow Open Water,water
+Treed Bog,wetland
+Emergent Marsh,wetland
+Non-woody Fen,wetland
+Treed/ Shrubby Bog,wetland
+Shrubby Bog,wetland
+Treed Bog/Treed,wetland
+Pasture,cropland
+Pasture/Hay,cropland
+Pasture/Forested,grassland
+Cultivated/Forested,cropland
+Forested / Grazing Lease,forest
+Watercourse - Tributary  to Stew art Creek (KP 1.025),water
+Pasture / Grazing Lease,grassland
+Watercourse - Tributary  to Sunset Creek (KP 3.632),water
+Watercourse - Tributary  to Sunset Creek (KP 3.771),water
+Watercourse - Tributary  to Sunset Creek (KP 4.984),water
+Watercourse - Tributary  to Sunset Creek (KP 5.239),water
+Watercourse - Tributary  to Sunset Creek (KP 7.407),water
+Watercourse - Tributary  to Sunset Creek (KP 7.579),water
+Watercourse - Tributary  to Sunset Creek (KP 8.187),water
+R & L Wolfe Property   Forest / Pasture,grassland
+V Wolfe Property   Forest / Pasture / Hay,cropland
+Watercourse - Sunset Creek  (KP 11.513),water
+L Dow d Property   Hay,cropland
+Sw amp Donkey  Property   Forest / Bush / Muskeg,forest
+Watercourse - Tributary  to Sunset Creek (KP 13.559),water
+SA Wolfe Property   Hay,cropland
+Sw amp Donkey  Property   Hay  / Cultiv ated,cropland
+Watercourse - Tributary  to Sunset Creek (KP 15.273),water
+SL Wolfe Property   Hay,cropland
+D Stenbraaten Property   Hay,cropland
+T & S Bruun Property   Forest / Hay,cropland
+Watercourse - Tributary  to Sunset Creek (KP 16.888),water
+Watercourse - Tributary  to Sunset Creek (KP 16.947),water
+J & A Sheets Property   Hay,cropland
+Westcoast Energy   Forest / Hay,cropland
+Westcoast Energy   Industrial / Hay,cropland
+Forested Low/Moderate Vegetation Establishment,forest
+Unnamed tributary to Midget Creek (KP 2+400) Low Vegetation Establishment,water
+Treed Fen (KP 4+300 to 4+450),wetland
+Shrubby Swamp (KP 5+100 to 5+140),wetland
+Shrubby Swamp (KP 6+100 to 6+400),wetland
+Unnamed drainage to Midget Creek (KP 6+400) Erosion Low Vegetation Establishment,water
+Treed Fen (KP 8+700 to 8+970),wetland
+Treed Fen (KP 9+200 to 9+340),wetland
+Shrubby Swamp (KP 9+500 to 9+700),wetland
+Treed Fen (KP 10+500 to 10+820),wetland
+Treed Bog (KP 11+200 to 11+350),wetland
+Shrubby Fen (KP 11+900 to 12+100),wetland
+Shrubby Fen (KP 12+200 to 12+360),wetland
+Treed Fen (KP 13+00 to 13+280),wetland
+Treed Fen (KP 13+700 to 14+410),wetland
+Treed Fen (KP 14+900 to 15+370),wetland
+Sloat Creek (KP 17+900) Low Vegetation Establishment,water
+Forested Low Vegetation Establishment (KP 22+400),forest
+Unnamed tributary to Chinchaga River (KP 26+400) Moderate/High Vegetation Establishment,water
+Treed Fen (KP 28+300 to 29+070),wetland
+Treed Bog (KP 29+200 to 29+360),wetland
+Treed Bog (KP 29+520 to 29+600),wetland
+Treed Bog (KP 29+800 to 29+910),wetland
+Treed Bog (KP 31+800 to 32+100),wetland
+Native prairie,grassland
+Improved Pasture,cropland
+Bald Mountain Creek (WC1),water
+Tributary to Bald Mountain Creek (WC2),water
+Tributary to Bald Mountain Creek (WC3),water
+Tributary to Bald Mountain Creek (WC4),water
+Tributary to Bald Mountain Creek (WC5),water
+Drainage (D1),water
+Tributary to Bald Mountain Creek (WC6),water
+Drainage (D2),water
+Tributary to Bald Mountain Creek (WC8),water
+Tributary to Bald Mountain Creek (WC9),water
+Drainage (D3),water
+Drainage (D4),water
+Drainage (D5),water
+Tributary to Bald Mountain Creek (WC10),water
+Tributary to Bald Mountain Creek (WC11),water
+Tributary to Bald Mountain Creek (WC12),water
+Drainage (D6),water
+Drainage (D7),water
+W6Drainage (D8),water
+Tributary to Cutbank River (WC14),water
+Tributary to Cutbank River (WC15),water
+Seasonal Drainage,water
+Tributary to Cutbank River (WC16),water
+Tributary to Cutbank River (WC17),water
+Tributary to Cutbank River (WC18),water
+Unnamed tributary to Bear River,water
+Drainage,water
+Tame Pasture/Treed,grassland
+Forested/wetland,forest
+Unnamed Tributary to Hotchkiss River (CH1),water
+Treed Swamp,wetland
+Unnamed Tributary to Hotchkiss River (CH4),water
+Unnamed Tributary to Meikle River (CH6),water
+Unnamed Tributary to Meikle River  (CH 7),water
+Unnamed Tributary to Meikle River (CH8),water
+Unnamed Tributary to Midget Creek (CH8.5),water
+Unnamed Tributary to Midget Creek (CH9),water
+Unnamed Tributary to Midget Creek (CH9.25),water
+Unnamed Tributary to Midget Creek (CH9.5),water
+Midget Creek (CH100),water
+Unnamed Tributary to Midget Creek (CH101),water
+Cultivated/ Hay,cropland
+Hayland,cropland
+Pasture/ Forested,forest
+Lynx Creek,water
+Cultivated / Pasture,cropland
+Riparian Zone,water
+Forested / Pasture,forest
+Pasture / Forested,grassland
+Forested / Cultivated,cropland
+Unnamed Tributary to  Smoky River,water
+Native grassland,grassland
+Crop,cropland
+Modified grass. Native grassland,grassland
+Modified grass,grassland
+Wetland (W-143) Weeds,wetland
+Wetland (W-339) Weeds,wetland
+Wetland (W-321) Weeds,wetland
+Watercourse crossing (Antler River),water
+Wetland (W-323) Weeds,wetland
+Wetland (W-340) Weeds,wetland
+Wetland W-183,wetland
+Wetland (W-185),wetland
+Watercourse crossing (tributary to Gainsborough Creek),water
+Watercourse crossing (Jackson Creek),water
+Wetland (W-AMEC1),wetland
+Watercourse crossing (tributary to Pipestone Creek),water
+Wetland  (W-534),wetland
+Wetland (W-319) Silt fence,wetland
+Organic hay,cropland
+Watercourse crossing (Alameda Reservoir West Arm: Shepherd Creek),water
+Hayland. Native grassland (100 m),grassland
+Watercourse crossing (tributary to Shepherd Creek),water
+Tame pasture. Native grassland,grassland
+Watercourse crossing (Alameda Reservoir East Arm: Moose Mountain Creek),water
+Wetland (W-633) Woody vegetation,wetland
+Wetland (W-418) Woody vegetation,wetland
+Wetland (W-638) Woody vegetation,wetland
+"Wetland (W-419) Bare soils, rutting",wetland
+Native grassland Weeds,grassland
+Watercourse crossing (tributary to Lightning Creek),water
+Watercourse crossing (Lightning Creek),water
+Wetland (W-179) Pugging,wetland
+Wetland (W-543),wetland
+Wetland (W-311) Contouring,wetland
+Wetland (w-421),wetland
+Wetland (W-484) Compaction,wetland
+Watercourse crossing (Gainsborough Creek),water
+Wetland (W-201) Rutting,wetland
+Wetland (W-357),wetland
+Wetland (W-359) Contouring,wetland
+Wetland (W-487) Subsidence,wetland
+Wetland No. 1,wetland
+Cultivation,cropland
+Wetland No. 2,wetland
+Wetland No. 3,wetland
+Wetland No. 4,wetland
+Wetland No. 5,wetland
+Wetland No. 6,wetland
+Wetland No. 7,wetland
+Wetland No. 8,wetland
+Wetland No. 9,wetland
+Wetland No. 10,wetland
+Wetland No. 11,wetland
+Wetland No. 12,wetland
+Wetland No. 13,wetland
+Wetland No. 14,wetland
+Wetland No. 15,wetland
+Wetland No. 16,wetland
+Wetland No. 17,wetland
+Wetland No. 18,wetland
+Wetland No. 19,wetland
+Wetland No. 20,wetland
+Wetland No. 21,wetland
+Wetland No. 22,wetland
+Wetland No. 23,wetland
+Wetland No. 24,wetland
+Wetland No. 25,wetland
+Wetland No. 26,wetland
+Wetland No. 27,wetland
+Wetland No. 28,wetland
+Wetland No. 29,wetland
+Wetland No. 30,wetland
+Wetland No. 31,wetland
+Wetland No. 32,wetland
+Wetland No. 33,wetland
+Wetland No. 34,wetland
+Wetland No. 35,wetland
+Wetland No. 36,wetland
+Wetland No. 37,wetland
+Wetland No. 38,wetland
+Wetland No. 39,wetland
+Wetland No. 40,wetland
+Wetland No. 41,wetland
+Wetland No. 42,wetland
+Wetland No. 43,wetland
+Wetland No. 44,wetland
+Wetland No. 45,wetland
+Wetland No. 46,wetland
+Wetland No. 47,wetland
+Wetland No. 48,wetland
+Watercourse – Unnamed Drainage,water
+Wetland No. 49,wetland
+Wetland No. 50,wetland
+Wetland No. 51,wetland
+Wetland No. 52,wetland
+Wetland No. 53,wetland
+Wetland No. 54,wetland
+Wetland No. 55,wetland
+Wetland No. 56,wetland
+Wetland No. 57,wetland
+Wetland No. 58,wetland
+Wetland No. 59,wetland
+Wetland No. 60,wetland
+Treed Tame Pasture,grassland
+Wetland No. 61,wetland
+Wetland No. 62,wetland
+Wetland No. 63,wetland
+Wetland No. 64,wetland
+Wetland No. 65,wetland
+Wetland No. 66,wetland
+Wetland No. 67,wetland
+Wetland No. 68,wetland
+Wetland No. 69,wetland
+Wetland No. 70,wetland
+Wetland No. 71,wetland
+Wetland No. 72,wetland
+Wetland No. 73,wetland
+Wetland No. 74,wetland
+Wetland No. 75,wetland
+Tame pasture/ cultivated,cropland
+Unnamed watercourse,water
+Forested / Muskeg,wetland
+Watercourse - Tributary  to Kobes Creek (FN1),water
+Watercourse - Tributary  to Kobes Creek (FN2),water
+Watercourse - Tributary  to Kobes Creek (FN3),water
+Watercourse - Tributary  to Kobes Creek (FN4),water
+Watercourse - Tributary  to Kobes Creek (FN5),water
+Kobes Creek Temporary Access Trail,water
+Watercourse - Kobes Creek (FN6),water
+Watercourse - Tributary  to Kobes Creek (FN7),water
+Forested / KP 3.540,forest
+Watercourse - Tributary  to Kobes Creek (FN8),water
+Watercourse - Tributary  to Kobes Creek (FN9),water
+Watercourse - Tributary  to Kobes Creek (FN10),water
+Watercourse - Tributary  to Kobes Creek (FN11),water
+Watercourse - Tributary  to Groundbirch Creek (FN12),water
+Watercourse - Tributary  to Groundbirch Creek (FN13),water
+Watercourse - Tributary  to Groundbirch Creek (FN14),water
+Watercourse - Groundbirch Creek (FN15),water
+Watercourse - Tributary  to Groundbirch Creek (FN16),water
+Watercourse - Tributary  to Groundbirch Creek (FN17),water
+Watercourse - Tributary  to Groundbirch Creek (FN18),water
+Watercourse - Tributary  to Groundbirch Creek (FN19),water
+Watercourse - Tributary  to Groundbirch Creek (FN20),water
+Watercourse - Tributary  to Farrell Creek    (FN21),water
+Watercourse - Tributary  to Farrell Creek (FN22),water
+Watercourse - Farrell Creek (FN23),water
+Hay (ALR),cropland
+Mulched re-growth (ALR),cropland
+Non-ALR,cropland
+Pasture (ALR),cropland
+Cleared Brush/ Pasture (ALR),cropland
+ALR,cropland
+Cleared (ALR),cropland
+Forested / Wetland,forest
+Bush/Tame <s>Pasture</s>,grassland
+<s>Tame Pasture</s>,cropland
+<s>Bush</s>,forest
+<s>Wetland</s>,wetland
+Bush /Tame <s>Pasture</s>,grassland
+Wooded,forest
+Cultivated and Wooded,cropland
+"Cultivated, Wetland and Wooded",cropland
+Wetland (off ROW),wetland
+Huggard Creek (Watercourse Crossing [WC2c),water
+Huggard Creek (WC2b),water
+Huggard Creek (WC2a),water
+Watercourse (WC 15),water
+Wetland (WET 1-1),wetland
+Wetland (WET 2-1),wetland
+Watercourse (WC 14),water
+Wetland (WET 3-1),wetland
+Wetland (WET 3-2),wetland
+Wetland (WET 4-1),wetland
+Wetland (WET 6-1),wetland
+Wetland (WET 6-2),wetland
+Watercourse (WC 11),water
+Wetland (WET 4-3 & WET 4-4),wetland
+Watercourse (WC 2),water
+Wetland (WET 7-1),wetland
+Wetland  (WET 8-1),wetland
+Wetland (WET 9-1),wetland
+Wetland  (WET 10-1),wetland
+Wetland (WET 10-2),wetland
+Watercourse (WC 4),water
+Wetland       (WET 11-1),wetland
+Wetland (WET 12-1),wetland
+Watercourse (WC 5),water
+Watercourse (WC 6),water
+Wetland (WET 13-1 & 13-2),wetland
+Watercourse (WC 7),water
+Wetland (WET 14-2),wetland
+Wetland (WET 15-1),wetland
+Wetland (WET 15-2),wetland
+Wetland (WET 16-1),wetland
+Watercourse (WC 8),water
+Watercourse (WC 9),water
+Wetland (WET 18-1),wetland
+Wetland (WET 19-1),wetland
+Wetland (WET 18-2),wetland
+Forested / Road,forest
+Wetland      (WET 20-1),wetland
+Wetland (WET 21-1),wetland
+Watercourse (WC 10),water
+Wetland (WET 21-2),wetland
+Wetland (WET 23-1),wetland
+Watercourse (WC 13),water
+River Band,water
+Bush,forest
+Bush/Pasture,grassland
+Wetland (shrub swamp),wetland
+Wetland (treed fen),wetland
+Unnamed Tributary to the Fort Nelson River,water
+Treed Wetland / Watercourse,water
+Treed Wetland / Forested,wetland
+Treed Wetland,wetland
+Watercourse (WC 1),water
+Wetland (WET 2-2),wetland
+Watercourse (WC3),water
+Wetland (WET 5-1),wetland
+Wetland (WET 5-2),wetland
+Wetland (WET 5-3),wetland
+Wetland (WET 8-1),wetland
+Wetland (WET 10-1),wetland
+Wetland (WET 10-3),wetland
+Wetland (WET 10-4),wetland
+Wetland (WET 11-1),wetland
+Wetland (WET 13-1),wetland
+Wetland (WET 12-2),wetland
+Mineral Wetland (Open Water Pond),water
+Unnamed Watercourse (WC1),water
+Potential Western Toad Breeding Pond,wetland
+Mineral Wetland (Emergent Marsh),wetland
+Unnamed Watercourse (WC2),water
+Unnamed Watercourse (WC3),water
+Sunday Creek (WC4),water
