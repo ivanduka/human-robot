@@ -115,6 +115,20 @@ def insert_standardizedLandUse():
             print(f"Added {standardized_land_use} for {land_use}")
     print('Done')
 
+def read_parsed_issues_data():
+    os.chdir('c:\\Users\\t1nipun\\Desktop\\PCMR\\human-robot\\Data_Analysis')
+    df = pd.read_csv('issue_parsed_clean.csv', keep_default_na = False)
+    return df
+
+def populate_issues_parsed_table():
+    insert_parsed_issue = 'INSERT INTO issues_parsed (tableId, rowIndex, rowCounter, status_txt, issue_parsed) VALUES (%s, %s, %s, %s, %s);'
+    data = read_parsed_issues_data()
+    with engine.connect() as conn:
+        for row in data.itertuples():
+            conn.execute(insert_parsed_issue, (row.tableId, row.rowIndex, row.rowCounter, row.status_txt, row.issues))
+    print("Done")
+
+
 if __name__ == "__main__":
     #populate_consultant_table()
     #populate_pdfsconsultants_table()
@@ -124,3 +138,5 @@ if __name__ == "__main__":
     #read_complete_issues()
     #update_status_column()
     #insert_standardizedLandUse()
+    #read_parsed_issues_data()
+    #populate_issues_parsed_table()
