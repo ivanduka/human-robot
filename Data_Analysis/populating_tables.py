@@ -128,6 +128,30 @@ def populate_issues_parsed_table():
             conn.execute(insert_parsed_issue, (row.tableId, row.rowIndex, row.rowCounter, row.status_txt, row.issues))
     print("Done")
 
+def read_bert_status_labels():
+    os.chdir('c:\\Users\\t1nipun\\Desktop\\PCMR\\human-robot\\Data_Analysis')
+    df = pd.read_csv('status_labels.csv', encoding='utf-8-sig', keep_default_na = False)
+    return df
+
+def populate_bert_status_labels():
+    read_issues_query = "SELECT * FROM pcmr.issues where tableId NOT IN ('02db9f91-572a-44af-9858-4add101353c1','03bfc26a-c6d0-4761-b8f5-47acf2290d02', '082134c0-6a4b-425b-a4ae-e79acd7316cb', '0d10a967-88d6-42e5-9bd7-309f24022b5f', '333e1e53-8897-41fa-acbd-86be8afb31c7', '35bd2caf-562c-4d14-a5d6-373f168b4acb', '397db969-9996-4d9e-bb05-6df69d0fe4a4', '417546c4-dacf-4c12-ae75-4dc4e656e198', '491c36c1-82d4-46ae-a684-470915a5659b', '60b3993d-7075-4790-8519-ba8193579754', '64a7ba33-ceee-4593-87a3-8f08dd46c8f4', '67691780-af41-414b-a0c2-aa33a3442cdc', '6a2f1370-1cd5-4ebb-a4bd-a1fe9d5a516a', '6b437f67-967b-4ef6-bd28-5ac8d39138e4', '77cc0b8d-8244-4622-8d9d-a56daf6069e8', '8bb683d9-f7ee-4a54-ad3d-dddc61ccdfcf', '9476acc2-294a-4cd6-a952-8274aedb645a', 'a6623233-9c9f-436b-ad11-0987ab3825e7', 'c04807de-2df1-4d26-9352-70d3cb6cb10b', 'cb197d7e-3ef6-4ee0-93d1-504c7286b580', 'f143c6b8-cf77-41c1-88b2-e7c97ba657c1', 'f2ebd484-4ec2-4481-907d-17334ca4657f', 'f4db9fc5-3a73-499a-ab1e-ab643530ea99', 'fdb3d057-943a-4fab-99ac-1f4eed471512', '44a33e5f-d99e-48ef-ad56-bbb516ec8796', 'bfafbfd0-8bb5-4283-8f5e-dd7cbcec480c');"
+    update_bert_status_query = 'UPDATE issues SET status = %s WHERE tableId = %s and rowIndex = %s;'
+    with engine.connect() as conn:
+        issues_df = pd.read_sql(read_issues_query, conn)[:1]
+        for row in issues_df.itertuples():
+            if pd.isna(row.status):
+                data = read_bert_status_labels()
+                for issue in data.itertuples():
+                    conn.execute(update_bert_status_query, (issue.status, issue.tableId, issue.rowIndex))
+    print("Done")
+
+def populate_status_issue_parsed():
+    update_bert_status_query = 'UPDATE issues_parsed SET status_issue_parsed = %s WHERE tableId = %s and rowIndex = %s and rowCounter = %s;'
+    data = read_bert_status_labels()
+    with engine.connect() as conn:
+        for issue in data.itertuples():
+            conn.execute(update_bert_status_query, (issue.status, issue.tableId, issue.rowIndex, issue.rowCounter))
+    print('Done')
 
 if __name__ == "__main__":
     #populate_consultant_table()
@@ -140,3 +164,6 @@ if __name__ == "__main__":
     #insert_standardizedLandUse()
     #read_parsed_issues_data()
     #populate_issues_parsed_table()
+    #read_bert_status_labels()
+    #populate_bert_status_labels()
+    #populate_status_issue_parsed()
