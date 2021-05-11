@@ -117,7 +117,7 @@ def insert_standardizedLandUse():
 
 def read_parsed_issues_data():
     os.chdir('c:\\Users\\t1nipun\\Desktop\\PCMR\\human-robot\\Data_Analysis')
-    df = pd.read_csv('issue_parsed_clean.csv', keep_default_na = False)
+    df = pd.read_csv('issue_parsed_clean1.csv', keep_default_na = False)
     return df
 
 def populate_issues_parsed_table():
@@ -125,7 +125,7 @@ def populate_issues_parsed_table():
     data = read_parsed_issues_data()
     with engine.connect() as conn:
         for row in data.itertuples():
-            conn.execute(insert_parsed_issue, (row.tableId, row.rowIndex, row.rowCounter, row.status_txt, row.issues))
+            conn.execute(insert_parsed_issue, (row.tableId, row.rowIndex, row.count, row.status_txt, row.issues))
     print("Done")
 
 def read_bert_status_labels():
@@ -196,6 +196,6 @@ if __name__ == "__main__":
     #read_bert_status_labels()
     #populate_bert_status_labels()
     #populate_status_issue_parsed()
-    delete_status_labels_issues_table()
+    #delete_status_labels_issues_table()
     #populate_prob_issues_table()
     #populate_prob_issue_parsed_table()
