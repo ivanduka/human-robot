@@ -30,23 +30,45 @@ engine = create_engine(conn_string)
 #  Consultant Name Extraction Step 1: Reading Consultant Name from First Page followed by manually adding Consultant Names to mapping dictionary
 #########################################################
 def get_pdf_metadata():
+    """
+    It returns a dataframe of all the pdfs in the database
+    :return: A dataframe with the pdfs and their metadata.
+    """
     with engine.connect() as conn:
         query1 = "SELECT * FROM pdfs;"
         df = pd.read_sql(query1, conn)
     return df
         
 def get_pdf_names():
+    """
+    Get the names of all the pdf files in the directory
+    :return: A list of the names of the pdf files.
+    """
     data = get_pdf_metadata()
     files = [file for file in data['pdfName']]
     return files
     
 def read_consultant_names():
+    """
+    Reads in a list of consultant names from an excel file
+    :return: A list of consultant names.
+    """
     consultant_name_df = pd.read_excel('G:/Post Construction/metadata csvs/consultants.xlsx', encoding = 'utf-8-sig')
     consultant_name_lst = consultant_name_df["consultant_name"].tolist()
     return consultant_name_lst
 
 
 def img_to_text(file):
+    """
+    The function takes in a pdf file and converts it to a jpg file.
+    Then it extracts the text from the jpg file and checks if any of the consultant names are present in
+    the text.
+    If they are present, it appends the consultant name to a list.
+    
+    :param file: The file name of the PDF file
+    :return: A list of lists. Each list contains the names of the consultant(s) who are mentioned in the
+    first page of the pdf.
+    """
     main_consultant_name = []
     pytesseract.pytesseract.tesseract_cmd = r'C:\Users\t1nipun\AppData\Local\Tesseract-OCR\tesseract.exe'
     pages = convert_from_path("G:/Post Construction/PCMR_All/" + file + '.pdf', 500, last_page= 1)
@@ -64,6 +86,10 @@ def img_to_text(file):
     
 
 def process_handler():
+    """
+    This function takes in a list of pdf files and returns a list of consultant names
+    :return: A list of names
+    """
     start_time = time.time()
 
     ########################################################
@@ -74,6 +100,9 @@ def process_handler():
     #     img_to_text(file)
     
     #######################################################
+    # Parallel Processing
+    #######################################################
+    
     pdf_files = get_pdf_names()
     with Pool() as pool:
         results = pool.map(img_to_text, pdf_files, chunksize=1)
@@ -90,6 +119,7 @@ def process_handler():
 
 if __name__ == "__main__":
     pcmr_consultant_list = read_consultant_names()
+    print(pcmr_consultant_list)
     names = process_handler()
     data = get_pdf_metadata()
     data['consultant_name'] = names
@@ -102,6 +132,12 @@ if __name__ == "__main__":
     #  Flatten the list
     #########################################################
     def flatten(lst_of_lsts):
+        """
+        Given a list of lists, return a list of all the elements in the sublists
+        
+        :param lst_of_lsts: a list of lists
+        :return: A list of all the unique elements in lst_of_lsts.
+        """
         output = []
         for element in lst_of_lsts:
             if type(element) == list:
@@ -131,6 +167,13 @@ if __name__ == "__main__":
     #########################################################
     
     def clean(my_str):
+        """
+        The function takes a string as input, and replaces any character that is not a-z, A-Z, 0-9, or a
+        dash (-) with a space.
+        
+        :param my_str: the string you want to clean
+        :return: A string with all non-alphanumeric characters replaced with a space.
+        """
         my_new_str = re.sub(r"[^a-zA-Z0-9-&]+",' ', my_str)
         return my_new_str
 
