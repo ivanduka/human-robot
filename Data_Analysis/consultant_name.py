@@ -13,6 +13,7 @@ import fitz
 import re
 from multiprocessing import Pool
 
+
 #########################################################
 #  Initialize Database Connection
 #########################################################
@@ -219,3 +220,5 @@ if __name__ == "__main__":
     df2.loc[df2.pdfName.str[:8] == 'A97613-5', 'consultant_name'] = pd.Series([['Paragon Soil and Environmental Consulting']]*df2.shape[0])
     columns  = ['pdfId', 'pdfName', 'filingId', 'totalPages', 'application_id', 'submitter', 'company', 'consultant_name']
     df2.to_csv('consultant_name1.csv', encoding = 'utf-8-sig', columns = columns)
+
+  
