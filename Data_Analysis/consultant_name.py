@@ -28,7 +28,9 @@ conn_string = f"mysql+mysqldb://{user}:{password}@{db_hostname}/{db_name}?charse
 engine = create_engine(conn_string)
 
 #########################################################
-#  Consultant Name Extraction Step 1: Reading Consultant Name from First Page followed by manually adding Consultant Names to mapping dictionary
+#  Consultant Name Extraction Step 1: Reading Consultant
+#  Name from First Page followed by creating a list of 
+#  unique Consultant Names for mapping purposes
 #########################################################
 def get_pdf_metadata():
     """
